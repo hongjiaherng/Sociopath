@@ -3,6 +3,10 @@ public class Test {
         System.out.println("feature a");
         System.out.println("Feature b");
         System.out.println("Feature c");
+
         System.out.println("Produce conflict");
+
+        System.out.println("Feature c again");
+
     }
 }
