@@ -8,5 +8,7 @@ public class Test {
 
         System.out.println("Feature c again");
 
+        System.out.println("Test push");
+
     }
 }
