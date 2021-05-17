@@ -1,58 +1,34 @@
 package org.sociopath;
 
-import java.util.LinkedList;
+import java.time.LocalTime;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Random;
 
-/**
- * @author Lim Hong Zhi, Hong Jia Herng
- *
- * A student class that is used for our Sociopath graph
- *
- * @version v1.0
- * - added the basic method and variables
- * - have an idea wanted to add name as a variable
- * since there is nothing to differentiate between all the
- * student objects
- */
 public class Student {
+    private String name;
+    private double dive;                        // 0 < dive < 100
+    private LocalTime lunchStart;                     // 1100 <= lunchStart <= 1400
+    private int lunchPeriod;                    // 5 < lunchPeriod < 60
+    private HashMap<String, Integer> repPoints; // 1 <= rep <= 10
+    private HashSet<String> friends;
 
-    private int rep;
-    private double dive;
-    private int lunchStart;
-    private int lunchPeriod;
-    private final LinkedList<Student> friends;
-
-    /**
-     * Constructor for the Student class
-     *
-     * Minimum arguments are reputation (rep), diving rate(dive),
-     * lunch starting time (lunchStart), lunch period(lunchPeriod)
-     */
-    public Student(int rep, double dive, int lunchStart, int lunchPeriod) {
-        this.rep = rep;
-        this.dive = dive;
-        this.lunchStart = lunchStart;
-        this.lunchPeriod = lunchPeriod;
-        friends = new LinkedList<>();
+    public Student(String name) {
+        Random rand = new Random();
+        this.name = name;
+        this.dive = Math.round(((Math.random() * (100 - 1)) + 1) * 100.0) / 100.0;
+        this.lunchStart = LocalTime.of(11, 0).plusMinutes(rand.nextInt(181));
+        this.lunchPeriod = rand.nextInt(55) + 5;
+        this.repPoints = new HashMap<>();
+        this.friends = new HashSet<>();
     }
 
-    public Student(int reputation, double dive, int lunchStart, int lunchPeriod, LinkedList<Student> friends) {
-        this.rep = reputation;
-        this.dive = dive;
-        this.lunchStart = lunchStart;
-        this.lunchPeriod = lunchPeriod;
-        this.friends = friends;
+    public String getName() {
+        return name;
     }
 
-    public int getRep() {
-        return rep;
-    }
-
-    /**
-     * Getter and setters for all the variables
-     * **except for the list of friends, it has a getter only
-     */
-    public void setRep(int rep) {
-        this.rep = rep;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public double getDive() {
@@ -63,12 +39,12 @@ public class Student {
         this.dive = dive;
     }
 
-    public int getLunchStart() {
+    public LocalTime getLunchStart() {
         return lunchStart;
     }
 
-    public void setLunchStart(int lunchTime) {
-        this.lunchStart = lunchTime;
+    public void setLunchStart(int hour, int minute) {
+        this.lunchStart = LocalTime.of(hour, minute);
     }
 
     public int getLunchPeriod() {
@@ -79,38 +55,31 @@ public class Student {
         this.lunchPeriod = lunchPeriod;
     }
 
-    public LinkedList<Student> getFriends(){
+    public HashMap<String, Integer> getRepPoints() {
+        return repPoints;
+    }
+
+    public void setRepPoints(HashMap<String, Integer> repPoints) {
+        this.repPoints = repPoints;
+    }
+
+    public HashSet<String> getFriends() {
         return friends;
     }
 
-    /**
-     * A method to add a new friend for the student
-     * @param friend a student object which is considered as a friend
-     *               of the student
-     * @return true if it is added successfully, false if it is not
-     */
-    public boolean addFriends(Student friend){
-        boolean result = friends.add(friend);
-        if(result){
-            System.out.println("Successfully added a friend!");
-            return true;
-        }
-
-        else{
-            System.out.println("unable to add a friend");
-            return false;
-        }
+    public void setFriends(HashSet<String> friends) {
+        this.friends = friends;
     }
 
-    /**
-     * A toString method to print out the object
-     */
-    public String toString(){
-
-        return "Reputation : " + rep +
-                "\nDiving rate : " + dive +
-                "\nLunch Time : " + lunchStart +
-                "\nLunch Period : " + lunchPeriod +
-                "\nFriend list: " + friends;
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Name").append("\t\t\t: ").append(name).append("\n");
+        sb.append("Dive").append("\t\t\t: ").append(dive).append("\n");
+        sb.append("Lunch start").append("\t\t: ").append(lunchStart).append("\n");
+        sb.append("Lunch period").append("\t: ").append(lunchPeriod).append("\n");
+        sb.append("Rep points").append("\t\t: ").append(repPoints).append("\n");
+        sb.append("Friends").append("\t\t\t: ").append(friends);
+        return sb.toString();
     }
 }
