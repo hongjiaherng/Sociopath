@@ -91,9 +91,9 @@ public class Sociograph {
 
     public int getSrcEdgeWeight(String srcName, String adjName) {
         if (head == null) {
-            return -1;
+            throw new NoSuchElementException("No friendship");
         } else if (!hasNode(srcName) || !hasNode(adjName)) {
-            return -1;
+            throw new NoSuchElementException("No friendship");
         }
         StudentNode srcNode = head;
         while (srcNode != null) {
@@ -108,7 +108,7 @@ public class Sociograph {
             }
             srcNode = srcNode.nextNode;
         }
-        return -1;
+        throw new NoSuchElementException("No friendship");
     }
 
     public boolean addNode(String name) {
