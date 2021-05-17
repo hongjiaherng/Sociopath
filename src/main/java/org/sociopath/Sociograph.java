@@ -89,7 +89,7 @@ public class Sociograph {
         return temp.studentInfo;
     }
 
-    public int getSrcEdgeWeight(String srcName, String adjName) {
+    public double getSrcEdgeWeight(String srcName, String adjName) {
         if (head == null) {
             throw new NoSuchElementException("No friendship");
         } else if (!hasNode(srcName) || !hasNode(adjName)) {
@@ -132,7 +132,7 @@ public class Sociograph {
         return false;
     }
 
-    public boolean addEdge(String srcName, String destName, int srcRep, int destRep) {
+    public boolean addEdge(String srcName, String destName, double srcRep, double destRep) {
         if (head == null) {
             return false;
         } else if (!hasNode(srcName) || !hasNode(destName)) {
@@ -247,7 +247,7 @@ public class Sociograph {
     static class FriendshipEdge {
         private StudentNode adjNode;
         private FriendshipEdge nextEdge;
-        private int repRelativeToAdj; // src's rep point in the opinion of adjNode
+        private double repRelativeToAdj; // src's rep point in the opinion of adjNode
 
         public FriendshipEdge() {
             this.adjNode = null;
@@ -255,7 +255,7 @@ public class Sociograph {
             this.repRelativeToAdj = 0;
         }
 
-        public FriendshipEdge(StudentNode adjNode, int repRelativeToAdj, FriendshipEdge nextEdge) {
+        public FriendshipEdge(StudentNode adjNode, double repRelativeToAdj, FriendshipEdge nextEdge) {
             this.adjNode = adjNode;
             this.repRelativeToAdj = repRelativeToAdj;
             this.nextEdge = nextEdge;

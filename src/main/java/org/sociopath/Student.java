@@ -10,7 +10,7 @@ public class Student {
     private double dive;                        // 0 < dive < 100
     private LocalTime lunchStart;                     // 1100 <= lunchStart <= 1400
     private int lunchPeriod;                    // 5 < lunchPeriod < 60
-    private HashMap<String, Integer> repPoints; // 1 <= rep <= 10
+    private HashMap<String, Double> repPoints; // 1 <= rep <= 10
     private HashSet<String> friends;
 
     public Student(String name) {
@@ -55,11 +55,11 @@ public class Student {
         this.lunchPeriod = lunchPeriod;
     }
 
-    public HashMap<String, Integer> getRepPoints() {
+    public HashMap<String, Double> getRepPoints() {
         return repPoints;
     }
 
-    public void setRepPoints(HashMap<String, Integer> repPoints) {
+    public void setRepPoints(HashMap<String, Double> repPoints) {
         this.repPoints = repPoints;
     }
 
