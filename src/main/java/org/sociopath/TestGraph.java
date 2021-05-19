@@ -23,10 +23,13 @@ public class TestGraph {
 
         System.out.println(sociograph);
         System.out.println();
-        ArrayList<Student> arrayList = sociograph.getAllStudents();
-        for (int i = 0; i < arrayList.size(); i++) {
-            System.out.println(arrayList.get(i));
-            System.out.println();
-        }
+//        ArrayList<Student> arrayList = sociograph.getAllStudents();
+//        for (int i = 0; i < arrayList.size(); i++) {
+//            System.out.println(arrayList.get(i));
+//            System.out.println();
+//        }
+
+        Event3.event3(sociograph,"A");
+        System.out.println(sociograph);
     }
 }

@@ -6,19 +6,21 @@ import java.util.HashSet;
 import java.util.Random;
 
 public class Student {
+    private static Random rand = new Random(1);
     private String name;
     private double dive;                        // 0 < dive < 100
-    private LocalTime lunchStart;                     // 1100 <= lunchStart <= 1400
+    private LocalTime lunchStart;               // 1100 <= lunchStart <= 1400
     private int lunchPeriod;                    // 5 < lunchPeriod < 60
-    private HashMap<String, Double> repPoints; // 1 <= rep <= 10
+    private LocalTime lunchEnd;
+    private HashMap<String, Double> repPoints;  // 1 <= rep <= 10
     private HashSet<String> friends;
 
     public Student(String name) {
-        Random rand = new Random();
         this.name = name;
-        this.dive = Math.round(((Math.random() * (100 - 1)) + 1) * 100.0) / 100.0;
+        this.dive = Math.round((rand.nextDouble() * 99 + 1) * 100.0) / 100.0;
         this.lunchStart = LocalTime.of(11, 0).plusMinutes(rand.nextInt(181));
         this.lunchPeriod = rand.nextInt(55) + 5;
+        this.lunchEnd = lunchStart.plusMinutes(lunchPeriod);
         this.repPoints = new HashMap<>();
         this.friends = new HashSet<>();
     }
@@ -55,6 +57,14 @@ public class Student {
         this.lunchPeriod = lunchPeriod;
     }
 
+    public LocalTime getLunchEnd() {
+        return lunchEnd;
+    }
+
+    public void setLunchEnd(int hour, int minute) {
+        this.lunchEnd = LocalTime.of(hour, minute);
+    }
+
     public HashMap<String, Double> getRepPoints() {
         return repPoints;
     }
@@ -78,6 +88,7 @@ public class Student {
         sb.append("Dive").append("\t\t\t: ").append(dive).append("\n");
         sb.append("Lunch start").append("\t\t: ").append(lunchStart).append("\n");
         sb.append("Lunch period").append("\t: ").append(lunchPeriod).append("\n");
+        sb.append("Lunch end").append("\t\t: ").append(lunchEnd).append("\n");
         sb.append("Rep points").append("\t\t: ").append(repPoints).append("\n");
         sb.append("Friends").append("\t\t\t: ").append(friends);
         return sb.toString();
