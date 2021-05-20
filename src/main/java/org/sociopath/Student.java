@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Random;
 
 public class Student {
+    private static Random rand = new Random(12345656);
     private String name;
     private double dive;                        // 0 < dive < 100
     private LocalTime lunchStart;                     // 1100 <= lunchStart <= 1400
@@ -14,9 +15,8 @@ public class Student {
     private HashSet<String> friends;
 
     public Student(String name) {
-        Random rand = new Random();
         this.name = name;
-        this.dive = Math.round(((Math.random() * (100 - 1)) + 1) * 100.0) / 100.0;
+        this.dive = Math.round((rand.nextDouble() * 99 + 1) * 100) / 100.0;
         this.lunchStart = LocalTime.of(11, 0).plusMinutes(rand.nextInt(181));
         this.lunchPeriod = rand.nextInt(55) + 5;
         this.repPoints = new HashMap<>();

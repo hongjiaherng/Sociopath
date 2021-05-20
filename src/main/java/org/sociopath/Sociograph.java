@@ -421,42 +421,6 @@ public class Sociograph {
         return sb.toString();
     }
 
-    public void event2(String hostName, String newFriendName) {
-        if (!hostName.equals(newFriendName)) {
-            chitchat(hostName, newFriendName, hostName);
-        } else {
-            System.out.println("hostName & newFriendName can't be the same");
-        }
-    }
-
-    private void chitchat(String hostName, String newFriendName, String previous) {
-        ArrayList<Student> friendsOfNewFriend = neighbours(newFriendName);
-        friendsOfNewFriend.remove(getStudent(previous));
-        friendsOfNewFriend.remove(getStudent(hostName));
-        // TODO: remove the previously visited nodes to avoid infinity loop
-        Student host = getStudent(hostName);
-        if (friendsOfNewFriend.isEmpty()) {
-            return;
-        } else {
-            for (Student friend : friendsOfNewFriend) {
-                double repRelativeToHost = 0;
-                if (Math.random() < 0.5) {  // if talk bad
-                    repRelativeToHost -= Math.abs(host.getRepPoints().get(newFriendName));
-                } else {    // if talk good
-                    repRelativeToHost += (host.getRepPoints().get(newFriendName) / 2.0);
-                }
-
-                if (hasDirectedEdge(hostName, friend.getName())) {
-                    repRelativeToHost += getDirectedEdgeWeight(hostName, friend.getName());
-                    setDirectedEdgeWeight(hostName, friend.getName(), repRelativeToHost);
-                } else {
-                    addDirectedEdge(hostName, friend.getName(), repRelativeToHost);
-                }
-                chitchat(hostName, friend.getName(), newFriendName);
-            }
-        }
-    }
-
     /**
      * Static class for vertex of the graph
      */
