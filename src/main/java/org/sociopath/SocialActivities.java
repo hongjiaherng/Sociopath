@@ -2,10 +2,37 @@ package org.sociopath;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Random;
 
 public class SocialActivities {
 
-    public static void event1(Sociograph sociograph, String hostName, String newFriendName) {   // new friend talk to his friends about the host
+    private static final Random rd = new Random();
+
+    public static void event1(String teacher, String student, Sociograph graph){
+        boolean areFriends = graph.hasUndirectedEdge(teacher, student) || graph.hasDirectedEdge(student, teacher) || graph.hasDirectedEdge(teacher, student);
+        if(!areFriends){
+            System.out.println("Now " + teacher + " will teach " + student);
+            System.out.println("Please wait for a while.....");
+
+            /*try {
+                Thread.sleep(4000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }*/
+
+            double rep = rd.nextDouble() < 0.5 ? 2 : 10;
+            graph.addUndirectedEdge(teacher, student, rd.nextInt(10) + 1, rep) ;
+            System.out.println("The result of the teaching is " + (rep == 10 ? "successful" : "not successful"));
+            System.out.println("So the rep point the new friend give you is : " + rep);
+            System.out.println("####################");
+            System.out.println(graph);
+
+        }
+        else
+            System.out.println("They are friends before. You cannot teach a person lab question if he is your friend.");
+    }
+
+    public static void event2(Sociograph sociograph, String hostName, String newFriendName) {   // new friend talk to his friends about the host
         if (!hostName.equals(newFriendName)) {
             HashSet<Student> visitedRecord = new HashSet<>();
             visitedRecord.add(sociograph.getStudent(newFriendName));
@@ -50,4 +77,57 @@ public class SocialActivities {
         }
     }
 
+    public static void event3(Sociograph sociograph, String hostName){
+        int n = 0;
+        ArrayList<Student> myLunchMates = new ArrayList<>();
+        ArrayList<Student> list = sociograph.getAllStudents();
+        list.remove(sociograph.getStudent(hostName));
+        Student host = sociograph.getStudent(hostName);
+
+        host.setLunchStart(12,00);
+        host.setLunchPeriod(180);
+        host.setLunchEnd(14,00);
+
+        System.out.println("My lunch time");
+        System.out.println("==============");
+        System.out.println(host);
+        System.out.println();
+
+        if(list.isEmpty()){
+            return;
+        }
+        else{
+            for (Student student : list) {
+                if(n > 7) {// i dont know why need 7, if i use 3 i will produce one lunchMate only
+                    continue;
+                }
+                else{
+                    double newRepPoint = 0;
+                    if (student.getDive() <= 50) {
+                        if (host.getLunchStart().isAfter(student.getLunchStart())) {
+                            continue;
+                        } else if (host.getLunchStart().isBefore(student.getLunchStart())) {
+                            if (host.getLunchEnd().isAfter(student.getLunchEnd())) {
+                                myLunchMates.add(student);
+                                if (sociograph.hasDirectedEdge(hostName, student.getName())) {
+                                    newRepPoint = host.getRepPoints().get(student.getName()) + 1;
+                                    sociograph.setDirectedEdgeWeight(hostName, student.getName(), newRepPoint);
+                                } else {
+                                    sociograph.addDirectedEdge(hostName, student.getName(), 1);
+                                }
+                            }
+                        }
+                    }
+//                    n++;
+                }
+                n++;
+            }
+            System.out.println("My lunch mates");
+            System.out.println("==============");
+            for(Student mate : myLunchMates) {
+                System.out.println(mate);
+                System.out.println();
+            }
+        }
+    }
 }
