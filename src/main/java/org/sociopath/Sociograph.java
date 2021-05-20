@@ -97,7 +97,7 @@ public class Sociograph {
         StudentVertex srcVertex = head;
         while (srcVertex != null) {
             if (srcVertex.studentInfo.getName().equals(srcName)) {
-                FriendshipEdge currentEdge = srcVertex.firstEdge;
+                RelationshipEdge currentEdge = srcVertex.firstEdge;
                 while (currentEdge != null) {
                     if (currentEdge.adjVertex.studentInfo.getName().equals(adjName)) {
                         return true;
@@ -141,6 +141,71 @@ public class Sociograph {
             pos++;
         }
         return -1;
+    }
+
+    /**
+     * Check the relationship between vertex srcName and vertex adjName. Return the relationship if there exist one.
+     * Otherwise, return null
+     * @param srcName student's name as source vertex
+     * @param adjName student's name as adjacent vertex
+     * @return relationship type in enum
+     */
+    public Relationship checkRelationship(String srcName, String adjName) {
+        if (hasUndirectedEdge(srcName, adjName)) {
+            StudentVertex srcVertex = head;
+            while (srcVertex != null) {
+                if (srcVertex.studentInfo.getName().equals(srcName)) {
+                    RelationshipEdge srcEdge = srcVertex.firstEdge;
+                    while (srcEdge != null) {
+                        if (srcEdge.adjVertex.studentInfo.getName().equals(adjName)) {
+                            return srcEdge.relationship;
+                        }
+                        srcEdge = srcEdge.nextEdge;
+                    }
+                }
+                srcVertex = srcVertex.nextVertex;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Set the relationship to the two vertices srcName and adjName. A relationship can only be set
+     * when there are both edges exist between them (meaning rep points are present relative to each other).
+     * @param srcName student's name as source vertex
+     * @param adjName student's name as adjacent vertex
+     * @param relationship relationship to set to both of the edges
+     * @return true if the relationship is successfully set, otherwise false
+     */
+    public boolean setRelationship(String srcName, String adjName, Relationship relationship) {
+        // Vertex srcName and adjName must have 2 edges connected together
+        // They must me connected directly to each other to be friend
+        if (hasUndirectedEdge(srcName, adjName)) {
+            StudentVertex srcVertex = head;
+            while (srcVertex != null) {
+                if (srcVertex.studentInfo.getName().equals(srcName)) {
+                    RelationshipEdge srcEdge = srcVertex.firstEdge;
+                    while (srcEdge != null) {
+                        if (srcEdge.adjVertex.studentInfo.getName().equals(adjName)) {
+                            srcEdge.relationship = relationship;
+                            RelationshipEdge destEdge = srcEdge.adjVertex.firstEdge;
+                            while (destEdge != null) {
+                                if (destEdge.adjVertex.studentInfo.getName().equals(srcName)) {
+                                    destEdge.relationship = relationship;
+                                    return true;
+                                }
+                                destEdge = destEdge.nextEdge;
+                            }
+                        }
+                        srcEdge = srcEdge.nextEdge;
+                    }
+                }
+                srcVertex = srcVertex.nextVertex;
+            }
+        } else {
+            System.out.println("Relationship can't be set. They must both know each other to have a relationship (having rep point relative to each other)");
+        }
+        return false;
     }
 
     /**
@@ -197,7 +262,7 @@ public class Sociograph {
         StudentVertex srcVertex = head;
         while (srcVertex != null) {
             if (srcVertex.studentInfo.getName().equals(srcName)) {
-                FriendshipEdge currentEdge = srcVertex.firstEdge;
+                RelationshipEdge currentEdge = srcVertex.firstEdge;
                 while (currentEdge != null) {
                     if (currentEdge.adjVertex.studentInfo.getName().equals(adjName)) {
                         return currentEdge.repRelativeToAdj;
@@ -208,7 +273,7 @@ public class Sociograph {
             }
             srcVertex = srcVertex.nextVertex;
         }
-        throw new NoSuchElementException("No friendship");
+        throw new NoSuchElementException(srcName + " don't know " + adjName);
     }
 
     /**
@@ -228,7 +293,7 @@ public class Sociograph {
         StudentVertex srcVertex = head;
         while (srcVertex != null) {
             if (srcVertex.studentInfo.getName().equals(srcName)) {
-                FriendshipEdge currentEdge = srcVertex.firstEdge;
+                RelationshipEdge currentEdge = srcVertex.firstEdge;
                 while (currentEdge != null) {
                     if (currentEdge.adjVertex.studentInfo.getName().equals(adjName)) {
                         currentEdge.repRelativeToAdj = newWeight;
@@ -240,7 +305,7 @@ public class Sociograph {
             }
             srcVertex = srcVertex.nextVertex;
         }
-        throw new NoSuchElementException("No friendship");
+        throw new NoSuchElementException(adjName + " don't know " + srcName);
     }
 
     /**
@@ -274,7 +339,7 @@ public class Sociograph {
      * Add the undirected edges from srcName and adjName but with different weight. Can also be rewritten as
      * <br> - addDirectedEdge(srcName, adjName, srcRep)
      * <br> - addDirectedEdge(adjName, srcName, adjRep)
-     * <br> Also note that self loop is not allowed in this graph.
+     * <br> Also note that self loop is not allowed in this graph. The relationship on both the edges are null.
      * @param srcName student's name as source vertex
      * @param adjName student's name as adjacent vertex
      * @param srcRep rep point of vertex srcName relative to vertex adjName / weight of edge from vertex srcName to vertex adjName
@@ -296,14 +361,65 @@ public class Sociograph {
                 StudentVertex destVertex = head;
                 while (destVertex != null) {
                     if (destVertex.studentInfo.getName().equals(adjName)) {
-                        FriendshipEdge newSrcEdge = new FriendshipEdge(destVertex, srcRep, srcVertex.firstEdge);
+                        RelationshipEdge newSrcEdge = new RelationshipEdge(destVertex, srcRep, srcVertex.firstEdge);
                         srcVertex.firstEdge = newSrcEdge;
                         srcVertex.studentInfo.getRepPoints().put(adjName, srcRep);
                         srcVertex.studentInfo.getFriends().add(adjName);
                         srcVertex.indeg++;
                         srcVertex.outdeg++;
 
-                        FriendshipEdge newDestEdge = new FriendshipEdge(srcVertex, adjRep, destVertex.firstEdge);
+                        RelationshipEdge newDestEdge = new RelationshipEdge(srcVertex, adjRep, destVertex.firstEdge);
+                        destVertex.firstEdge = newDestEdge;
+                        destVertex.studentInfo.getRepPoints().put(srcName, adjRep);
+                        destVertex.studentInfo.getFriends().add(srcName);
+                        destVertex.indeg++;
+                        destVertex.outdeg++;
+
+                        return true;
+                    }
+                    destVertex = destVertex.nextVertex;
+                }
+            }
+            srcVertex = srcVertex.nextVertex;
+        }
+        return false;
+    }
+
+    /**
+     * Add the undirected edges from srcName and adjName but with different weight. Can also be rewritten as
+     * <br> - addDirectedEdge(srcName, adjName, srcRep)
+     * <br> - addDirectedEdge(adjName, srcName, adjRep)
+     * <br> Also note that self loop is not allowed in this graph. The relationship on both the edges are determined by relationship.
+     * @param srcName student's name as source vertex
+     * @param adjName student's name as adjacent vertex
+     * @param srcRep rep point of vertex srcName relative to vertex adjName / weight of edge from vertex srcName to vertex adjName
+     * @param adjRep rep point of vertex adjName relative to vertex srcName / weight of edge from vertex adjName to vertex srcName
+     * @param relationship relationship to set to both of the edges
+     * @return true if both the edges is successfully added, otherwise false
+     */
+    public boolean addUndirectedEdge(String srcName, String adjName, double srcRep, double adjRep, Relationship relationship) {
+        if (head == null) {
+            return false;
+        } else if (!hasVertex(srcName) || !hasVertex(adjName)) {
+            return false;
+        } else if (srcName.equals(adjName)) {
+            System.out.println("Self loop is not allowed");
+            return false;
+        }
+        StudentVertex srcVertex = head;
+        while (srcVertex != null) {
+            if (srcVertex.studentInfo.getName().equals(srcName)) {
+                StudentVertex destVertex = head;
+                while (destVertex != null) {
+                    if (destVertex.studentInfo.getName().equals(adjName)) {
+                        RelationshipEdge newSrcEdge = new RelationshipEdge(destVertex, srcRep, relationship, srcVertex.firstEdge);
+                        srcVertex.firstEdge = newSrcEdge;
+                        srcVertex.studentInfo.getRepPoints().put(adjName, srcRep);
+                        srcVertex.studentInfo.getFriends().add(adjName);
+                        srcVertex.indeg++;
+                        srcVertex.outdeg++;
+
+                        RelationshipEdge newDestEdge = new RelationshipEdge(srcVertex, adjRep, relationship, destVertex.firstEdge);
                         destVertex.firstEdge = newDestEdge;
                         destVertex.studentInfo.getRepPoints().put(srcName, adjRep);
                         destVertex.studentInfo.getFriends().add(srcName);
@@ -322,7 +438,7 @@ public class Sociograph {
 
     /**
      * Add the directed edges from srcName and adjName with weight "srcRep". Also note that self
-     * loop is not allowed in this graph.
+     * loop is not allowed in this graph. The relationship on the edge is null.
      * @param srcName student's name as source vertex
      * @param adjName student's name as adjacent vertex
      * @param srcRep rep point of vertex srcName relative to vertex adjName / weight of edge from vertex srcName to vertex adjName
@@ -343,7 +459,7 @@ public class Sociograph {
                 StudentVertex destVertex = head;
                 while (destVertex != null) {
                     if (destVertex.studentInfo.getName().equals(adjName)) {
-                        FriendshipEdge newSrcEdge = new FriendshipEdge(destVertex, srcRep, srcVertex.firstEdge);
+                        RelationshipEdge newSrcEdge = new RelationshipEdge(destVertex, srcRep, srcVertex.firstEdge);
                         srcVertex.firstEdge = newSrcEdge;
                         srcVertex.studentInfo.getRepPoints().put(adjName, srcRep);
                         srcVertex.studentInfo.getFriends().add(adjName);
@@ -386,7 +502,7 @@ public class Sociograph {
         StudentVertex temp = head;
         while (temp != null) {
             if (temp.studentInfo.getName().equals(name)) {
-                FriendshipEdge currentEdge = temp.firstEdge;
+                RelationshipEdge currentEdge = temp.firstEdge;
                 while (currentEdge != null) {
                     list.add(currentEdge.adjVertex.studentInfo);
                     currentEdge = currentEdge.nextEdge;
@@ -403,10 +519,11 @@ public class Sociograph {
         StudentVertex temp = head;
         while (temp != null) {
             sb.append(temp.studentInfo.getName()).append("\t=> [");
-            FriendshipEdge currentEdge = temp.firstEdge;
+            RelationshipEdge currentEdge = temp.firstEdge;
             while (currentEdge != null) {
                 sb.append("(").append(currentEdge.adjVertex.studentInfo.getName()).append(" | ");
-                sb.append("rep:").append(currentEdge.repRelativeToAdj).append(")");
+                sb.append("rep:").append(currentEdge.repRelativeToAdj).append(" | ");
+                sb.append("rel:").append(currentEdge.relationship).append(")");
                 if (currentEdge.nextEdge != null) {
                     sb.append(", ");
                 }
@@ -429,7 +546,7 @@ public class Sociograph {
         private int indeg;
         private int outdeg;
         private StudentVertex nextVertex;
-        private FriendshipEdge firstEdge;
+        private RelationshipEdge firstEdge;
 
         public StudentVertex() {
             this.studentInfo = null;
@@ -455,25 +572,32 @@ public class Sociograph {
     /**
      * Static class for edge of the graph
      */
-    static class FriendshipEdge {
+    static class RelationshipEdge {
         private StudentVertex adjVertex;
-        private FriendshipEdge nextEdge;
+        private RelationshipEdge nextEdge;
 
         // Also the weight of the edge
         private double repRelativeToAdj; // src's rep point in the opinion of adjVertex
+        private Relationship relationship;
 
-        public FriendshipEdge() {
-            this.adjVertex = null;
-            this.nextEdge = null;
-            this.repRelativeToAdj = 0;
+        public RelationshipEdge() {
+            this(null, 0, null, null);
         }
 
-        public FriendshipEdge(StudentVertex adjVertex, double repRelativeToAdj, FriendshipEdge nextEdge) {
+        public RelationshipEdge(StudentVertex adjVertex, double repRelativeToAdj, RelationshipEdge nextEdge) {
+            this(adjVertex, repRelativeToAdj, null, nextEdge);
+        }
+
+        public RelationshipEdge(StudentVertex adjVertex, double repRelativeToAdj, Relationship relationship, RelationshipEdge nextEdge) {
             this.adjVertex = adjVertex;
             this.repRelativeToAdj = repRelativeToAdj;
+            this.relationship = relationship;
             this.nextEdge = nextEdge;
         }
     }
 }
 
+enum Relationship { // If relationship is null, means no relationship, but only know the person
+    FRIEND
+}
 

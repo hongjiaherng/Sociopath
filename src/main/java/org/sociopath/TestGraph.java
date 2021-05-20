@@ -13,14 +13,14 @@ public class TestGraph {
             sociograph.addVertex(node);
         }
 
-        sociograph.addUndirectedEdge("A", "G", 3, 4);
-        sociograph.addUndirectedEdge("A", "B", 8, 5);
-        sociograph.addUndirectedEdge("B", "F", 7, 9);
-        sociograph.addUndirectedEdge("B", "E", 2, 6);
-        sociograph.addUndirectedEdge("B", "C", 4, 5);
-        sociograph.addUndirectedEdge("H", "D", 7, 10);
-        sociograph.addUndirectedEdge("D", "J", 7, 7);
-        sociograph.addUndirectedEdge("J", "I", 5, 6);
+        sociograph.addUndirectedEdge("A", "G", 3, 4, Relationship.FRIEND);
+        sociograph.addUndirectedEdge("A", "B", 8, 5, Relationship.FRIEND);
+        sociograph.addUndirectedEdge("B", "F", 7, 9, Relationship.FRIEND);
+        sociograph.addUndirectedEdge("B", "E", 2, 6, Relationship.FRIEND);
+        sociograph.addUndirectedEdge("B", "C", 4, 5, Relationship.FRIEND);
+        sociograph.addUndirectedEdge("H", "D", 7, 10, Relationship.FRIEND);
+        sociograph.addUndirectedEdge("D", "J", 7, 7, Relationship.FRIEND);
+        sociograph.addUndirectedEdge("J", "I", 5, 6, Relationship.FRIEND);
 
         // Graph Tests
 //        System.out.println(sociograph);
@@ -33,17 +33,17 @@ public class TestGraph {
 
 
         // Event 1 Tests
-//        event1("B" , "D", sociograph);
+        event1("B" , "D", sociograph);
 
         // test whether if they are friends then can the event run??
-        //event1("A", "B", sociograph);
+//        event1("A", "B", sociograph);
 
         // test if whether if they one of them know the other but the other do not know him
         // whether the event can run
         // B -> D
         // so the event cannot run
-        //sociograph.addDirectedEdge("B", "D", 3);
-        //event1("B" , "D", sociograph);
+//        sociograph.addDirectedEdge("B", "D", 3);
+//        event1("B" , "D", sociograph);
 
 
         // Event 2 Tests
