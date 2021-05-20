@@ -1,6 +1,7 @@
 package org.sociopath;
 
 import java.util.ArrayList;
+import static org.sociopath.SocialActivities.event1;
 
 public class TestGraph {
     public static void main(String[] args) {
@@ -28,5 +29,18 @@ public class TestGraph {
             System.out.println(arrayList.get(i));
             System.out.println();
         }
+
+        event1("B" , "D", sociograph);
+
+        // test whether if they are friends then can the event run??
+        //event1("A", "B", sociograph);
+
+        // test if whether if they one of them know the other but the other do not know him
+        // whether the event can run
+        // B -> D
+        // so the event cannot run
+        //sociograph.addDirectedEdge("B", "D", 3);
+        //event1("B" , "D", sociograph);
+
     }
 }
