@@ -6,7 +6,8 @@ import java.util.HashSet;
 import java.util.Random;
 
 public class Student {
-    private static Random rand = new Random(1);
+
+    private static Random rand = new Random(12345656);
     private String name;
     private double dive;                        // 0 < dive < 100
     private LocalTime lunchStart;               // 1100 <= lunchStart <= 1400
