@@ -182,30 +182,50 @@ public class Sociograph {
         // They must me connected directly to each other to be friend
         if (hasUndirectedEdge(srcName, adjName)) {
             StudentVertex srcVertex = head;
-            while (srcVertex != null) {
-                if (srcVertex.studentInfo.getName().equals(srcName)) {
-                    RelationshipEdge srcEdge = srcVertex.firstEdge;
-                    while (srcEdge != null) {
-                        if (srcEdge.adjVertex.studentInfo.getName().equals(adjName)) {
-                            srcEdge.relationship = relationship;
-                            RelationshipEdge destEdge = srcEdge.adjVertex.firstEdge;
-                            while (destEdge != null) {
-                                if (destEdge.adjVertex.studentInfo.getName().equals(srcName)) {
-                                    destEdge.relationship = relationship;
-                                    return true;
-                                }
-                                destEdge = destEdge.nextEdge;
+            RelationshipEdge srcEdge = srcVertex.firstEdge;
+            StudentVertex adjVertex = head;
+            RelationshipEdge adjEdge = adjVertex.firstEdge;
+            getSrcVertexNEdge:
+                while (srcVertex != null) {
+                    if (srcVertex.studentInfo.getName().equals(srcName)) {
+                        srcEdge = srcVertex.firstEdge;
+                        while (srcEdge != null) {
+                            if (srcEdge.adjVertex.studentInfo.getName().equals(adjName)) {
+                                break getSrcVertexNEdge;
                             }
+                            srcEdge = srcEdge.nextEdge;
                         }
-                        srcEdge = srcEdge.nextEdge;
                     }
+                    srcVertex = srcVertex.nextVertex;
                 }
-                srcVertex = srcVertex.nextVertex;
+
+            getAdjVertexNEdge:
+                while (adjVertex != null) {
+                    if (adjVertex.studentInfo.getName().equals(adjName)) {
+                        adjEdge = adjVertex.firstEdge;
+                        while (adjEdge != null) {
+                            if (adjEdge.adjVertex.studentInfo.getName().equals(srcName)) {
+                                break getAdjVertexNEdge;
+                            }
+                            adjEdge = adjEdge.nextEdge;
+                        }
+                    }
+                    adjVertex = adjVertex.nextVertex;
+                }
+
+            if (srcVertex != null && srcEdge != null && adjVertex != null && adjEdge != null) {
+                srcEdge.relationship = relationship;
+                adjEdge.relationship = relationship;
+                srcVertex.studentInfo.getFriends().add(adjName);
+                adjVertex.studentInfo.getFriends().add(srcName);
+            } else {    // This might happen if the some of the method are wrongly implemented
+                throw new NullPointerException(srcName + " & " + adjName + ", they don't have a proper undirected edge connected between them");
             }
+            return true;
         } else {
             System.out.println("Relationship can't be set. They must both know each other to have a relationship (having rep point relative to each other)");
+            return false;
         }
-        return false;
     }
 
     /**
@@ -364,14 +384,14 @@ public class Sociograph {
                         RelationshipEdge newSrcEdge = new RelationshipEdge(destVertex, srcRep, srcVertex.firstEdge);
                         srcVertex.firstEdge = newSrcEdge;
                         srcVertex.studentInfo.getRepPoints().put(adjName, srcRep);
-                        srcVertex.studentInfo.getFriends().add(adjName);
+//                        srcVertex.studentInfo.getFriends().add(adjName);
                         srcVertex.indeg++;
                         srcVertex.outdeg++;
 
                         RelationshipEdge newDestEdge = new RelationshipEdge(srcVertex, adjRep, destVertex.firstEdge);
                         destVertex.firstEdge = newDestEdge;
                         destVertex.studentInfo.getRepPoints().put(srcName, adjRep);
-                        destVertex.studentInfo.getFriends().add(srcName);
+//                        destVertex.studentInfo.getFriends().add(srcName);
                         destVertex.indeg++;
                         destVertex.outdeg++;
 
@@ -415,16 +435,19 @@ public class Sociograph {
                         RelationshipEdge newSrcEdge = new RelationshipEdge(destVertex, srcRep, relationship, srcVertex.firstEdge);
                         srcVertex.firstEdge = newSrcEdge;
                         srcVertex.studentInfo.getRepPoints().put(adjName, srcRep);
-                        srcVertex.studentInfo.getFriends().add(adjName);
                         srcVertex.indeg++;
                         srcVertex.outdeg++;
 
                         RelationshipEdge newDestEdge = new RelationshipEdge(srcVertex, adjRep, relationship, destVertex.firstEdge);
                         destVertex.firstEdge = newDestEdge;
                         destVertex.studentInfo.getRepPoints().put(srcName, adjRep);
-                        destVertex.studentInfo.getFriends().add(srcName);
                         destVertex.indeg++;
                         destVertex.outdeg++;
+
+                        if (relationship == Relationship.FRIEND) {
+                            srcVertex.studentInfo.getFriends().add(adjName);
+                            destVertex.studentInfo.getFriends().add(srcName);
+                        }
 
                         return true;
                     }
@@ -462,7 +485,7 @@ public class Sociograph {
                         RelationshipEdge newSrcEdge = new RelationshipEdge(destVertex, srcRep, srcVertex.firstEdge);
                         srcVertex.firstEdge = newSrcEdge;
                         srcVertex.studentInfo.getRepPoints().put(adjName, srcRep);
-                        srcVertex.studentInfo.getFriends().add(adjName);
+//                        srcVertex.studentInfo.getFriends().add(adjName);
                         srcVertex.outdeg++;
                         destVertex.indeg++;
                         return true;
@@ -598,6 +621,6 @@ public class Sociograph {
 }
 
 enum Relationship { // If relationship is null, means no relationship, but only know the person
-    FRIEND
+    FRIEND, ENEMY
 }
 
