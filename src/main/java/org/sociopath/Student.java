@@ -7,11 +7,12 @@ import java.util.Random;
 
 public class Student {
 
-    private static Random rand = new Random(12345656);
+    private static Random rand = new Random();  // Set seed here if you want a fixed random values
     private String name;
     private double dive;                        // 0 < dive < 100
     private LocalTime lunchStart;               // 1100 <= lunchStart <= 1400
     private int lunchPeriod;                    // 5 < lunchPeriod < 60
+    private LocalTime lunchEnd;
     private HashMap<String, Double> repPoints;  // 1 <= rep <= 10
     private HashSet<String> friends;
 
@@ -22,6 +23,7 @@ public class Student {
         this.lunchPeriod = rand.nextInt(55) + 5;
         this.repPoints = new HashMap<>();
         this.friends = new HashSet<>();
+        this.lunchEnd = lunchStart.plusMinutes(lunchPeriod);
     }
 
     public String getName() {
@@ -44,8 +46,13 @@ public class Student {
         return lunchStart;
     }
 
+    public LocalTime getLunchEnd() {
+        return lunchEnd;
+    }
+
     public void setLunchStart(int hour, int minute) {
         this.lunchStart = LocalTime.of(hour, minute);
+        this.lunchEnd = lunchStart.plusMinutes(lunchPeriod);
     }
 
     public int getLunchPeriod() {
@@ -54,6 +61,7 @@ public class Student {
 
     public void setLunchPeriod(int lunchPeriod) {
         this.lunchPeriod = lunchPeriod;
+        this.lunchEnd = lunchStart.plusMinutes(lunchPeriod);
     }
 
     public HashMap<String, Double> getRepPoints() {
@@ -79,6 +87,7 @@ public class Student {
         sb.append("Dive").append("\t\t\t: ").append(dive).append("\n");
         sb.append("Lunch start").append("\t\t: ").append(lunchStart).append("\n");
         sb.append("Lunch period").append("\t: ").append(lunchPeriod).append("\n");
+        sb.append("Lunch end").append("\t\t: ").append(lunchEnd).append("\n");
         sb.append("Rep points").append("\t\t: ").append(repPoints).append("\n");
         sb.append("Friends").append("\t\t\t: ").append(friends);
         return sb.toString();
