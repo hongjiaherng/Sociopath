@@ -317,6 +317,7 @@ public class Sociograph {
                 while (currentEdge != null) {
                     if (currentEdge.adjVertex.studentInfo.getName().equals(adjName)) {
                         currentEdge.repRelativeToAdj = newWeight;
+                        srcVertex.studentInfo.getRepPoints().put(adjName, newWeight);       // Bug fixed (Update rep point to student object)
                         return;
                     }
                     currentEdge = currentEdge.nextEdge;

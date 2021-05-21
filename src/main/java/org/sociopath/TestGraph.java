@@ -1,11 +1,17 @@
 package org.sociopath;
 
-import java.util.ArrayList;
-import static org.sociopath.SocialActivities.event1;
-
 public class TestGraph {
     public static void main(String[] args) {
         Sociograph sociograph = new Sociograph();
+
+        initialization(sociograph);
+        event1Test(sociograph);
+        event2Test(sociograph);
+        event3Test(sociograph);
+
+    }
+
+    public static void initialization(Sociograph sociograph) {
 //                            {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10"}
         String[] nodesToAdd = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J"};
 
@@ -21,9 +27,10 @@ public class TestGraph {
         sociograph.addUndirectedEdge("H", "D", 7, 10, Relationship.FRIEND);
         sociograph.addUndirectedEdge("D", "J", 7, 7, Relationship.FRIEND);
         sociograph.addUndirectedEdge("J", "I", 5, 6, Relationship.FRIEND);
-        System.out.println(sociograph.setRelationship("G", "A" , Relationship.FRIEND));
+        sociograph.setRelationship("G", "A" , Relationship.FRIEND);
 
-//         Graph Tests
+        // Graph Tests
+        /*
         System.out.println(sociograph);
         System.out.println();
         ArrayList<Student> arrayList = sociograph.getAllStudents();
@@ -31,8 +38,11 @@ public class TestGraph {
             System.out.println(arrayList.get(i));
             System.out.println();
         };
+         */
 
+    }
 
+    public static void event1Test(Sociograph sociograph) {
         // Event 1 Tests
 //        event1("B" , "D", sociograph);
 
@@ -45,8 +55,9 @@ public class TestGraph {
         // so the event cannot run
 //        sociograph.addDirectedEdge("B", "D", 3);
 //        event1("B" , "D", sociograph);
+    }
 
-
+    public static void event2Test(Sociograph sociograph) {
         // Event 2 Tests
         // Test simple case, G make new friend with H (H connects to a path, one direction propagate)
 //        sociograph.addDirectedEdge("G", "H", 10);
@@ -80,10 +91,83 @@ public class TestGraph {
 //        System.out.println();
 //        System.out.println("Mutated Graph 4");
 //        SocialActivities.event2(sociograph, "G", "C");
+    }
 
-
+    public static void event3Test(Sociograph sociograph) {
         // Event 3 Tests
-//        Event3.event3(sociograph,"A");
-//        System.out.println(sociograph);
+        // Normal condition
+//        SocialActivities.event3(sociograph, "A");
+
+        // When first 3 having same lunchStart
+//        sociograph.getStudent("A").setLunchStart(10, 45);
+//        sociograph.getStudent("A").setLunchPeriod(60);
+//        sociograph.getStudent("D").setLunchStart(10, 40);
+//        sociograph.getStudent("D").setLunchPeriod(10);
+//        sociograph.getStudent("G").setLunchStart(10, 40);
+//        sociograph.getStudent("G").setLunchPeriod(20);
+//        sociograph.getStudent("C").setLunchStart(10, 40);
+//        sociograph.getStudent("C").setLunchPeriod(30);
+//        sociograph.getStudent("I").setLunchStart(11, 5);
+//        sociograph.getStudent("I").setLunchPeriod(20);
+//        sociograph.getStudent("F").setLunchStart(11, 20);
+//        sociograph.getStudent("F").setLunchPeriod(30);
+//        SocialActivities.event3(sociograph,"A");
+
+        // When middle 3 having same lunchStart
+//        sociograph.getStudent("A").setLunchStart(10, 45);
+//        sociograph.getStudent("A").setLunchPeriod(60);
+//        sociograph.getStudent("D").setLunchStart(10, 40);
+//        sociograph.getStudent("D").setLunchPeriod(20);
+//        sociograph.getStudent("G").setLunchStart(10, 50);
+//        sociograph.getStudent("G").setLunchPeriod(10);
+//        sociograph.getStudent("C").setLunchStart(10, 50);
+//        sociograph.getStudent("C").setLunchPeriod(20);
+//        sociograph.getStudent("I").setLunchStart(10, 50);
+//        sociograph.getStudent("I").setLunchPeriod(30);
+//        sociograph.getStudent("F").setLunchStart(11, 20);
+//        sociograph.getStudent("F").setLunchPeriod(30);
+//        SocialActivities.event3(sociograph,"A");
+
+        // When last 3 having same lunchStart
+//        sociograph.getStudent("A").setLunchStart(10, 45);
+//        sociograph.getStudent("A").setLunchPeriod(60);
+//        sociograph.getStudent("D").setLunchStart(10, 40);
+//        sociograph.getStudent("D").setLunchPeriod(15);
+//        sociograph.getStudent("G").setLunchStart(10, 55);
+//        sociograph.getStudent("G").setLunchPeriod(10);
+//        sociograph.getStudent("C").setLunchStart(11, 0);
+//        sociograph.getStudent("C").setLunchPeriod(10);
+//        sociograph.getStudent("I").setLunchStart(11, 0);
+//        sociograph.getStudent("I").setLunchPeriod(20);
+//        sociograph.getStudent("F").setLunchStart(11, 0);
+//        sociograph.getStudent("F").setLunchPeriod(30);
+//
+//        Student studentA = sociograph.getStudent("A");
+//        System.out.println("Original rep points of A relative to others");
+//        System.out.println(studentA.getRepPoints() + "\n");
+//        SocialActivities.event3(sociograph,"A");
+//        System.out.println(studentA.getRepPoints());
+
+        // Normal test
+//        SocialActivities.event3(sociograph,"A");
+
+        // Use this to test event 3
+//        Student studentA = sociograph.getStudent("A");
+//        System.out.println("Original rep points of A relative to others");
+//        System.out.println(studentA.getRepPoints() + "\n");
+//        SocialActivities.event3(sociograph,"A");
+//        System.out.println(studentA.getRepPoints());
+    }
+
+    public static void event4Test(Sociograph sociograph) {
+
+    }
+
+    public static void event5Test(Sociograph sociograph) {
+
+    }
+
+    public static void event6Test(Sociograph sociograph) {
+
     }
 }
