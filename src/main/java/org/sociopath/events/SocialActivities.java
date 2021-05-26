@@ -159,8 +159,8 @@ public class SocialActivities {
         System.out.println();
         for (String lunchMate : hostSchedule.keySet()) {
             if (sociograph.hasDirectedEdge(hostName, lunchMate)) {
-                double oldRep = sociograph.getStudent(hostName).getRepPoints().get(lunchMate);
-                sociograph.setDirectedEdgeWeight(hostName, lunchMate, oldRep + 1);
+                double oldRep = sociograph.getSrcRepRelativeToAdj(hostName, lunchMate);
+                sociograph.setSrcRepRelativeToAdj(hostName, lunchMate, oldRep + 1);
             } else {
                 sociograph.addDirectedEdge(hostName, lunchMate, 1);
             }
@@ -249,7 +249,7 @@ public class SocialActivities {
     }
 
     private static void chitchat(Sociograph sociograph, String hostName, String newFriendName, HashSet<Student> visitedRecord) {
-        ArrayList<Student> friendsOfNewFriend = sociograph.neighbours(newFriendName);
+        List<Student> friendsOfNewFriend = sociograph.neighbours(newFriendName);
         friendsOfNewFriend.removeAll(visitedRecord);
         Student host = sociograph.getStudent(hostName);
         if (friendsOfNewFriend.isEmpty()) {
@@ -261,14 +261,14 @@ public class SocialActivities {
                 }
                 double repRelativeToHost = 0;
                 if (Math.random() < 0.5) {  // if talk bad
-                    repRelativeToHost -= Math.abs(host.getRepPoints().get(newFriendName));
+                    repRelativeToHost -= Math.abs(sociograph.getSrcRepRelativeToAdj(hostName, newFriendName));
                 } else {    // if talk good
-                    repRelativeToHost += (host.getRepPoints().get(newFriendName) / 2.0);
+                    repRelativeToHost += (sociograph.getSrcRepRelativeToAdj(hostName, newFriendName) / 2.0);
                 }
 
                 if (sociograph.hasDirectedEdge(hostName, friend.getName())) {
-                    repRelativeToHost += sociograph.getDirectedEdgeWeight(hostName, friend.getName());
-                    sociograph.setDirectedEdgeWeight(hostName, friend.getName(), repRelativeToHost);
+                    repRelativeToHost += sociograph.getSrcRepRelativeToAdj(hostName, friend.getName());
+                    sociograph.setSrcRepRelativeToAdj(hostName, friend.getName(), repRelativeToHost);
                 } else {
                     sociograph.addDirectedEdge(hostName, friend.getName(), repRelativeToHost);
                 }
