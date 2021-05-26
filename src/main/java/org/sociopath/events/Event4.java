@@ -1,4 +1,4 @@
-package org.sociopath;
+package org.sociopath.events;
 
 import java.util.Scanner;
 import java.util.Stack;

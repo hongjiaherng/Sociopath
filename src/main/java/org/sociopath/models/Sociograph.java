@@ -1,4 +1,4 @@
-package org.sociopath;
+package org.sociopath.models;
 
 import java.util.*;
 
@@ -6,7 +6,7 @@ import java.util.*;
  * Graph object to simulate friendship
  */
 public class Sociograph {
-
+    // TODO: vertex arrayList,
     private StudentVertex head;   // First vertex of the graph
     private int size;           // Total vertices in the graph
     private List<List<String>> listOfPathList;      // all possible path from one src to another dest using dfs
@@ -666,7 +666,5 @@ public class Sociograph {
     }
 }
 
-enum Relationship { // If relationship is null, means no relationship, but only know the person
-    FRIEND, ENEMY
-}
+
 

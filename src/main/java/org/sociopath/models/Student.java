@@ -1,4 +1,4 @@
-package org.sociopath;
+package org.sociopath.models;
 
 import java.time.LocalTime;
 import java.util.HashMap;
@@ -6,8 +6,8 @@ import java.util.HashSet;
 import java.util.Random;
 
 public class Student {
-
-    private static Random rand = new Random(1234);  // Set seed here if you want a fixed random values
+    // TODO: friends, lunchStart, lunchPeriod, lunchEnd, getRepPoints, getFriends
+    private static final Random rand = new Random(1234);  // Set seed here if you want a fixed random values
     private String name;
     private double dive;                        // 0 < dive < 100
     private LocalTime lunchStart;               // 1100 <= lunchStart <= 1400
@@ -18,8 +18,7 @@ public class Student {
 
     public Student(String name) {
         this.name = name;
-//        this.dive = Math.round((rand.nextDouble() * 99 + 1) * 100.0) / 100.0;
-        this.dive = 30;
+        this.dive = Math.round((rand.nextDouble() * 99 + 1) * 100.0) / 100.0;
         this.lunchStart = LocalTime.of(11, 0).plusMinutes(rand.nextInt(181));
         this.lunchPeriod = rand.nextInt(55) + 5;
         this.repPoints = new HashMap<>();
@@ -53,7 +52,6 @@ public class Student {
 
     public void setLunchStart(int hour, int minute) {
         this.lunchStart = LocalTime.of(hour, minute);
-        this.lunchEnd = lunchStart.plusMinutes(lunchPeriod);
     }
 
     public int getLunchPeriod() {

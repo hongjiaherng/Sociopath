@@ -1,4 +1,9 @@
-package org.sociopath;
+package org.sociopath.models;
+
+import org.sociopath.events.SocialActivities;
+import org.sociopath.models.Relationship;
+import org.sociopath.models.Sociograph;
+import org.sociopath.models.Student;
 
 public class TestGraph {
     public static void main(String[] args) {

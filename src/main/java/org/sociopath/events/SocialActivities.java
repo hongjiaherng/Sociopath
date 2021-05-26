@@ -1,4 +1,8 @@
-package org.sociopath;
+package org.sociopath.events;
+
+import org.sociopath.models.Relationship;
+import org.sociopath.models.Sociograph;
+import org.sociopath.models.Student;
 
 import java.time.LocalTime;
 import java.util.*;
