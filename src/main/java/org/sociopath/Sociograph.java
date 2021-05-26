@@ -1,7 +1,6 @@
 package org.sociopath;
 
-import java.util.ArrayList;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 /**
  * Graph object to simulate friendship
@@ -10,6 +9,7 @@ public class Sociograph {
 
     private StudentVertex head;   // First vertex of the graph
     private int size;           // Total vertices in the graph
+    private List<List<String>> listOfPathList;      // all possible path from one src to another dest using dfs
 
     public Sociograph() {
         this.head = null;
@@ -560,6 +560,51 @@ public class Sociograph {
             temp = temp.nextVertex;
         }
         return sb.toString();
+    }
+
+    /**
+     * Find all the path from source to destination (Edge of the 2 vertices that are not FRIEND will not be passed through)
+     * @param source source vertex
+     * @param destination destination vertex
+     * @return a list of path from source to destination
+     */
+    public List<List<String>> dfs(String source, String destination) {
+        this.listOfPathList = new LinkedList<>();
+        Map<String, Boolean> isVisited = new HashMap<>();
+        StudentVertex currentVertex = head;
+        while (currentVertex != null) {
+            isVisited.put(currentVertex.getStudentInfo().getName(), false);
+            currentVertex = currentVertex.nextVertex;
+        }
+
+        LinkedList<String> pathList = new LinkedList<>();
+
+        pathList.add(source);
+
+        dfsUtil(source, destination, isVisited, pathList);
+        return this.listOfPathList;
+    }
+
+    private void dfsUtil(String current, String destination, Map<String, Boolean> isVisited, List<String> localPathList) {
+        if (current.equals(destination)) {
+            List<String> copy = new LinkedList<>(localPathList);
+            this.listOfPathList.add(copy);
+            return;
+        }
+
+        isVisited.put(current, true);
+
+        for (Student neighborObj : neighbours(current)) {
+            String neighbor = neighborObj.getName();
+            if (!isVisited.get(neighbor) && checkRelationship(neighbor, current) == Relationship.FRIEND) {
+                localPathList.add(neighbor);
+
+                dfsUtil(neighbor, destination, isVisited, localPathList);
+
+                localPathList.remove(neighbor);
+            }
+        }
+        isVisited.put(current, false);
     }
 
     /**

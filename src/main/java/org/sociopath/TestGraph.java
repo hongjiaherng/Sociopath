@@ -5,10 +5,10 @@ public class TestGraph {
         Sociograph sociograph = new Sociograph();
 
         initialization(sociograph);
-        event1Test(sociograph);
-        event2Test(sociograph);
+//        event1Test(sociograph);
+//        event2Test(sociograph);
         event3Test(sociograph);
-
+//        event5Test(sociograph);
     }
 
     public static void initialization(Sociograph sociograph) {
@@ -28,6 +28,7 @@ public class TestGraph {
         sociograph.addUndirectedEdge("D", "J", 7, 7, Relationship.FRIEND);
         sociograph.addUndirectedEdge("J", "I", 5, 6, Relationship.FRIEND);
         sociograph.setRelationship("G", "A" , Relationship.FRIEND);
+
 
         // Graph Tests
         /*
@@ -95,6 +96,9 @@ public class TestGraph {
 
     public static void event3Test(Sociograph sociograph) {
         // Event 3 Tests
+
+        // TODO: Start n End are the same
+
         // Normal condition
 //        SocialActivities.event3(sociograph, "A");
 
@@ -141,15 +145,32 @@ public class TestGraph {
 //        sociograph.getStudent("I").setLunchPeriod(20);
 //        sociograph.getStudent("F").setLunchStart(11, 0);
 //        sociograph.getStudent("F").setLunchPeriod(30);
-//
+
 //        Student studentA = sociograph.getStudent("A");
 //        System.out.println("Original rep points of A relative to others");
 //        System.out.println(studentA.getRepPoints() + "\n");
 //        SocialActivities.event3(sociograph,"A");
 //        System.out.println(studentA.getRepPoints());
 
-        // Normal test
-//        SocialActivities.event3(sociograph,"A");
+        // When 2 have exactly the same lunchStart and lunchEnd
+        sociograph.getStudent("A").setLunchStart(10, 45);
+        sociograph.getStudent("A").setLunchPeriod(60);
+        sociograph.getStudent("D").setLunchStart(10, 50);
+        sociograph.getStudent("D").setLunchPeriod(30);
+        sociograph.getStudent("G").setLunchStart(10, 50);
+        sociograph.getStudent("G").setLunchPeriod(30);
+        sociograph.getStudent("C").setLunchStart(11, 0);
+        sociograph.getStudent("C").setLunchPeriod(10);
+        sociograph.getStudent("I").setLunchStart(11, 0);
+        sociograph.getStudent("I").setLunchPeriod(20);
+        sociograph.getStudent("F").setLunchStart(11, 0);
+        sociograph.getStudent("F").setLunchPeriod(30);
+
+        Student studentA = sociograph.getStudent("A");
+        System.out.println("Original rep points of A relative to others");
+        System.out.println(studentA.getRepPoints() + "\n");
+        SocialActivities.event3(sociograph,"A");
+        System.out.println(studentA.getRepPoints());
 
         // Use this to test event 3
 //        Student studentA = sociograph.getStudent("A");
@@ -164,7 +185,9 @@ public class TestGraph {
     }
 
     public static void event5Test(Sociograph sociograph) {
-
+        sociograph.addUndirectedEdge("G", "E", 1, 1, Relationship.FRIEND);
+        sociograph.addUndirectedEdge("E", "C", 1, 1, Relationship.FRIEND);
+        SocialActivities.event5(sociograph, "F", "C");
     }
 
     public static void event6Test(Sociograph sociograph) {

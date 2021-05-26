@@ -6,6 +6,7 @@ import java.util.*;
 public class SocialActivities {
 
     private static final Random rd = new Random();
+    private static Scanner sc = new Scanner(System.in);
 
     public static void event1(String teacher, String student, Sociograph graph){
         boolean areFriends = graph.checkRelationship(teacher, student) == Relationship.FRIEND;
@@ -42,39 +43,6 @@ public class SocialActivities {
             System.out.println("All " + newFriendName + "'s friend and " + newFriendName + "'s friends' friends' friends' ... know " + hostName);
         } else {
             System.out.println("hostName & newFriendName can't be the same");
-        }
-    }
-
-    private static void chitchat(Sociograph sociograph, String hostName, String newFriendName, HashSet<Student> visitedRecord) {
-        ArrayList<Student> friendsOfNewFriend = sociograph.neighbours(newFriendName);
-        friendsOfNewFriend.removeAll(visitedRecord);
-        Student host = sociograph.getStudent(hostName);
-        if (friendsOfNewFriend.isEmpty()) {
-            return;
-        } else {
-            for (Student friend : friendsOfNewFriend) {
-                if (visitedRecord.contains(friend)) {
-                    continue;
-                }
-                double repRelativeToHost = 0;
-                if (Math.random() < 0.5) {  // if talk bad
-                    repRelativeToHost -= Math.abs(host.getRepPoints().get(newFriendName));
-                } else {    // if talk good
-                    repRelativeToHost += (host.getRepPoints().get(newFriendName) / 2.0);
-                }
-
-                if (sociograph.hasDirectedEdge(hostName, friend.getName())) {
-                    repRelativeToHost += sociograph.getDirectedEdgeWeight(hostName, friend.getName());
-                    sociograph.setDirectedEdgeWeight(hostName, friend.getName(), repRelativeToHost);
-                } else {
-                    sociograph.addDirectedEdge(hostName, friend.getName(), repRelativeToHost);
-                }
-                visitedRecord.add(friend);
-                System.out.println("Propagated: " + friend.getName());
-                System.out.println(sociograph);
-                System.out.println();
-                chitchat(sociograph, hostName, friend.getName(), visitedRecord);
-            }
         }
     }
 
@@ -178,7 +146,7 @@ public class SocialActivities {
             }
         }
 
-        System.out.println("Adjusted Schedule for B");
+        System.out.println("Adjusted Schedule for " + hostName);
         System.out.println("Host " + hostName + "\t| " + hostStart + "\t-> " + hostEnd);
         for (Map.Entry<String, LocalTime[]> entry : hostSchedule.entrySet()) {
             System.out.println(entry.getKey() + "\t\t| " + entry.getValue()[0] + "\t-> " + entry.getValue()[1]);
@@ -196,6 +164,117 @@ public class SocialActivities {
 
         System.out.println(hostName + " had lunch with " + lunchMates.size() + " persons, " + lunchMates.size() + " rep points earned!");
 
+    }
+
+    public static void event5(Sociograph sociograph, String you, String crush) {
+        // Get the stranger object randomly
+        ArrayList<String> possibleStrangers = new ArrayList<>();
+        for (Student student : sociograph.getAllStudents()) {
+            if (!(student.getName().equals(you) || student.getName().equals(crush))) {
+                possibleStrangers.add(student.getName());
+            }
+        }
+        final String stranger = possibleStrangers.get(rd.nextInt(possibleStrangers.size()));
+
+        System.out.println("That stranger: " + stranger);
+
+        // Find all the path between stranger and crush
+        List<List<String>> allPaths = sociograph.dfs(stranger, crush);
+        System.out.println(allPaths + "\n");
+
+        // Rumors can't spread if the path is empty
+        // Start spreading if it's not empty
+        if (!allPaths.isEmpty()) {
+            // Declare pplKnewSecret to keep the ppl who knows the secret according to their respective path
+            List<List<String>> pplKnewSecret = new ArrayList<>();
+            for (int i = 0; i < allPaths.size(); i++) {
+                pplKnewSecret.add(new ArrayList<>());
+            }
+            // Add stranger to every path of pplKnewSecret first
+            pplKnewSecret.forEach(list -> list.add(stranger));
+
+            // Remove stranger from every path to mark as visited
+            allPaths.forEach(list -> list.remove(stranger));
+
+            int day = 1;
+
+            // Spreading process start, this process will stop if crush know the rumor or you stop the rumor successfully
+            for (boolean terminate = false; !terminate; day++) {
+                System.out.println("Day " + day);
+                System.out.println("===================================");
+
+//                System.out.println("Path today " + allPaths);
+//                System.out.println("PplKnewSecret today " + pplKnewSecret);
+
+                // If day 1, spreading process not started yet
+                if (day == 1) {
+                    System.out.println("Stranger " + stranger + " is going to start spreading your secret tomorrow! Get ready!");
+                } else {
+                    // After day 1, stranger starts to spread the rumors to his neighbouring friends, his friends also will spread
+                    // to his own friends in the consecutive days
+
+                    // Return true if the rumor reaches crush, else false
+                    boolean reachCrush = spreadRumor(allPaths, crush, pplKnewSecret);
+
+                    // Terminate loop if reachCrush
+                    if (reachCrush) {
+                        terminate = true;
+                        continue;
+                    }
+                }
+
+                // Input ppl to convince
+                System.out.print("Who would you want to convince today?: ");
+                String pplToConvince = sc.next();
+
+                // Return true if all rumor chains are broken
+                boolean allChainStopped = convince(allPaths, pplToConvince, pplKnewSecret, crush);
+
+                // Terminate loop if all rumor chains are broken
+                if (allChainStopped) {
+                    terminate = true;
+                    System.out.println("You've break all the rumors chain");
+                    continue;
+                }
+                System.out.println();
+            }
+        } else {    // Exit if the path is empty
+            System.out.println("No path from " + stranger + " to " + crush);
+        }
+
+    }
+
+    private static void chitchat(Sociograph sociograph, String hostName, String newFriendName, HashSet<Student> visitedRecord) {
+        ArrayList<Student> friendsOfNewFriend = sociograph.neighbours(newFriendName);
+        friendsOfNewFriend.removeAll(visitedRecord);
+        Student host = sociograph.getStudent(hostName);
+        if (friendsOfNewFriend.isEmpty()) {
+            return;
+        } else {
+            for (Student friend : friendsOfNewFriend) {
+                if (visitedRecord.contains(friend)) {
+                    continue;
+                }
+                double repRelativeToHost = 0;
+                if (Math.random() < 0.5) {  // if talk bad
+                    repRelativeToHost -= Math.abs(host.getRepPoints().get(newFriendName));
+                } else {    // if talk good
+                    repRelativeToHost += (host.getRepPoints().get(newFriendName) / 2.0);
+                }
+
+                if (sociograph.hasDirectedEdge(hostName, friend.getName())) {
+                    repRelativeToHost += sociograph.getDirectedEdgeWeight(hostName, friend.getName());
+                    sociograph.setDirectedEdgeWeight(hostName, friend.getName(), repRelativeToHost);
+                } else {
+                    sociograph.addDirectedEdge(hostName, friend.getName(), repRelativeToHost);
+                }
+                visitedRecord.add(friend);
+                System.out.println("Propagated: " + friend.getName());
+                System.out.println(sociograph);
+                System.out.println();
+                chitchat(sociograph, hostName, friend.getName(), visitedRecord);
+            }
+        }
     }
 
     private static LocalTime minTime(LocalTime t1, LocalTime t2) {
@@ -216,6 +295,66 @@ public class SocialActivities {
         } else {
             return t1;
         }
+    }
+
+    private static boolean spreadRumor(List<List<String>> allPaths, String crush, List<List<String>> pplKnewSecret) {
+//        System.out.println("Inside before removing " + allPaths);
+        for (int i = 0; i < allPaths.size(); i++) {
+            if (allPaths.get(i).contains("stop")) {
+                continue;
+            }
+            String newlySpread = allPaths.get(i).remove(0);
+            pplKnewSecret.get(i).add(newlySpread);
+            if (newlySpread.equals(crush)) {
+                System.out.println(pplKnewSecret.get(i).get(pplKnewSecret.get(i).size() - 2) + " told your crush, " + crush + " ...");
+                return true;
+            }
+            System.out.println(pplKnewSecret.get(i).get(pplKnewSecret.get(i).size() - 2) + " told " + newlySpread + " your secret!");
+        }
+//        System.out.println("Inside after removing " + allPaths);
+        return false;
+    }
+
+    private static boolean convince(List<List<String>> allPaths, String pplToConvince, List<List<String>> pplKnewSecret, String crush) {
+        HashSet<String> pplKnewSecretSet = new HashSet<>();
+        pplKnewSecret.forEach(list -> pplKnewSecretSet.addAll(list));
+        if (allPaths.stream().noneMatch(path -> path.contains(pplToConvince))) {
+            System.out.println("You convince the wrong person!");
+        } else if (pplToConvince.equals(crush)) {
+            System.out.println("You can't convince your crush directly!");
+        } else if (pplKnewSecretSet.contains(pplToConvince)) {
+            System.out.println("You can't convince the person who already know your secret!");
+        } else {
+            boolean someoneConvinced = false;
+            for (List<String> path : allPaths) {
+                if (path.contains("stop")) continue;
+
+                if (path.contains(pplToConvince)) {
+                    someoneConvinced = true;
+                    path.add("stop");
+                    StringBuilder chain = new StringBuilder("[");
+                    path.forEach(v -> {
+                        if (v.equals("stop"))
+                            chain.append("]");
+                        else if (v.equals(crush))
+                            chain.append(v);
+                        else
+                            chain.append(v).append(", ");
+                    });
+                    System.out.println("This chain " + chain + " stopped");
+                }
+            }
+
+            if (someoneConvinced) {
+                System.out.print("You convinced the right person, " + pplToConvince + "! ");
+                if (allPaths.stream().allMatch(v -> v.contains("stop"))) {
+                    System.out.println();
+                } else {
+                    System.out.println("But there's still someone to convince.");
+                }
+            }
+        }
+        return allPaths.stream().allMatch(path -> path.contains("stop"));
     }
 
 }
