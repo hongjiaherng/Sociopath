@@ -6,13 +6,12 @@ import java.util.*;
  * Graph object to simulate friendship
  */
 public class Sociograph {
-    // TODO: vertex arrayList,
-    private StudentVertex head;   // First vertex of the graph
-    private int size;           // Total vertices in the graph
-    private List<List<String>> listOfPathList;      // all possible path from one src to another dest using dfs
+
+    private List<Vertex> vertices;
+    private int size;    // Total vertices in the graph
 
     public Sociograph() {
-        this.head = null;
+        this.vertices = new ArrayList<>();
         this.size = 0;
     }
 
@@ -30,55 +29,11 @@ public class Sociograph {
      * @return true if name exist in any of the vertices, otherwise false
      */
     public boolean hasVertex(String name) {
-        if (head == null) {
-            return false;
-        }
-        StudentVertex temp = head;
-        while (temp != null) {
-            if (temp.studentInfo.getName().equals(name)) {
+        for(Vertex v : vertices){
+            if(v.studentInfo.getName().equals(name))
                 return true;
-            }
-            temp = temp.nextVertex;
         }
         return false;
-    }
-
-    /**
-     * Get the total number of entering edge for the vertex named "name"
-     * @param name student's name
-     * @return total number of entering edge for the vertex with Student object named "name"
-     * <br> -1 if vertex named "name" is not exist
-     */
-    public int getIndeg(String name) {
-        if (hasVertex(name)) {
-            StudentVertex temp = head;
-            while (temp != null) {
-                if (temp.studentInfo.getName().equals(name)) {
-                    return temp.indeg;
-                }
-                temp = temp.nextVertex;
-            }
-        }
-        return -1;
-    }
-
-    /**
-     * Get the total number of exiting edge for the vertex named "name"
-     * @param name student's name
-     * @return total number of exiting edge for the vertex with Student object named "name"
-     * <br> -1 if vertex named "name" is not exist
-     */
-    public int getOutdeg(String name) {
-        if (hasVertex(name)) {
-            StudentVertex temp = head;
-            while (temp != null) {
-                if (temp.studentInfo.getName().equals(name)) {
-                    return temp.outdeg;
-                }
-                temp = temp.nextVertex;
-            }
-        }
-        return -1;
     }
 
     /**
@@ -89,24 +44,15 @@ public class Sociograph {
      * @return true if from vertex srcName to vertex adjName contains an edge (direction-wise), otherwise false
      */
     public boolean hasDirectedEdge(String srcName, String adjName) {
-        if (head == null) {
-            return false;
-        } else if (!hasVertex(srcName) || !hasVertex(adjName)) {
-            return false;
-        }
-        StudentVertex srcVertex = head;
-        while (srcVertex != null) {
-            if (srcVertex.studentInfo.getName().equals(srcName)) {
-                RelationshipEdge currentEdge = srcVertex.firstEdge;
-                while (currentEdge != null) {
-                    if (currentEdge.adjVertex.studentInfo.getName().equals(adjName)) {
-                        return true;
-                    }
-                    currentEdge = currentEdge.nextEdge;
-                }
-                break;
+        if(hasVertex(srcName) && hasVertex(adjName)){
+            Vertex srcVertex = vertices.get(indexOf(srcName));
+            Edge currentEdge = srcVertex.firstEdge;
+
+            while(currentEdge != null){
+                if(currentEdge.adjVertex.studentInfo.getName().equals(adjName))
+                    return true;
+                currentEdge = currentEdge.nextEdge;
             }
-            srcVertex = srcVertex.nextVertex;
         }
         return false;
     }
@@ -125,22 +71,121 @@ public class Sociograph {
     }
 
     /**
-     * Get the index of vertex named "name" in the graph.
+     * Get the total number of exiting edge for the vertex named "name"
      * @param name student's name
-     * @return index position of vertex named "name" in the graph
+     * @return total number of exiting edge for the vertex with Student object named "name"
      * <br> -1 if vertex named "name" is not exist
      */
-    public int getIndex(String name) {
-        StudentVertex temp = head;
-        int pos = 0;
-        while (temp != null) {
-            if (temp.studentInfo.getName().equals(name)) {
-                return pos;
-            }
-            temp = temp.nextVertex;
-            pos++;
+    public int getOutdeg(String name) {
+        int index = indexOf(name);
+
+        if(index == -1)
+            return -1;
+        else
+            return vertices.get(index).outdeg;
+    }
+
+    /**
+     * Get the total number of entering edge for the vertex named "name"
+     * @param name student's name
+     * @return total number of entering edge for the vertex with Student object named "name"
+     * <br> -1 if vertex named "name" is not exist
+     */
+    public int getIndeg(String name) {
+        int index = indexOf(name);
+
+        if(index == -1)
+            return -1;
+        else
+            return vertices.get(index).indeg;
+    }
+
+    /**
+     * Create a Student object with "name" and add a new vertex using the newly created Student object. The new vertex is
+     * being add at the end of the linked list of the graph.
+     * @param name student's name
+     * @return true if the vertex is successfully added, otherwise false
+     */
+    public boolean addVertex(String name) {
+        if (!hasVertex(name)) {
+            Vertex newVertex = new Vertex(new Student(name));
+            this.vertices.add(newVertex);
+            size++;
+            return true;
         }
-        return -1;
+        return false;
+    }
+
+    /**
+     * Add the undirected edges from srcName and adjName but with different weight. Can also be rewritten as
+     * <br> - addDirectedEdge(srcName, adjName, srcRep)
+     * <br> - addDirectedEdge(adjName, srcName, adjRep)
+     * <br> Also note that self loop is not allowed in this graph. The relationship on both the edges are determined by relationship.
+     * @param srcName student's name as source vertex
+     * @param adjName student's name as adjacent vertex
+     * @param srcRep rep point of vertex srcName relative to vertex adjName / weight of edge from vertex srcName to vertex adjName
+     * @param adjRep rep point of vertex adjName relative to vertex srcName / weight of edge from vertex adjName to vertex srcName
+     * @param rel relationship to set to both of the edges
+     * @return true if both the edges is successfully added, otherwise false
+     */
+    public boolean addUndirectedEdge(String srcName, String adjName, double srcRep, double adjRep, Relationship rel) {
+        if (size == 0) {
+            return false;
+        } else if (srcName.equals(adjName)) {
+            System.out.println("Self loop is not allowed");
+            return false;
+        } else if (!hasVertex(srcName) || !hasVertex(adjName)) {
+            return false;
+        }
+
+        Vertex srcVertex = vertices.get(indexOf(srcName));
+        Vertex adjVertex = vertices.get(indexOf(adjName));
+        Edge newSrcEdge = new Edge(adjVertex, srcRep, rel, srcVertex.firstEdge);
+        srcVertex.firstEdge = newSrcEdge;
+        srcVertex.indeg++;
+        srcVertex.outdeg++;
+        srcVertex.studentInfo.setRepPoints(adjName, srcRep);
+
+        Edge newAdjEdge = new Edge(srcVertex, adjRep, rel, adjVertex.firstEdge);
+        adjVertex.firstEdge = newAdjEdge;
+        adjVertex.indeg++;
+        adjVertex.outdeg++;
+        adjVertex.studentInfo.setRepPoints(srcName, adjRep);
+
+        if (rel == Relationship.FRIEND) {
+            srcVertex.studentInfo.addFriend(adjVertex.studentInfo);
+            adjVertex.studentInfo.addFriend(srcVertex.studentInfo);
+        }
+
+        return true;
+    }
+
+    /**
+     * Add the directed edges from srcName and adjName with weight "srcRep". Also note that self
+     * loop is not allowed in this graph. The relationship on the edge is null.
+     * @param srcName student's name as source vertex
+     * @param adjName student's name as adjacent vertex
+     * @param srcRep rep point of vertex srcName relative to vertex adjName / weight of edge from vertex srcName to vertex adjName
+     * @return true if the edge is successfully added, otherwise false
+     */
+    public boolean addDirectedEdge(String srcName, String adjName, double srcRep) {
+        if(srcName.equals(adjName))
+            return false;
+
+        if(hasVertex(srcName) && hasVertex(adjName)){
+            Vertex srcVertex = vertices.get(indexOf(srcName));
+            Vertex adjVertex = vertices.get(indexOf(adjName));
+
+            Edge newSrcEdge = new Edge(adjVertex, srcRep, Relationship.NONE, srcVertex.firstEdge);
+            srcVertex.firstEdge = newSrcEdge;
+            srcVertex.studentInfo.setRepPoints(adjName, srcRep);
+            srcVertex.indeg++;
+            srcVertex.outdeg++;
+
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -151,19 +196,14 @@ public class Sociograph {
      * @return relationship type in enum
      */
     public Relationship checkRelationship(String srcName, String adjName) {
-        if (hasUndirectedEdge(srcName, adjName)) {
-            StudentVertex srcVertex = head;
-            while (srcVertex != null) {
-                if (srcVertex.studentInfo.getName().equals(srcName)) {
-                    RelationshipEdge srcEdge = srcVertex.firstEdge;
-                    while (srcEdge != null) {
-                        if (srcEdge.adjVertex.studentInfo.getName().equals(adjName)) {
-                            return srcEdge.relationship;
-                        }
-                        srcEdge = srcEdge.nextEdge;
-                    }
-                }
-                srcVertex = srcVertex.nextVertex;
+        if(hasUndirectedEdge(srcName, adjName)){
+            Vertex srcVertex = vertices.get(indexOf(srcName));
+            Edge srcEdge = srcVertex.firstEdge;
+
+            while(srcEdge != null){
+                if(srcEdge.adjVertex.studentInfo.getName().equals(adjName))
+                    return srcEdge.relationship;
+                srcEdge = srcEdge.nextEdge;
             }
         }
         return null;
@@ -178,90 +218,40 @@ public class Sociograph {
      * @return true if the relationship is successfully set, otherwise false
      */
     public boolean setRelationship(String srcName, String adjName, Relationship relationship) {
-        // Vertex srcName and adjName must have 2 edges connected together
-        // They must me connected directly to each other to be friend
         if (hasUndirectedEdge(srcName, adjName)) {
-            StudentVertex srcVertex = head;
-            RelationshipEdge srcEdge = srcVertex.firstEdge;
-            StudentVertex adjVertex = head;
-            RelationshipEdge adjEdge = adjVertex.firstEdge;
-            getSrcVertexNEdge:
-                while (srcVertex != null) {
-                    if (srcVertex.studentInfo.getName().equals(srcName)) {
-                        srcEdge = srcVertex.firstEdge;
-                        while (srcEdge != null) {
-                            if (srcEdge.adjVertex.studentInfo.getName().equals(adjName)) {
-                                break getSrcVertexNEdge;
-                            }
-                            srcEdge = srcEdge.nextEdge;
-                        }
-                    }
-                    srcVertex = srcVertex.nextVertex;
-                }
+            Vertex srcVertex = vertices.get(indexOf(srcName));
+            Vertex adjVertex = vertices.get(indexOf(adjName));
+            Edge srcEdge = srcVertex.firstEdge;
+            Edge adjEdge = adjVertex.firstEdge;
 
-            getAdjVertexNEdge:
-                while (adjVertex != null) {
-                    if (adjVertex.studentInfo.getName().equals(adjName)) {
-                        adjEdge = adjVertex.firstEdge;
-                        while (adjEdge != null) {
-                            if (adjEdge.adjVertex.studentInfo.getName().equals(srcName)) {
-                                break getAdjVertexNEdge;
-                            }
-                            adjEdge = adjEdge.nextEdge;
-                        }
-                    }
-                    adjVertex = adjVertex.nextVertex;
+            while (srcEdge != null) {
+                if (srcEdge.adjVertex.studentInfo.getName().equals(adjName)) {
+                    srcEdge.relationship = relationship;
+                    break;
                 }
+                srcEdge = srcEdge.nextEdge;
+            }
 
-            if (srcVertex != null && srcEdge != null && adjVertex != null && adjEdge != null) {
-                srcEdge.relationship = relationship;
-                adjEdge.relationship = relationship;
-                srcVertex.studentInfo.getFriends().add(adjName);
-                adjVertex.studentInfo.getFriends().add(srcName);
-            } else {    // This might happen if the some of the method are wrongly implemented
-                throw new NullPointerException(srcName + " & " + adjName + ", they don't have a proper undirected edge connected between them");
+            while (adjEdge != null) {
+                if (adjEdge.adjVertex.studentInfo.getName().equals(srcName)) {
+                    adjEdge.relationship = relationship;
+                    break;
+                }
+                adjEdge = adjEdge.nextEdge;
+            }
+
+            if (relationship == Relationship.FRIEND) {
+                srcVertex.studentInfo.addFriend(adjVertex.studentInfo);
+                adjVertex.studentInfo.addFriend(srcVertex.studentInfo);
+            } else {
+                srcVertex.studentInfo.unfriend(adjVertex.studentInfo);
+                adjVertex.studentInfo.unfriend(srcVertex.studentInfo);
             }
             return true;
         } else {
             System.out.println("Relationship can't be set. They must both know each other to have a relationship (having rep point relative to each other)");
             return false;
         }
-    }
-
-    /**
-     * Get the Student object of vertex at index "pos" (contains overloaded version of this method)
-     * @param pos index position of a vertex in the graph
-     * @return Student object of vertex at index "pos"
-     * <br> null if "pos" is out of bound
-     */
-    public Student getStudent(int pos) {
-        if (pos >= size || pos < 0) {
-            return null;
-        }
-        StudentVertex temp = head;
-        for (int i = 0; i < pos; i++) {
-            temp = temp.nextVertex;
-        }
-        return temp.studentInfo;
-    }
-
-    /**
-     * Get the Student object of vertex named "name" (contains overloaded version of this method)
-     * @param name student's name
-     * @return Student object of vertex named "name"
-     * <br> null if "name" is not exist in any of the vertex of the graph
-     */
-    public Student getStudent(String name) {
-        if (hasVertex(name)) {
-            StudentVertex temp = head;
-            while (temp != null) {
-                if (temp.studentInfo.getName().equals(name)) {
-                    return temp.studentInfo;
-                }
-                temp = temp.nextVertex;
-            }
-        }
-        return null;
     }
 
     /**
@@ -273,27 +263,17 @@ public class Sociograph {
      * @return the weight of edge from vertex srcName to vertex adjName / rep point of vertex srcName relative to vertex adjName
      * <br> throw NoSuchElementException if there's no edge from vertex srcName to vertex adjName
      */
-    public double getDirectedEdgeWeight(String srcName, String adjName) {
-        if (head == null) {
-            throw new NoSuchElementException("No friendship");
-        } else if (!hasVertex(srcName) || !hasVertex(adjName)) {
-            throw new NoSuchElementException("No friendship");
-        }
-        StudentVertex srcVertex = head;
-        while (srcVertex != null) {
-            if (srcVertex.studentInfo.getName().equals(srcName)) {
-                RelationshipEdge currentEdge = srcVertex.firstEdge;
-                while (currentEdge != null) {
-                    if (currentEdge.adjVertex.studentInfo.getName().equals(adjName)) {
-                        return currentEdge.repRelativeToAdj;
-                    }
-                    currentEdge = currentEdge.nextEdge;
-                }
-                break;
+    public double getSrcRepRelativeToAdj(String srcName, String adjName) {
+        if (hasDirectedEdge(srcName, adjName)) {
+            Vertex srcVertex = vertices.get(indexOf(srcName));
+            Edge srcEdge = srcVertex.firstEdge;
+            while (srcEdge != null) {
+                if (srcEdge.adjVertex.studentInfo.getName().equals(adjName))
+                    return srcEdge.repRelativeToAdj;
+                srcEdge = srcEdge.nextEdge;
             }
-            srcVertex = srcVertex.nextVertex;
         }
-        throw new NoSuchElementException(srcName + " don't know " + adjName);
+        throw new NoSuchElementException("No edge between srcName & adjName or they don't exist");
     }
 
     /**
@@ -302,213 +282,46 @@ public class Sociograph {
      * opinion of vertex adjName, he thinks that the reputation point of vertex srcName is the returned value
      * @param srcName student's name as source vertex
      * @param adjName student's name as adjacent vertex
-     * @param newWeight weight of edge from vertex srcName to vertex adjName / rep point of vertex srcName relative to vertex adjName
+     * @param newRep weight of edge from vertex srcName to vertex adjName / rep point of vertex srcName relative to vertex adjName
      */
-    public void setDirectedEdgeWeight(String srcName, String adjName, double newWeight) {
-        if (head == null) {
-            throw new NoSuchElementException("No friendship");
-        } else if (!hasVertex(srcName) || !hasVertex(adjName)) {
-            throw new NoSuchElementException("No friendship");
-        }
-        StudentVertex srcVertex = head;
-        while (srcVertex != null) {
-            if (srcVertex.studentInfo.getName().equals(srcName)) {
-                RelationshipEdge currentEdge = srcVertex.firstEdge;
-                while (currentEdge != null) {
-                    if (currentEdge.adjVertex.studentInfo.getName().equals(adjName)) {
-                        currentEdge.repRelativeToAdj = newWeight;
-                        srcVertex.studentInfo.getRepPoints().put(adjName, newWeight);       // Bug fixed (Update rep point to student object)
-                        return;
-                    }
-                    currentEdge = currentEdge.nextEdge;
+    public void setSrcRepRelativeToAdj(String srcName, String adjName, double newRep) {
+        if (hasDirectedEdge(srcName, adjName)) {
+            Vertex srcVertex = vertices.get(indexOf(srcName));
+            Edge srcEdge = srcVertex.firstEdge;
+            while (srcEdge != null) {
+                if (srcEdge.adjVertex.studentInfo.getName().equals(adjName)) {
+                    srcEdge.repRelativeToAdj = newRep;
+                    srcVertex.studentInfo.setRepPoints(adjName, newRep);
+                    return;
                 }
-                break;
+                srcEdge = srcEdge.nextEdge;
             }
-            srcVertex = srcVertex.nextVertex;
         }
-        throw new NoSuchElementException(adjName + " don't know " + srcName);
+        throw new NoSuchElementException("No edge between srcName & adjName or they don't exist");
     }
 
     /**
-     * Create a Student object with "name" and add a new vertex using the newly created Student object. The new vertex is
-     * being add at the end of the linked list of the graph.
+     * Get the Student object of vertex named "name" (contains overloaded version of this method)
      * @param name student's name
-     * @return true if the vertex is successfully added, otherwise false
+     * @return Student object of vertex named "name"
+     * <br> null if "name" is not exist in any of the vertex of the graph
      */
-    public boolean addVertex(String name) {
-        if (!hasVertex(name)) {
-            StudentVertex temp = head;
-            StudentVertex newVertex = new StudentVertex(new Student(name), null);
-
-            if (head == null) {
-                head = newVertex;
-            } else {
-                StudentVertex previous = head;
-                while (temp != null) {
-                    previous = temp;
-                    temp = temp.nextVertex;
-                }
-                previous.nextVertex = newVertex;
-            }
-            size++;
-            return true;
+    public Student getStudent(String name) {
+        if (hasVertex(name)) {
+            Vertex vertex = vertices.get(indexOf(name));
+            return vertex.studentInfo;
         }
-        return false;
-    }
-
-    /**
-     * Add the undirected edges from srcName and adjName but with different weight. Can also be rewritten as
-     * <br> - addDirectedEdge(srcName, adjName, srcRep)
-     * <br> - addDirectedEdge(adjName, srcName, adjRep)
-     * <br> Also note that self loop is not allowed in this graph. The relationship on both the edges are null.
-     * @param srcName student's name as source vertex
-     * @param adjName student's name as adjacent vertex
-     * @param srcRep rep point of vertex srcName relative to vertex adjName / weight of edge from vertex srcName to vertex adjName
-     * @param adjRep rep point of vertex adjName relative to vertex srcName / weight of edge from vertex adjName to vertex srcName
-     * @return true if both the edges is successfully added, otherwise false
-     */
-    public boolean addUndirectedEdge(String srcName, String adjName, double srcRep, double adjRep) {
-        if (head == null) {
-            return false;
-        } else if (!hasVertex(srcName) || !hasVertex(adjName)) {
-            return false;
-        } else if (srcName.equals(adjName)) {
-            System.out.println("Self loop is not allowed");
-            return false;
-        }
-        StudentVertex srcVertex = head;
-        while (srcVertex != null) {
-            if (srcVertex.studentInfo.getName().equals(srcName)) {
-                StudentVertex destVertex = head;
-                while (destVertex != null) {
-                    if (destVertex.studentInfo.getName().equals(adjName)) {
-                        RelationshipEdge newSrcEdge = new RelationshipEdge(destVertex, srcRep, srcVertex.firstEdge);
-                        srcVertex.firstEdge = newSrcEdge;
-                        srcVertex.studentInfo.getRepPoints().put(adjName, srcRep);
-//                        srcVertex.studentInfo.getFriends().add(adjName);
-                        srcVertex.indeg++;
-                        srcVertex.outdeg++;
-
-                        RelationshipEdge newDestEdge = new RelationshipEdge(srcVertex, adjRep, destVertex.firstEdge);
-                        destVertex.firstEdge = newDestEdge;
-                        destVertex.studentInfo.getRepPoints().put(srcName, adjRep);
-//                        destVertex.studentInfo.getFriends().add(srcName);
-                        destVertex.indeg++;
-                        destVertex.outdeg++;
-
-                        return true;
-                    }
-                    destVertex = destVertex.nextVertex;
-                }
-            }
-            srcVertex = srcVertex.nextVertex;
-        }
-        return false;
-    }
-
-    /**
-     * Add the undirected edges from srcName and adjName but with different weight. Can also be rewritten as
-     * <br> - addDirectedEdge(srcName, adjName, srcRep)
-     * <br> - addDirectedEdge(adjName, srcName, adjRep)
-     * <br> Also note that self loop is not allowed in this graph. The relationship on both the edges are determined by relationship.
-     * @param srcName student's name as source vertex
-     * @param adjName student's name as adjacent vertex
-     * @param srcRep rep point of vertex srcName relative to vertex adjName / weight of edge from vertex srcName to vertex adjName
-     * @param adjRep rep point of vertex adjName relative to vertex srcName / weight of edge from vertex adjName to vertex srcName
-     * @param relationship relationship to set to both of the edges
-     * @return true if both the edges is successfully added, otherwise false
-     */
-    public boolean addUndirectedEdge(String srcName, String adjName, double srcRep, double adjRep, Relationship relationship) {
-        if (head == null) {
-            return false;
-        } else if (!hasVertex(srcName) || !hasVertex(adjName)) {
-            return false;
-        } else if (srcName.equals(adjName)) {
-            System.out.println("Self loop is not allowed");
-            return false;
-        }
-        StudentVertex srcVertex = head;
-        while (srcVertex != null) {
-            if (srcVertex.studentInfo.getName().equals(srcName)) {
-                StudentVertex destVertex = head;
-                while (destVertex != null) {
-                    if (destVertex.studentInfo.getName().equals(adjName)) {
-                        RelationshipEdge newSrcEdge = new RelationshipEdge(destVertex, srcRep, relationship, srcVertex.firstEdge);
-                        srcVertex.firstEdge = newSrcEdge;
-                        srcVertex.studentInfo.getRepPoints().put(adjName, srcRep);
-                        srcVertex.indeg++;
-                        srcVertex.outdeg++;
-
-                        RelationshipEdge newDestEdge = new RelationshipEdge(srcVertex, adjRep, relationship, destVertex.firstEdge);
-                        destVertex.firstEdge = newDestEdge;
-                        destVertex.studentInfo.getRepPoints().put(srcName, adjRep);
-                        destVertex.indeg++;
-                        destVertex.outdeg++;
-
-                        if (relationship == Relationship.FRIEND) {
-                            srcVertex.studentInfo.getFriends().add(adjName);
-                            destVertex.studentInfo.getFriends().add(srcName);
-                        }
-
-                        return true;
-                    }
-                    destVertex = destVertex.nextVertex;
-                }
-            }
-            srcVertex = srcVertex.nextVertex;
-        }
-        return false;
-    }
-
-    /**
-     * Add the directed edges from srcName and adjName with weight "srcRep". Also note that self
-     * loop is not allowed in this graph. The relationship on the edge is null.
-     * @param srcName student's name as source vertex
-     * @param adjName student's name as adjacent vertex
-     * @param srcRep rep point of vertex srcName relative to vertex adjName / weight of edge from vertex srcName to vertex adjName
-     * @return true if the edge is successfully added, otherwise false
-     */
-    public boolean addDirectedEdge(String srcName, String adjName, double srcRep) {
-        if (head == null) {
-            return false;
-        } else if (!hasVertex(srcName) || !hasVertex(adjName)) {
-            return false;
-        } else if (srcName.equals(adjName)) {
-            System.out.println("Self loop is not allowed");
-            return false;
-        }
-        StudentVertex srcVertex = head;
-        while (srcVertex != null) {
-            if (srcVertex.studentInfo.getName().equals(srcName)) {
-                StudentVertex destVertex = head;
-                while (destVertex != null) {
-                    if (destVertex.studentInfo.getName().equals(adjName)) {
-                        RelationshipEdge newSrcEdge = new RelationshipEdge(destVertex, srcRep, srcVertex.firstEdge);
-                        srcVertex.firstEdge = newSrcEdge;
-                        srcVertex.studentInfo.getRepPoints().put(adjName, srcRep);
-//                        srcVertex.studentInfo.getFriends().add(adjName);
-                        srcVertex.outdeg++;
-                        destVertex.indeg++;
-                        return true;
-                    }
-                    destVertex = destVertex.nextVertex;
-                }
-            }
-            srcVertex = srcVertex.nextVertex;
-        }
-        return false;
+        return null;
     }
 
     /**
      * Get all the Student objects in the graph
      * @return all the Student objects in the graph in the form of ArrayList
      */
-    public ArrayList<Student> getAllStudents() {
-        ArrayList<Student> list = new ArrayList<>();
-        StudentVertex temp = head;
-        while (temp != null) {
-            list.add(temp.studentInfo);
-            temp = temp.nextVertex;
+    public List<Student> getAllStudents() {
+        List<Student> list = new ArrayList<>();
+        for (Vertex v : vertices) {
+            list.add(v.studentInfo);
         }
         return list;
     }
@@ -518,32 +331,26 @@ public class Sociograph {
      * @param name student's name
      * @return Student object of vertices which is directly connected to vertex "name"
      */
-    public ArrayList<Student> neighbours(String name) {
-        if (!hasVertex(name)) {
-            throw new NoSuchElementException("Node name is not exist");
-        }
-        ArrayList<Student> list = new ArrayList<>();
-        StudentVertex temp = head;
-        while (temp != null) {
-            if (temp.studentInfo.getName().equals(name)) {
-                RelationshipEdge currentEdge = temp.firstEdge;
-                while (currentEdge != null) {
-                    list.add(currentEdge.adjVertex.studentInfo);
-                    currentEdge = currentEdge.nextEdge;
-                }
+    public List<Student> neighbours(String name) {
+        if (hasVertex(name)) {
+            List<Student> list = new ArrayList<>();
+            Vertex srcVertex = vertices.get(indexOf(name));
+            Edge srcEdge = srcVertex.firstEdge;
+            while (srcEdge != null) {
+                list.add(srcEdge.adjVertex.studentInfo);
+                srcEdge = srcEdge.nextEdge;
             }
-            temp = temp.nextVertex;
+            return list;
         }
-        return list;
+        throw new NoSuchElementException("Vertex " + name + " is not exist");
     }
 
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        StudentVertex temp = head;
-        while (temp != null) {
-            sb.append(temp.studentInfo.getName()).append("\t=> [");
-            RelationshipEdge currentEdge = temp.firstEdge;
+        for (int i = 0; i < vertices.size(); i++) {
+            sb.append(vertices.get(i).studentInfo.getName()).append("\t=> [");
+            Edge currentEdge = vertices.get(i).firstEdge;
             while (currentEdge != null) {
                 sb.append("(").append(currentEdge.adjVertex.studentInfo.getName()).append(" | ");
                 sb.append("rep:").append(currentEdge.repRelativeToAdj).append(" | ");
@@ -554,10 +361,9 @@ public class Sociograph {
                 currentEdge = currentEdge.nextEdge;
             }
             sb.append("]");
-            if (temp.nextVertex != null) {
+            if (i != vertices.size() - 1) {
                 sb.append("\n");
             }
-            temp = temp.nextVertex;
         }
         return sb.toString();
     }
@@ -569,26 +375,23 @@ public class Sociograph {
      * @return a list of path from source to destination
      */
     public List<List<String>> dfs(String source, String destination) {
-        this.listOfPathList = new LinkedList<>();
+        List<List<String>> listOfPathList = new LinkedList<>();
         Map<String, Boolean> isVisited = new HashMap<>();
-        StudentVertex currentVertex = head;
-        while (currentVertex != null) {
-            isVisited.put(currentVertex.getStudentInfo().getName(), false);
-            currentVertex = currentVertex.nextVertex;
+        for (Vertex v : vertices) {
+            isVisited.put(v.studentInfo.getName(), false);
         }
-
         LinkedList<String> pathList = new LinkedList<>();
 
         pathList.add(source);
 
-        dfsUtil(source, destination, isVisited, pathList);
-        return this.listOfPathList;
+        dfsUtil(source, destination, isVisited, pathList, listOfPathList);
+        return listOfPathList;
     }
 
-    private void dfsUtil(String current, String destination, Map<String, Boolean> isVisited, List<String> localPathList) {
+    private void dfsUtil(String current, String destination, Map<String, Boolean> isVisited, List<String> localPathList, List<List<String>> listOfPathList) {
         if (current.equals(destination)) {
             List<String> copy = new LinkedList<>(localPathList);
-            this.listOfPathList.add(copy);
+            listOfPathList.add(copy);
             return;
         }
 
@@ -599,7 +402,7 @@ public class Sociograph {
             if (!isVisited.get(neighbor) && checkRelationship(neighbor, current) == Relationship.FRIEND) {
                 localPathList.add(neighbor);
 
-                dfsUtil(neighbor, destination, isVisited, localPathList);
+                dfsUtil(neighbor, destination, isVisited, localPathList, listOfPathList);
 
                 localPathList.remove(neighbor);
             }
@@ -607,57 +410,53 @@ public class Sociograph {
         isVisited.put(current, false);
     }
 
+    private int indexOf(String name) {
+        int index = -1;
+
+        for (int i = 0; i < vertices.size(); i++) {
+            Vertex srcVertex = vertices.get(i);
+
+            if (srcVertex.studentInfo.getName().equals(name)) {
+                index = i;
+                break;
+            }
+        }
+        return index;
+    }
+
     /**
      * Static class for vertex of the graph
      */
-    static class StudentVertex {
+    static class Vertex {
         private Student studentInfo;
         private int indeg;
         private int outdeg;
-        private StudentVertex nextVertex;
-        private RelationshipEdge firstEdge;
+        private Edge firstEdge;
 
-        public StudentVertex() {
-            this.studentInfo = null;
-            this.indeg = 0;
-            this.outdeg = 0;
-            this.nextVertex = null;
-            this.firstEdge = null;
-        }
-
-        public StudentVertex(Student studentInfo, StudentVertex nextVertex) {
+        public Vertex(Student studentInfo) {
             this.studentInfo = studentInfo;
             this.indeg = 0;
             this.outdeg = 0;
-            this.nextVertex = nextVertex;
             this.firstEdge = null;
-        }
-
-        public Student getStudentInfo() {
-            return studentInfo;
         }
     }
 
     /**
      * Static class for edge of the graph
      */
-    static class RelationshipEdge {
-        private StudentVertex adjVertex;
-        private RelationshipEdge nextEdge;
+    static class Edge {
+        private Vertex adjVertex;
+        private Edge nextEdge;
 
         // Also the weight of the edge
         private double repRelativeToAdj; // src's rep point in the opinion of adjVertex
         private Relationship relationship;
 
-        public RelationshipEdge() {
-            this(null, 0, null, null);
+        public Edge(Vertex adjVertex, double repRelativeToAdj, Edge nextEdge) {
+            this(adjVertex, repRelativeToAdj, Relationship.NONE, nextEdge);
         }
 
-        public RelationshipEdge(StudentVertex adjVertex, double repRelativeToAdj, RelationshipEdge nextEdge) {
-            this(adjVertex, repRelativeToAdj, null, nextEdge);
-        }
-
-        public RelationshipEdge(StudentVertex adjVertex, double repRelativeToAdj, Relationship relationship, RelationshipEdge nextEdge) {
+        public Edge(Vertex adjVertex, double repRelativeToAdj, Relationship relationship, Edge nextEdge) {
             this.adjVertex = adjVertex;
             this.repRelativeToAdj = repRelativeToAdj;
             this.relationship = relationship;
@@ -665,6 +464,3 @@ public class Sociograph {
         }
     }
 }
-
-
-
