@@ -374,7 +374,7 @@ public class Sociograph {
      * @param destination destination vertex
      * @return a list of path from source to destination
      */
-    public List<List<String>> dfs(String source, String destination) {
+    public List<List<String>> dfTraversal(String source, String destination) {
         List<List<String>> listOfPathList = new LinkedList<>();
         Map<String, Boolean> isVisited = new HashMap<>();
         for (Vertex v : vertices) {
@@ -384,11 +384,11 @@ public class Sociograph {
 
         pathList.add(source);
 
-        dfsUtil(source, destination, isVisited, pathList, listOfPathList);
+        dfTraversalRecur(source, destination, isVisited, pathList, listOfPathList);
         return listOfPathList;
     }
 
-    private void dfsUtil(String current, String destination, Map<String, Boolean> isVisited, List<String> localPathList, List<List<String>> listOfPathList) {
+    private void dfTraversalRecur(String current, String destination, Map<String, Boolean> isVisited, List<String> localPathList, List<List<String>> listOfPathList) {
         if (current.equals(destination)) {
             List<String> copy = new LinkedList<>(localPathList);
             listOfPathList.add(copy);
@@ -402,7 +402,7 @@ public class Sociograph {
             if (!isVisited.get(neighbor) && checkRelationship(neighbor, current) == Relationship.FRIEND) {
                 localPathList.add(neighbor);
 
-                dfsUtil(neighbor, destination, isVisited, localPathList, listOfPathList);
+                dfTraversalRecur(neighbor, destination, isVisited, localPathList, listOfPathList);
 
                 localPathList.remove(neighbor);
             }

@@ -51,122 +51,115 @@ public class SocialActivities {
     }
 
     public static void event3(Sociograph sociograph, String hostName) {
-        ArrayList<Student> lunchMates = new ArrayList<>();
-        Student host = sociograph.getStudent(hostName);
-        LocalTime hostStart = host.getLunchStart();
-        LocalTime hostEnd = host.getLunchEnd();
+        // List to keep all the students that has intersection with host's lunch time
+        List<Student> potentialLunchMates = new ArrayList<>();      // didn't consider the number of ppl that can have lunch with in parallel way (3 persons)
+        List<Student> actualLunchMates = new ArrayList<>();         // after considering the number of ppl that can simultaneously to have lunch with
+        int totalRepObtained = 0;
 
-        // Get students who have low dive rate & their lunch times are within host's lunch time
-        for (Student lunchMate : sociograph.getAllStudents()) {
-            if (lunchMate.getName().equals(hostName)) {
+        Student host = sociograph.getStudent(hostName);
+        host.estimateLunchEnd();
+
+        // Timeslot to keep who are having lunch with host at a certain minute (row array - minute; col arraylist - Student)
+        ArrayList<String>[] timeslot = new ArrayList[host.getAvgLunchPeriod()];
+        for (int i = 0; i < timeslot.length; i++) {
+            timeslot[i] = new ArrayList<>();
+        }
+
+        // Add the student who has lunch time that intersect with host's lunch time to the list
+        // Filter out those students who have high dive rate (>50)
+        // Estimate the lunchEnd of everyone
+        for (Student mate : sociograph.getAllStudents()) {
+            if (mate.getName().equals(hostName)) {
                 continue;
             }
-            if (lunchMate.getDive() <= 50) {  // Make sure the student is reliable
-                LocalTime mateStart = lunchMate.getLunchStart();
-                LocalTime mateEnd = lunchMate.getLunchEnd();
-                if (mateStart.isBefore(hostEnd) && mateEnd.isAfter(hostStart)) {
-                    lunchMates.add(lunchMate);
-                }
+            mate.estimateLunchEnd();
+            if (mate.getAvgLunchStart().isBefore(host.getEstimatedLunchEnd()) &&
+                    mate.getEstimatedLunchEnd().isAfter(host.getAvgLunchStart()) &&
+                    mate.getDive() <= 50) {    // Turn diving rate filter off first
+                potentialLunchMates.add(mate);
             }
         }
 
-        if (lunchMates.isEmpty()) {
-            System.out.println("No lunch mates available due to the time and also you don't want diver");
+        // The method stops if there's no ppl to have lunch with
+        if (potentialLunchMates.size() == 0) {
+            System.out.println("You don't have people to have lunch with due to time constraint and their high diving rate");
             return;
         }
 
-        // Sort the list in ascending order according to lunchStart, sort by lunchEnd if lunchStart is the same
-        for (int i = 0; i < lunchMates.size() - 1; i++) {
-            for (int j = 0; j < lunchMates.size() - i - 1; j++) {
-                if (lunchMates.get(j).getLunchStart().isAfter(lunchMates.get(j + 1).getLunchStart())) {
-                    Student temp = lunchMates.get(j);
-                    lunchMates.set(j, lunchMates.get(j + 1));
-                    lunchMates.set(j + 1, temp);
-                } else if (lunchMates.get(j).getLunchStart().compareTo(lunchMates.get(j + 1).getLunchStart()) == 0) {
-                    if (lunchMates.get(j).getLunchEnd().isAfter(lunchMates.get(j + 1).getLunchEnd())) {
-                        Student temp = lunchMates.get(j);
-                        lunchMates.set(j, lunchMates.get(j + 1));
-                        lunchMates.set(j + 1, temp);
+        // Sort the student with avgLunchStart, if avgLunchStart is same, use estimatedLunchEnd instead (ascending)
+        potentialLunchMates.sort((mate1, mate2) -> {
+            if (mate1.getAvgLunchStart().isBefore(mate2.getAvgLunchStart())) {
+                return -1;
+            } else if (mate1.getAvgLunchStart().isAfter(mate2.getAvgLunchStart())) {
+                return 1;
+            } else {
+                if (mate1.getEstimatedLunchEnd().isBefore(mate2.getEstimatedLunchEnd())) {
+                    return -1;
+                } else if (mate1.getEstimatedLunchEnd().isAfter(mate2.getEstimatedLunchEnd())) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            }
+        });
+
+        // Display all lunch time for everyone
+        System.out.println("Lunch time for all potential lunch mates");
+        System.out.println("==================================");
+        System.out.println("name\tavg_lunch_start\tavg_lunch_period\test_lunch_end\tdiving rate (<=50)");
+        System.out.println(hostName + "\t\t" + host.getAvgLunchStart() + "\t\t\t" + host.getAvgLunchPeriod() + "\t\t\t\t\t" + host.getEstimatedLunchEnd() + "\t\t\t" + host.getDive());
+        potentialLunchMates.forEach(mate -> System.out.println(mate.getName() + "\t\t" + mate.getAvgLunchStart() + "\t\t\t" + mate.getAvgLunchPeriod() + "\t\t\t\t\t" + mate.getEstimatedLunchEnd() + "\t\t\t" + mate.getDive()));
+
+        // Add all the satisfied mate to the timeslot by considering the number of ppl currently in the slot
+        for (Student mate : potentialLunchMates) {
+            for (int i = computeNthMinute(host.getAvgLunchStart(), mate.getAvgLunchStart());
+                 i < computeNthMinute(host.getAvgLunchStart(), mate.getEstimatedLunchEnd());
+                 i++) {
+                if (i < timeslot.length && timeslot[i].size() < 3) {
+                    timeslot[i].add(mate.getName());
+                    if (!actualLunchMates.contains(mate)) {
+                        actualLunchMates.add(mate);
                     }
                 }
             }
         }
 
-        System.out.println("Original Schedule for " + hostName);
-        System.out.println("Host " + hostName + "\t| " + hostStart + "\t-> " + hostEnd);
-        for (Student lunchMate : lunchMates) {
-            System.out.println(lunchMate.getName() + "\t\t| " + lunchMate.getLunchStart() + "\t-> " + lunchMate.getLunchEnd());
+        // Display schedule in terms of minutes
+        System.out.println("\n" + "Schedule of " + hostName + " in terms of minutes");
+        System.out.println("==================================");
+        LocalTime time = host.getAvgLunchStart();
+        for (int i = 0; i < host.getAvgLunchPeriod(); i++) {
+            System.out.println(time + " : " + timeslot[i]);
+            time = time.plusMinutes(1);
         }
         System.out.println();
 
-        // Obtain a map which maps student names to their respective lunch time with the host
-        Map<String, LocalTime[]> hostSchedule = new LinkedHashMap<>();
-
-        NormalCase:
-        for (int i = 0; i < lunchMates.size(); i++) {
-            String mateName = lunchMates.get(i).getName();
-            LocalTime mateStart = lunchMates.get(i).getLunchStart();
-            LocalTime mateEnd = lunchMates.get(i).getLunchEnd();
-            boolean ignoreMiddle = false;  // A variable to make sure it enter the correct condition when multiple same lunchStart is occur at middle of the list
-
-            // Enter this loop when more than 1 lunchStart is the same for some student
-            while (lunchMates.size() > 1 && i < lunchMates.size() - 1 && mateStart.compareTo(lunchMates.get(i + 1).getLunchStart()) == 0) {
-//                System.out.println(i + mateName + " " + mateStart + " " + mateEnd);
-                if (i == 0) {   // First process of having multiple same lunchStart at first few lines
-                    hostSchedule.put(mateName, new LocalTime[]{maxTime(mateStart, hostStart), maxTime(mateEnd, lunchMates.get(i + 1).getLunchStart())});
-                } else if (!ignoreMiddle) {     // First process of having multiple same lunchStart at middle lines
-                    hostSchedule.put(mateName, new LocalTime[]{mateStart, maxTime(mateEnd, lunchMates.get(i + 1).getLunchStart())});
-                } else {    // Default process for all
-                    hostSchedule.put(mateName, new LocalTime[]{ lunchMates.get(i - 1).getLunchEnd(), maxTime(mateEnd, lunchMates.get(i + 1).getLunchStart()) });
-                }
-                i++;
-                mateName = lunchMates.get(i).getName();
-                mateStart = lunchMates.get(i).getLunchStart();
-                mateEnd = lunchMates.get(i).getLunchEnd();
-
-                // Enter here when all the same lunchStart of students have been exhausted but left a final one to execute
-                if (i == lunchMates.size() - 1) {   // When it's the last element in the list
-                    hostSchedule.put(mateName, new LocalTime[]{ lunchMates.get(i - 1).getLunchEnd(), minTime(hostEnd, mateEnd)});
-                    continue NormalCase;
-                } else if (mateStart.compareTo(lunchMates.get(i + 1).getLunchStart()) != 0) {   // When it's the last repeated lunchStart student element (but not last element in the list)
-//                    System.out.println(i + mateName + " " + mateStart + " " + mateEnd);
-                    hostSchedule.put(mateName, new LocalTime[]{ lunchMates.get(i - 1).getLunchEnd(), minTime(mateEnd, lunchMates.get(i + 1).getLunchStart()) });
-                    continue NormalCase;
-                }
-                ignoreMiddle = true;
-            }
-//            System.out.println(i + mateName + " " + mateStart + " " + mateEnd);
-
-            if (lunchMates.size() == 1) {
-                hostSchedule.put(mateName, new LocalTime[]{maxTime(mateStart, hostStart), minTime(mateEnd, hostEnd)});
-            } else if (i == 0) {
-                LocalTime nextMateStart = lunchMates.get(i + 1).getLunchStart();
-                hostSchedule.put(mateName, new LocalTime[]{maxTime(mateStart, hostStart), minTime(mateEnd, nextMateStart)});
-            } else if (i == lunchMates.size() - 1) {
-                hostSchedule.put(mateName, new LocalTime[]{mateStart, minTime(hostEnd, mateEnd)});
+        // Add edge (rep point) to the host after having lunch with those ppl
+        for (Student actualMate : actualLunchMates) {
+            if (sociograph.hasDirectedEdge(hostName, actualMate.getName())) {
+                double newRep = sociograph.getSrcRepRelativeToAdj(hostName, actualMate.getName()) + 1;
+                sociograph.setSrcRepRelativeToAdj(hostName, actualMate.getName(), newRep);
             } else {
-                LocalTime nextMateStart = lunchMates.get(i + 1).getLunchStart();
-                hostSchedule.put(mateName, new LocalTime[]{mateStart, minTime(mateEnd, nextMateStart)});
+                sociograph.addDirectedEdge(hostName, actualMate.getName(), 1);
             }
+            totalRepObtained++;
         }
 
-        System.out.println("Adjusted Schedule for " + hostName);
-        System.out.println("Host " + hostName + "\t| " + hostStart + "\t-> " + hostEnd);
-        for (Map.Entry<String, LocalTime[]> entry : hostSchedule.entrySet()) {
-            System.out.println(entry.getKey() + "\t\t| " + entry.getValue()[0] + "\t-> " + entry.getValue()[1]);
-        }
-
-        System.out.println();
-        for (String lunchMate : hostSchedule.keySet()) {
-            if (sociograph.hasDirectedEdge(hostName, lunchMate)) {
-                double oldRep = sociograph.getSrcRepRelativeToAdj(hostName, lunchMate);
-                sociograph.setSrcRepRelativeToAdj(hostName, lunchMate, oldRep + 1);
+        // Print out result
+        StringBuilder sb = new StringBuilder();
+        sb.append("Your obtained total ").append(totalRepObtained).append(" reputation points after having lunch with ");
+        for (int i = 0; i < actualLunchMates.size(); i++) {
+            if (actualLunchMates.size() == 2) {
+                sb.append(actualLunchMates.get(0).getName()).append(" and ").append(actualLunchMates.get(1).getName());
+                break;
+            } else if (i == actualLunchMates.size() - 1) {
+                sb.append("and ").append(actualLunchMates.get(i).getName());
             } else {
-                sociograph.addDirectedEdge(hostName, lunchMate, 1);
+                sb.append(actualLunchMates.get(i).getName()).append(", ");
             }
         }
 
-        System.out.println(hostName + " had lunch with " + lunchMates.size() + " persons, " + lunchMates.size() + " rep points earned!");
+        System.out.println(sb);
 
     }
 
@@ -183,7 +176,7 @@ public class SocialActivities {
         System.out.println("That stranger: " + stranger);
 
         // Find all the path between stranger and crush
-        List<List<String>> allPaths = sociograph.dfs(stranger, crush);
+        List<List<String>> allPaths = sociograph.dfTraversal(stranger, crush);
         System.out.println(allPaths + "\n");
 
         // Rumors can't spread if the path is empty
@@ -281,24 +274,15 @@ public class SocialActivities {
         }
     }
 
-    private static LocalTime minTime(LocalTime t1, LocalTime t2) {
-        if (t1.isAfter(t2)) {
-            return t2;
-        } else if (t1.isBefore(t2)) {
-            return t1;
-        } else {
-            return t1;
+    private static int computeNthMinute(LocalTime hostTime, LocalTime mateTime) {
+        if (mateTime.isBefore(hostTime)) {
+            return 0;
         }
-    }
-
-    private static LocalTime maxTime(LocalTime t1, LocalTime t2) {
-        if (t1.isAfter(t2)) {
-            return t1;
-        } else if (t1.isBefore(t2)) {
-            return t2;
-        } else {
-            return t1;
-        }
+        LocalTime resultDuration = mateTime.minusSeconds(hostTime.toSecondOfDay());
+        int minute = resultDuration.getMinute();
+        int hour = resultDuration.getHour() * 60;
+        int nthMinute = minute + hour;
+        return nthMinute;
     }
 
     private static boolean spreadRumor(List<List<String>> allPaths, String crush, List<List<String>> pplKnewSecret) {
