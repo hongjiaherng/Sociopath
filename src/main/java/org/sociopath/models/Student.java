@@ -7,6 +7,7 @@ import org.sociopath.utils.HashMapConverter;
 import org.sociopath.utils.LocalTimeConverter;
 
 import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 @NodeEntity
@@ -25,11 +26,14 @@ public class Student {
     private double dive;                        // 0 < dive < 100
 
     @Property(name = "Lunch Start Time") @Convert(LocalTimeConverter.class)
-    private LocalTime lunchStart;               // 1100 <= lunchStart <= 1400
+    private final LocalTime[] lunchStart = new LocalTime[3];               // 1100 <= lunchStart <= 1400
 
     @Property(name = "Lunch Period")
-    private int lunchPeriod;                    // 5 < lunchPeriod < 60
+    private final int[] lunchPeriod = new int[3];                    // 5 < lunchPeriod < 60
 
+    // TODO: hz, if possible, I also don't want to include this
+    //  (lunchEnd, avgLunchPeriod, avgLunchStart are intermediary attributes that I create for event 3,
+    //  they are calculated with estimateLunchEnd(), which won't run at first)
     @Property(name = "Lunch End Time") @Convert(LocalTimeConverter.class)
     private LocalTime lunchEnd;
 
@@ -39,16 +43,40 @@ public class Student {
     @Relationship(type = "FRIENDS")
     private List<Student> friends;
 
+    // TODO: hz, can I don't include these two attribute to the db? Will it affect the working of this POJO class?
+    private int avgLunchPeriod;
+    private LocalTime avgLunchStart;
+
     public Student(){}
 
     public Student(String name) {
         this.name = name;
         this.dive = Math.round((rand.nextDouble() * 99 + 1) * 100.0) / 100.0;
-        this.lunchStart = LocalTime.of(11, 0).plusMinutes(rand.nextInt(181));
-        this.lunchPeriod = rand.nextInt(55) + 5;
         this.repPoints = new HashMap<>();
         this.friends = new LinkedList<>();
-        this.lunchEnd = lunchStart.plusMinutes(lunchPeriod);
+        for (int i = 0; i < lunchStart.length; i++) {
+            this.lunchStart[i] = LocalTime.of(11, 0).plusMinutes(rand.nextInt(181));
+        }
+        for (int i = 0; i < lunchPeriod.length; i++) {
+            this.lunchPeriod[i] = rand.nextInt(55) + 5;
+        }
+        this.lunchEnd = null;
+        this.avgLunchPeriod = 0;
+        this.avgLunchStart = null;
+    }
+
+    public void estimateLunchEnd() {
+        long totalSeconds = 0;
+        int totalMins = 0;
+        for (LocalTime localTime : lunchStart) {
+            totalSeconds += localTime.toSecondOfDay();
+        }
+        for (int j : lunchPeriod) {
+            totalMins += j;
+        }
+        avgLunchPeriod = totalMins / 3;
+        avgLunchStart = LocalTime.ofSecondOfDay(totalSeconds / 3).truncatedTo(ChronoUnit.MINUTES);
+        this.lunchEnd = avgLunchStart.plusMinutes(avgLunchPeriod);
     }
 
     public String getName() {
@@ -67,26 +95,16 @@ public class Student {
         this.dive = dive;
     }
 
-    public LocalTime getLunchStart() {
-        return lunchStart;
+    public LocalTime getAvgLunchStart() {
+        return avgLunchStart;
     }
 
-    public LocalTime getLunchEnd() {
+    public LocalTime getEstimatedLunchEnd() {
         return lunchEnd;
     }
 
-    public void setLunchStart(int hour, int minute) {
-        this.lunchStart = LocalTime.of(hour, minute);
-        this.lunchEnd = lunchStart.plusMinutes(lunchPeriod);
-    }
-
-    public int getLunchPeriod() {
-        return lunchPeriod;
-    }
-
-    public void setLunchPeriod(int lunchPeriod) {
-        this.lunchPeriod = lunchPeriod;
-        this.lunchEnd = lunchStart.plusMinutes(lunchPeriod);
+    public int getAvgLunchPeriod() {
+        return avgLunchPeriod;
     }
 
     void setRepPoints(String adjName, double repRelativeToAdj) {
@@ -107,13 +125,18 @@ public class Student {
         friends.remove(newFriend);
     }
 
+    public void setAvgLunchStart(int hour, int minute) {
+        this.avgLunchStart = LocalTime.of(hour, minute);
+        this.lunchEnd = avgLunchStart.plusMinutes(avgLunchPeriod);
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("Name").append("\t\t\t: ").append(name).append("\n");
         sb.append("Dive").append("\t\t\t: ").append(dive).append("\n");
-        sb.append("Lunch start").append("\t\t: ").append(lunchStart).append("\n");
-        sb.append("Lunch period").append("\t: ").append(lunchPeriod).append("\n");
+        sb.append("Lunch start").append("\t\t: ").append(Arrays.toString(lunchStart)).append("\n");
+        sb.append("Lunch period").append("\t: ").append(Arrays.toString(lunchPeriod)).append("\n");
         sb.append("Lunch end").append("\t\t: ").append(lunchEnd).append("\n");
         sb.append("Rep points").append("\t\t: ").append(repPoints).append("\n");
         sb.append("Friends\t\t\t: [");
