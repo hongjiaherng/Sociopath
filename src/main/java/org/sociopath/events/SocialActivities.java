@@ -244,7 +244,6 @@ public class SocialActivities {
     private static void chitchat(Sociograph sociograph, String hostName, String newFriendName, HashSet<Student> visitedRecord) {
         List<Student> friendsOfNewFriend = sociograph.neighbours(newFriendName);
         friendsOfNewFriend.removeAll(visitedRecord);
-        Student host = sociograph.getStudent(hostName);
         if (friendsOfNewFriend.isEmpty()) {
             return;
         } else {
@@ -252,19 +251,20 @@ public class SocialActivities {
                 if (visitedRecord.contains(friend)) {
                     continue;
                 }
-                double repRelativeToHost = 0;
+                double hostRepRelativeToFriend = 0;
                 if (Math.random() < 0.5) {  // if talk bad
-                    repRelativeToHost -= Math.abs(sociograph.getSrcRepRelativeToAdj(hostName, newFriendName));
+                    hostRepRelativeToFriend -= Math.abs(sociograph.getSrcRepRelativeToAdj(hostName, newFriendName));
                 } else {    // if talk good
-                    repRelativeToHost += (sociograph.getSrcRepRelativeToAdj(hostName, newFriendName) / 2.0);
+                    hostRepRelativeToFriend += (sociograph.getSrcRepRelativeToAdj(hostName, newFriendName) / 2.0);
                 }
 
                 if (sociograph.hasDirectedEdge(hostName, friend.getName())) {
-                    repRelativeToHost += sociograph.getSrcRepRelativeToAdj(hostName, friend.getName());
-                    sociograph.setSrcRepRelativeToAdj(hostName, friend.getName(), repRelativeToHost);
+                    hostRepRelativeToFriend += sociograph.getSrcRepRelativeToAdj(hostName, friend.getName());
+                    sociograph.setSrcRepRelativeToAdj(hostName, friend.getName(), hostRepRelativeToFriend);
                 } else {
-                    sociograph.addDirectedEdge(hostName, friend.getName(), repRelativeToHost);
+                    sociograph.addDirectedEdge(hostName, friend.getName(), hostRepRelativeToFriend);
                 }
+                // Update graph (update student's properties, add edge)
                 visitedRecord.add(friend);
                 System.out.println("Propagated: " + friend.getName());
                 System.out.println(sociograph);

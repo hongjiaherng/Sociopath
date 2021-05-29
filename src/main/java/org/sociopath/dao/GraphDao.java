@@ -4,7 +4,6 @@ import org.neo4j.ogm.session.Session;
 import org.sociopath.models.Sociograph;
 import org.sociopath.models.Student;
 import org.sociopath.utils.DBConnect;
-import org.sociopath.utils.HashMapConverter;
 
 import java.util.*;
 
@@ -13,7 +12,6 @@ public class GraphDao {
      * Connection for Neo4j database
      */
     private static final Session session = DBConnect.getSession();
-
 
     /**
      * Save the graph into the database
@@ -63,6 +61,11 @@ public class GraphDao {
 //
 //        return sociograph;
 //    }
+
+
+    public static void db_addOrUpdateNode(Student node) {
+        session.save(node);
+    }
 
     private static void getRelationship(ArrayList<Student> allStudents, Sociograph sociograph){
         for(Student s : allStudents){

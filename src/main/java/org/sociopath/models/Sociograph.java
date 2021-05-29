@@ -1,5 +1,7 @@
 package org.sociopath.models;
 
+import org.sociopath.dao.GraphDao;
+
 import java.util.*;
 
 /**
@@ -111,6 +113,7 @@ public class Sociograph {
             Vertex newVertex = new Vertex(new Student(name));
             this.vertices.add(newVertex);
             size++;
+            GraphDao.db_addOrUpdateNode(newVertex.studentInfo);
             return true;
         }
         return false;
@@ -129,6 +132,7 @@ public class Sociograph {
      * @return true if both the edges is successfully added, otherwise false
      */
     public boolean addUndirectedEdge(String srcName, String adjName, double srcRep, double adjRep, Relationship rel) {
+
         if (size == 0) {
             return false;
         } else if (srcName.equals(adjName)) {
@@ -152,19 +156,10 @@ public class Sociograph {
         adjVertex.outdeg++;
         adjVertex.studentInfo.setRepPoints(srcName, adjRep);
 
-        if (rel == Relationship.FRIEND) {
-            srcVertex.studentInfo.addFriend(adjVertex.studentInfo);
-            adjVertex.studentInfo.addFriend(srcVertex.studentInfo);
-        } else if (rel == Relationship.ENEMY) {
-            srcVertex.studentInfo.addEnemy(adjVertex.studentInfo);
-            adjVertex.studentInfo.addEnemy(srcVertex.studentInfo);
-        } else if (rel == Relationship.CRUSH) {
-            srcVertex.studentInfo.addCrush(adjVertex.studentInfo);
-            adjVertex.studentInfo.addCrush(srcVertex.studentInfo);
-        } else if (rel == Relationship.NONE) {
-            srcVertex.studentInfo.addNone(adjVertex.studentInfo);
-            adjVertex.studentInfo.addNone(srcVertex.studentInfo);
-        }
+        add2WaysRelationToStudent(srcVertex.studentInfo, adjVertex.studentInfo, rel);
+
+        GraphDao.db_addOrUpdateNode(srcVertex.studentInfo);
+        GraphDao.db_addOrUpdateNode(adjVertex.studentInfo);
 
         return true;
     }
@@ -191,6 +186,9 @@ public class Sociograph {
             srcVertex.indeg++;
             srcVertex.outdeg++;
             srcVertex.studentInfo.addNone(adjVertex.studentInfo);
+
+            GraphDao.db_addOrUpdateNode(srcVertex.studentInfo);
+
             return true;
         }
 
@@ -250,33 +248,11 @@ public class Sociograph {
                 adjEdge = adjEdge.nextEdge;
             }
 
-            if (prevRel == Relationship.FRIEND) {
-                srcVertex.studentInfo.unfriend(adjVertex.studentInfo);
-                adjVertex.studentInfo.unfriend(srcVertex.studentInfo);
-            } else if (prevRel == Relationship.ENEMY) {
-                srcVertex.studentInfo.unEnemy(adjVertex.studentInfo);
-                adjVertex.studentInfo.unEnemy(srcVertex.studentInfo);
-            } else if (prevRel == Relationship.CRUSH) {
-                srcVertex.studentInfo.unCrush(adjVertex.studentInfo);
-                adjVertex.studentInfo.unCrush(srcVertex.studentInfo);
-            } else if (prevRel == Relationship.NONE) {
-                srcVertex.studentInfo.unNone(adjVertex.studentInfo);
-                adjVertex.studentInfo.unNone(srcVertex.studentInfo);
-            }
+            remove2WaysRelationFromStudent(srcVertex.studentInfo, adjVertex.studentInfo, prevRel);
+            add2WaysRelationToStudent(srcVertex.studentInfo, adjVertex.studentInfo, relationship);
 
-            if (relationship == Relationship.FRIEND) {
-                srcVertex.studentInfo.addFriend(adjVertex.studentInfo);
-                adjVertex.studentInfo.addFriend(srcVertex.studentInfo);
-            } else if (relationship == Relationship.ENEMY) {
-                srcVertex.studentInfo.addEnemy(adjVertex.studentInfo);
-                adjVertex.studentInfo.addEnemy(srcVertex.studentInfo);
-            } else if (relationship == Relationship.CRUSH) {
-                srcVertex.studentInfo.addCrush(adjVertex.studentInfo);
-                adjVertex.studentInfo.addCrush(srcVertex.studentInfo);
-            } else if (relationship == Relationship.NONE) {
-                srcVertex.studentInfo.addNone(adjVertex.studentInfo);
-                adjVertex.studentInfo.addNone(srcVertex.studentInfo);
-            }
+            GraphDao.db_addOrUpdateNode(srcVertex.studentInfo);
+            GraphDao.db_addOrUpdateNode(adjVertex.studentInfo);
 
             return true;
         } else {
@@ -323,6 +299,9 @@ public class Sociograph {
                 if (srcEdge.adjVertex.studentInfo.getName().equals(adjName)) {
                     srcEdge.repRelativeToAdj = newRep;
                     srcVertex.studentInfo.setRepPoints(adjName, newRep);
+
+                    GraphDao.db_addOrUpdateNode(srcVertex.studentInfo);
+
                     return;
                 }
                 srcEdge = srcEdge.nextEdge;
@@ -453,6 +432,32 @@ public class Sociograph {
             }
         }
         return index;
+    }
+
+    private static void add2WaysRelationToStudent(Student src, Student adj, Relationship newRel) {
+        if (newRel == Relationship.FRIEND) {
+            src.addFriend(adj);
+            adj.addFriend(src);
+        } else if (newRel == Relationship.ENEMY) {
+            src.addEnemy(adj);
+            adj.addEnemy(src);
+        } else if (newRel == Relationship.NONE) {
+            src.addNone(adj);
+            adj.addNone(src);
+        }
+    }
+
+    private static void remove2WaysRelationFromStudent(Student src, Student adj, Relationship relToRemove) {
+        if (relToRemove == Relationship.FRIEND) {
+            src.unfriend(adj);
+            adj.unfriend(src);
+        } else if (relToRemove == Relationship.ENEMY) {
+            src.unEnemy(adj);
+            adj.unEnemy(src);
+        } else if (relToRemove == Relationship.NONE) {
+            src.unNone(adj);
+            adj.unNone(src);
+        }
     }
 
     /**

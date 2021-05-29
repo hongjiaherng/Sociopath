@@ -5,7 +5,6 @@ import org.neo4j.ogm.annotation.Relationship;
 import org.neo4j.ogm.annotation.typeconversion.Convert;
 import org.sociopath.utils.HashMapConverter;
 import org.sociopath.utils.LocalTimeArrayConverter;
-import org.sociopath.utils.LocalTimeConverter;
 
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
@@ -34,25 +33,20 @@ public class Student {
     @Property(name = "repPoints") @Convert(HashMapConverter.class)
     private HashMap<String, Double> repPoints;  // 1 <= rep <= 10
 
-    @Relationship(type = "FRIENDS")
+    @Relationship(type = "FRIEND")
     private Set<Student> friends;
 
     @Relationship(type = "ENEMY")
     private Set<Student> enemies;
 
-    @Relationship(type = "CRUSH")
-    private Set<Student> crushes;
+//    @Relationship(type = "CRUSH")
+//    private Set<Student> crushes;
 
     @Relationship(type = "NONE")
     private Set<Student> nones;
 
-    @Property(name = "avg lunch period")
     private transient int avgLunchPeriod;
-
-    @Property(name = "avg lunch start") @Convert(LocalTimeConverter.class)
     private transient LocalTime avgLunchStart;
-
-    @Property(name = "avg lunch end") @Convert(LocalTimeConverter.class)
     private transient LocalTime lunchEnd;
 
     public Student(){}
@@ -63,7 +57,7 @@ public class Student {
         this.repPoints = new HashMap<>();
         this.friends = new HashSet<>();
         this.enemies = new HashSet<>();
-        this.crushes = new HashSet<>();
+//        this.crushes = new HashSet<>();
         this.nones = new HashSet<>();
         for (int i = 0; i < lunchStart.length; i++) {
             this.lunchStart[i] = LocalTime.of(11, 0).plusMinutes(rand.nextInt(181));
@@ -71,7 +65,6 @@ public class Student {
         for (int i = 0; i < lunchPeriod.length; i++) {
             this.lunchPeriod[i] = rand.nextInt(55) + 5;
         }
-        estimateLunchEnd();
     }
 
     public void estimateLunchEnd() {
@@ -140,13 +133,13 @@ public class Student {
         enemies.remove(enemy);
     }
 
-    void addCrush(Student crush) {
-        crushes.add(crush);
-    }
-
-    void unCrush(Student crush) {
-        crushes.remove(crush);
-    }
+//    void addCrush(Student crush) {
+//        crushes.add(crush);
+//    }
+//
+//    void unCrush(Student crush) {
+//        crushes.remove(crush);
+//    }
 
     void addNone(Student none) {
         nones.add(none);
@@ -180,11 +173,12 @@ public class Student {
             sb.append(enemy.getName()).append(" ");
         });
         sb.append("]\n");
-        sb.append("Crushes").append("\t\t\t: [ ");
-        crushes.forEach(crush -> {
-            sb.append(crush.getName()).append(" ");
-        });
-        sb.append("]\n");sb.append("Nones").append("\t\t\t: [ ");
+//        sb.append("Crushes").append("\t\t\t: [ ");
+//        crushes.forEach(crush -> {
+//            sb.append(crush.getName()).append(" ");
+//        });
+//        sb.append("]\n");
+        sb.append("Nones").append("\t\t\t: [ ");
         nones.forEach(none -> {
             sb.append(none.getName()).append(" ");
         });
