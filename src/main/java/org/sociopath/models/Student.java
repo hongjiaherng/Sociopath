@@ -4,6 +4,7 @@ import org.neo4j.ogm.annotation.*;
 import org.neo4j.ogm.annotation.Relationship;
 import org.neo4j.ogm.annotation.typeconversion.Convert;
 import org.sociopath.utils.HashMapConverter;
+import org.sociopath.utils.LocalTimeArrayConverter;
 import org.sociopath.utils.LocalTimeConverter;
 
 import java.time.LocalTime;
@@ -13,8 +14,7 @@ import java.util.*;
 @NodeEntity
 public class Student {
 
-    @Id
-    @GeneratedValue
+    @Id @GeneratedValue
     private Long id;
 
     private static final Random rand = new Random();  // Set seed here if you want a fixed random values
@@ -25,27 +25,35 @@ public class Student {
     @Property(name = "Dive Rate")
     private double dive;                        // 0 < dive < 100
 
-    @Property(name = "Lunch Start Time") @Convert(LocalTimeConverter.class)
+    @Property(name = "Lunch Start Time") @Convert(LocalTimeArrayConverter.class)
     private final LocalTime[] lunchStart = new LocalTime[3];               // 1100 <= lunchStart <= 1400
 
     @Property(name = "Lunch Period")
     private final int[] lunchPeriod = new int[3];                    // 5 < lunchPeriod < 60
 
-    // TODO: hz, if possible, I also don't want to include this
-    //  (lunchEnd, avgLunchPeriod, avgLunchStart are intermediary attributes that I create for event 3,
-    //  they are calculated with estimateLunchEnd(), which won't run at first)
-    @Property(name = "Lunch End Time") @Convert(LocalTimeConverter.class)
-    private LocalTime lunchEnd;
-
     @Property(name = "repPoints") @Convert(HashMapConverter.class)
     private HashMap<String, Double> repPoints;  // 1 <= rep <= 10
 
     @Relationship(type = "FRIENDS")
-    private List<Student> friends;
+    private Set<Student> friends;
 
-    // TODO: hz, can I don't include these two attribute to the db? Will it affect the working of this POJO class?
-    private int avgLunchPeriod;
-    private LocalTime avgLunchStart;
+    @Relationship(type = "ENEMY")
+    private Set<Student> enemies;
+
+    @Relationship(type = "CRUSH")
+    private Set<Student> crushes;
+
+    @Relationship(type = "NONE")
+    private Set<Student> nones;
+
+    @Property(name = "avg lunch period")
+    private transient int avgLunchPeriod;
+
+    @Property(name = "avg lunch start") @Convert(LocalTimeConverter.class)
+    private transient LocalTime avgLunchStart;
+
+    @Property(name = "avg lunch end") @Convert(LocalTimeConverter.class)
+    private transient LocalTime lunchEnd;
 
     public Student(){}
 
@@ -53,16 +61,17 @@ public class Student {
         this.name = name;
         this.dive = Math.round((rand.nextDouble() * 99 + 1) * 100.0) / 100.0;
         this.repPoints = new HashMap<>();
-        this.friends = new LinkedList<>();
+        this.friends = new HashSet<>();
+        this.enemies = new HashSet<>();
+        this.crushes = new HashSet<>();
+        this.nones = new HashSet<>();
         for (int i = 0; i < lunchStart.length; i++) {
             this.lunchStart[i] = LocalTime.of(11, 0).plusMinutes(rand.nextInt(181));
         }
         for (int i = 0; i < lunchPeriod.length; i++) {
             this.lunchPeriod[i] = rand.nextInt(55) + 5;
         }
-        this.lunchEnd = null;
-        this.avgLunchPeriod = 0;
-        this.avgLunchStart = null;
+        estimateLunchEnd();
     }
 
     public void estimateLunchEnd() {
@@ -111,24 +120,46 @@ public class Student {
         repPoints.put(adjName, repRelativeToAdj);
     }
 
-    public String getRepPoints() {
-        return repPoints.toString();
+    public HashMap<String, Double> getRepPoints() {
+        return repPoints;
     }
 
-    void addFriend(Student newFriend) {
-        if (!friends.contains(newFriend)) {
-            friends.add(newFriend);
-        }
+    void addFriend(Student friend) {
+        friends.add(friend);
     }
 
-    void unfriend(Student newFriend) {
-        friends.remove(newFriend);
+    void unfriend(Student friend) {
+        friends.remove(friend);
     }
 
-    public void setAvgLunchStart(int hour, int minute) {
-        this.avgLunchStart = LocalTime.of(hour, minute);
-        this.lunchEnd = avgLunchStart.plusMinutes(avgLunchPeriod);
+    void addEnemy(Student enemy) {
+        enemies.add(enemy);
     }
+
+    void unEnemy(Student enemy) {
+        enemies.remove(enemy);
+    }
+
+    void addCrush(Student crush) {
+        crushes.add(crush);
+    }
+
+    void unCrush(Student crush) {
+        crushes.remove(crush);
+    }
+
+    void addNone(Student none) {
+        nones.add(none);
+    }
+
+    void unNone(Student none) {
+        nones.remove(none);
+    }
+
+//    public void setAvgLunchStart(int hour, int minute) {
+//        this.avgLunchStart = LocalTime.of(hour, minute);
+//        this.lunchEnd = avgLunchStart.plusMinutes(avgLunchPeriod);
+//    }
 
     @Override
     public String toString() {
@@ -139,14 +170,24 @@ public class Student {
         sb.append("Lunch period").append("\t: ").append(Arrays.toString(lunchPeriod)).append("\n");
         sb.append("Lunch end").append("\t\t: ").append(lunchEnd).append("\n");
         sb.append("Rep points").append("\t\t: ").append(repPoints).append("\n");
-        sb.append("Friends\t\t\t: [");
-        for(int i =0; i<friends.size(); i++){
-            if(i==friends.size() - 1)
-                sb.append(friends.get(i).getName());
-            else
-                sb.append(friends.get(i).getName()).append(", ");
-        }
-
+        sb.append("Friends").append("\t\t\t: [ ");
+        friends.forEach(friend -> {
+            sb.append(friend.getName()).append(" ");
+        });
+        sb.append("]\n");
+        sb.append("Enemies").append("\t\t\t: [ ");
+        enemies.forEach(enemy -> {
+            sb.append(enemy.getName()).append(" ");
+        });
+        sb.append("]\n");
+        sb.append("Crushes").append("\t\t\t: [ ");
+        crushes.forEach(crush -> {
+            sb.append(crush.getName()).append(" ");
+        });
+        sb.append("]\n");sb.append("Nones").append("\t\t\t: [ ");
+        nones.forEach(none -> {
+            sb.append(none.getName()).append(" ");
+        });
         sb.append("]");
         return sb.toString();
     }

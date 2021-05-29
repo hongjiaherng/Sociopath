@@ -1,6 +1,8 @@
 package org.sociopath.models;
 
+import org.sociopath.dao.GraphDao;
 import org.sociopath.events.SocialActivities;
+import org.sociopath.utils.DBConnect;
 
 public class TestGraph {
     public static void main(String[] args) {
@@ -10,7 +12,7 @@ public class TestGraph {
 //        event1Test(sociograph);
 //        event2Test(sociograph);
 //        event3Test(sociograph);
-        event5Test(sociograph);
+//        event5Test(sociograph);
 
     }
 
@@ -31,6 +33,16 @@ public class TestGraph {
         sociograph.addUndirectedEdge("D", "J", 7, 7, Relationship.FRIEND);
         sociograph.addUndirectedEdge("I", "J", 6, 5, Relationship.FRIEND);
         sociograph.setRelationship("G", "A" , Relationship.FRIEND);
+        System.out.println(sociograph);
+
+        for (Student student : sociograph.getAllStudents()) {
+            System.out.println(student);
+            System.out.println();
+        }
+
+//        DBConnect.startCon();
+//        GraphDao.saveGraph(sociograph);
+
 
         // Graph Tests
         /*

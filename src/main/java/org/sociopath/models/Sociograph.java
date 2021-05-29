@@ -155,6 +155,15 @@ public class Sociograph {
         if (rel == Relationship.FRIEND) {
             srcVertex.studentInfo.addFriend(adjVertex.studentInfo);
             adjVertex.studentInfo.addFriend(srcVertex.studentInfo);
+        } else if (rel == Relationship.ENEMY) {
+            srcVertex.studentInfo.addEnemy(adjVertex.studentInfo);
+            adjVertex.studentInfo.addEnemy(srcVertex.studentInfo);
+        } else if (rel == Relationship.CRUSH) {
+            srcVertex.studentInfo.addCrush(adjVertex.studentInfo);
+            adjVertex.studentInfo.addCrush(srcVertex.studentInfo);
+        } else if (rel == Relationship.NONE) {
+            srcVertex.studentInfo.addNone(adjVertex.studentInfo);
+            adjVertex.studentInfo.addNone(srcVertex.studentInfo);
         }
 
         return true;
@@ -181,7 +190,7 @@ public class Sociograph {
             srcVertex.studentInfo.setRepPoints(adjName, srcRep);
             srcVertex.indeg++;
             srcVertex.outdeg++;
-
+            srcVertex.studentInfo.addNone(adjVertex.studentInfo);
             return true;
         }
 
@@ -206,7 +215,7 @@ public class Sociograph {
                 srcEdge = srcEdge.nextEdge;
             }
         }
-        return null;
+        return Relationship.NONE;
     }
 
     /**
@@ -223,6 +232,7 @@ public class Sociograph {
             Vertex adjVertex = vertices.get(indexOf(adjName));
             Edge srcEdge = srcVertex.firstEdge;
             Edge adjEdge = adjVertex.firstEdge;
+            Relationship prevRel = checkRelationship(srcName, adjName);
 
             while (srcEdge != null) {
                 if (srcEdge.adjVertex.studentInfo.getName().equals(adjName)) {
@@ -240,13 +250,34 @@ public class Sociograph {
                 adjEdge = adjEdge.nextEdge;
             }
 
+            if (prevRel == Relationship.FRIEND) {
+                srcVertex.studentInfo.unfriend(adjVertex.studentInfo);
+                adjVertex.studentInfo.unfriend(srcVertex.studentInfo);
+            } else if (prevRel == Relationship.ENEMY) {
+                srcVertex.studentInfo.unEnemy(adjVertex.studentInfo);
+                adjVertex.studentInfo.unEnemy(srcVertex.studentInfo);
+            } else if (prevRel == Relationship.CRUSH) {
+                srcVertex.studentInfo.unCrush(adjVertex.studentInfo);
+                adjVertex.studentInfo.unCrush(srcVertex.studentInfo);
+            } else if (prevRel == Relationship.NONE) {
+                srcVertex.studentInfo.unNone(adjVertex.studentInfo);
+                adjVertex.studentInfo.unNone(srcVertex.studentInfo);
+            }
+
             if (relationship == Relationship.FRIEND) {
                 srcVertex.studentInfo.addFriend(adjVertex.studentInfo);
                 adjVertex.studentInfo.addFriend(srcVertex.studentInfo);
-            } else {
-                srcVertex.studentInfo.unfriend(adjVertex.studentInfo);
-                adjVertex.studentInfo.unfriend(srcVertex.studentInfo);
+            } else if (relationship == Relationship.ENEMY) {
+                srcVertex.studentInfo.addEnemy(adjVertex.studentInfo);
+                adjVertex.studentInfo.addEnemy(srcVertex.studentInfo);
+            } else if (relationship == Relationship.CRUSH) {
+                srcVertex.studentInfo.addCrush(adjVertex.studentInfo);
+                adjVertex.studentInfo.addCrush(srcVertex.studentInfo);
+            } else if (relationship == Relationship.NONE) {
+                srcVertex.studentInfo.addNone(adjVertex.studentInfo);
+                adjVertex.studentInfo.addNone(srcVertex.studentInfo);
             }
+
             return true;
         } else {
             System.out.println("Relationship can't be set. They must both know each other to have a relationship (having rep point relative to each other)");
