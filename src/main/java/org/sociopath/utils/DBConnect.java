@@ -14,10 +14,10 @@ public class DBConnect {
     public static void startCon() {
         configuration= new Configuration.Builder()
                 .uri("bolt://localhost")
-                .credentials("neo4j", "1234")
+                .credentials("neo4j", "QWERTyuiop12#")
                 .build();
         LogManager.getLogManager().reset();
-        sessionFactory = new SessionFactory(configuration, "node", "org.school");
+        sessionFactory = new SessionFactory(configuration, "models", "org.sociopath");
     }
 
     public static Session getSession() {

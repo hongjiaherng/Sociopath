@@ -1,6 +1,8 @@
 package org.sociopath.models;
 
+import org.sociopath.dao.GraphDao;
 import org.sociopath.events.SocialActivities;
+import org.sociopath.utils.DBConnect;
 
 public class TestGraph {
     public static void main(String[] args) {
@@ -16,6 +18,10 @@ public class TestGraph {
     }
 
     public static void initialization(Sociograph sociograph) {
+
+        DBConnect.startCon();
+        GraphDao.deleteGraph();     // reset
+
 //                            {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10"}
         String[] nodesToAdd = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J"};
 
@@ -23,7 +29,7 @@ public class TestGraph {
             sociograph.addVertex(node);
         }
 
-        sociograph.addUndirectedEdge("A", "G", 3, 4, Relationship.NONE);
+        sociograph.addUndirectedEdge("A", "G", 3, 4, Relationship.ENEMY);
         sociograph.addUndirectedEdge("A", "B", 8, 5, Relationship.FRIEND);
         sociograph.addUndirectedEdge("B", "F", 7, 9, Relationship.FRIEND);
         sociograph.addUndirectedEdge("B", "E", 2, 6, Relationship.FRIEND);
@@ -31,6 +37,7 @@ public class TestGraph {
         sociograph.addUndirectedEdge("H", "D", 7, 10, Relationship.FRIEND);
         sociograph.addUndirectedEdge("D", "J", 7, 7, Relationship.FRIEND);
         sociograph.addUndirectedEdge("I", "J", 6, 5, Relationship.FRIEND);
+
         sociograph.setRelationship("G", "A" , Relationship.FRIEND);
         System.out.println(sociograph + "\n");
         sociograph.removeEdge("A", "G");
@@ -66,12 +73,13 @@ public class TestGraph {
     public static void event2Test(Sociograph sociograph) {
         // Event 2 Tests
         // Test simple case, G make new friend with H (H connects to a path, one direction propagate)
-        sociograph.addDirectedEdge("G", "H", 10);
-        System.out.println("Original Graph");
-        System.out.println(sociograph);
-        System.out.println();
-        System.out.println("Mutated Graph 1");
-        SocialActivities.event2(sociograph, "G", "H");
+//        sociograph.addDirectedEdge("G", "H", 10);
+//        System.out.println("Original Graph");
+//        System.out.println(sociograph);
+//        System.out.println();
+//        System.out.println("Mutated Graph 1");
+//        SocialActivities.event2(sociograph, "G", "H");
+//        System.out.println(sociograph + "\n");
 
         // Test simple case, G make new friend with D (D connects to H and J, two direction propagate)
 //        sociograph.addDirectedEdge("G", "D", 10);
