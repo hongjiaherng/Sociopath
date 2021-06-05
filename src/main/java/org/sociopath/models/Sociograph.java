@@ -116,6 +116,51 @@ public class Sociograph {
         return false;
     }
 
+    public boolean deleteVertex(String name) {
+        if (hasVertex(name)) {
+            int vertexIndex = indexOf(name);
+            this.vertices.remove(indexOf(name));
+            for (Vertex v : vertices) {
+                Edge currentEdge = v.firstEdge;
+                while (currentEdge != null) {
+                    if (currentEdge.adjVertex.studentInfo.getName().equals(name)) {
+                        removeEdge(v.studentInfo.getName(), name);
+                        continue;
+                    }
+                    currentEdge = currentEdge.nextEdge;
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+
+    public boolean removeEdge(String srcName, String adjName) {
+        if (hasDirectedEdge(srcName, adjName)) {
+            Vertex srcVertex = vertices.get(indexOf(srcName));
+            Edge currentEdge = srcVertex.firstEdge;
+            Edge prevEdge = srcVertex.firstEdge;
+
+            while (currentEdge != null) {
+                if (currentEdge.adjVertex.studentInfo.getName().equals(adjName)) {
+                    Student studentToUnfriend = currentEdge.adjVertex.studentInfo;
+                    if (srcVertex.firstEdge.adjVertex.studentInfo.getName().equals(adjName)) {
+                        srcVertex.firstEdge = currentEdge.nextEdge;
+
+                    } else {
+                        prevEdge.nextEdge = currentEdge.nextEdge;
+
+                    }
+                    srcVertex.studentInfo.unfriend(studentToUnfriend);
+                    return true;
+                }
+                currentEdge = currentEdge.nextEdge;
+                prevEdge = currentEdge;
+            }
+        }
+        return false;
+    }
+
     /**
      * Add the undirected edges from srcName and adjName but with different weight. Can also be rewritten as
      * <br> - addDirectedEdge(srcName, adjName, srcRep)
@@ -427,7 +472,7 @@ public class Sociograph {
     /**
      * Static class for vertex of the graph
      */
-    static class Vertex {
+    public static class Vertex {
         private Student studentInfo;
         private int indeg;
         private int outdeg;
@@ -444,7 +489,7 @@ public class Sociograph {
     /**
      * Static class for edge of the graph
      */
-    static class Edge {
+    public static class Edge {
         private Vertex adjVertex;
         private Edge nextEdge;
 

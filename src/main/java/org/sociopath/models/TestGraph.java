@@ -7,10 +7,11 @@ public class TestGraph {
         Sociograph sociograph = new Sociograph();
 
         initialization(sociograph);
+        System.out.println(sociograph);
 //        event1Test(sociograph);
 //        event2Test(sociograph);
 //        event3Test(sociograph);
-        event5Test(sociograph);
+//        event5Test(sociograph);
 
     }
 
@@ -31,6 +32,8 @@ public class TestGraph {
         sociograph.addUndirectedEdge("D", "J", 7, 7, Relationship.FRIEND);
         sociograph.addUndirectedEdge("I", "J", 6, 5, Relationship.FRIEND);
         sociograph.setRelationship("G", "A" , Relationship.FRIEND);
+        System.out.println(sociograph + "\n");
+        sociograph.removeEdge("A", "G");
 
         // Graph Tests
         /*
