@@ -73,36 +73,6 @@ public class Sociograph {
     }
 
     /**
-     * Get the total number of exiting edge for the vertex named "name"
-     * @param name student's name
-     * @return total number of exiting edge for the vertex with Student object named "name"
-     * <br> -1 if vertex named "name" is not exist
-     */
-    public int getOutdeg(String name) {
-        int index = indexOf(name);
-
-        if(index == -1)
-            return -1;
-        else
-            return vertices.get(index).outdeg;
-    }
-
-    /**
-     * Get the total number of entering edge for the vertex named "name"
-     * @param name student's name
-     * @return total number of entering edge for the vertex with Student object named "name"
-     * <br> -1 if vertex named "name" is not exist
-     */
-    public int getIndeg(String name) {
-        int index = indexOf(name);
-
-        if(index == -1)
-            return -1;
-        else
-            return vertices.get(index).indeg;
-    }
-
-    /**
      * Create a Student object with "name" and add a new vertex using the newly created Student object. The new vertex is
      * being add at the end of the linked list of the graph.
      * @param name student's name
@@ -113,7 +83,6 @@ public class Sociograph {
             Vertex newVertex = new Vertex(new Student(name));
             this.vertices.add(newVertex);
             size++;
-            GraphDao.db_addOrUpdateNode(newVertex.studentInfo);
             return true;
         }
         return false;
@@ -122,17 +91,23 @@ public class Sociograph {
     public boolean deleteVertex(String name) {
         if (hasVertex(name)) {
             int vertexIndex = indexOf(name);
-            this.vertices.remove(indexOf(name));
-            for (Vertex v : vertices) {
-                Edge currentEdge = v.firstEdge;
-                while (currentEdge != null) {
-                    if (currentEdge.adjVertex.studentInfo.getName().equals(name)) {
-                        removeEdge(v.studentInfo.getName(), name);
+            next:
+                for (Vertex v : vertices) {
+                    if (v.studentInfo.getName().equals(name)) {
                         continue;
                     }
-                    currentEdge = currentEdge.nextEdge;
+
+                    Edge currentEdge = v.firstEdge;
+                    while (currentEdge != null) {
+                        if (currentEdge.adjVertex.studentInfo.getName().equals(name)) {
+                            removeEdge(v.studentInfo.getName(), name);
+                            continue next;
+                        }
+                        currentEdge = currentEdge.nextEdge;
+                    }
                 }
-            }
+            this.vertices.remove(vertexIndex);
+            size--;
             return true;
         }
         return false;
@@ -146,19 +121,19 @@ public class Sociograph {
 
             while (currentEdge != null) {
                 if (currentEdge.adjVertex.studentInfo.getName().equals(adjName)) {
-                    Student studentToUnfriend = currentEdge.adjVertex.studentInfo;
+                    Student personToRemove = currentEdge.adjVertex.studentInfo;
                     if (srcVertex.firstEdge.adjVertex.studentInfo.getName().equals(adjName)) {
                         srcVertex.firstEdge = currentEdge.nextEdge;
-
                     } else {
                         prevEdge.nextEdge = currentEdge.nextEdge;
-
                     }
-                    srcVertex.studentInfo.unfriend(studentToUnfriend);
+                    // remove adjStudent from HashMap
+                    // remove rep point of adjStudent
+                    srcVertex.studentInfo.deleteRelationship(personToRemove, checkRelationship(srcName, adjName));
                     return true;
                 }
-                currentEdge = currentEdge.nextEdge;
                 prevEdge = currentEdge;
+                currentEdge = currentEdge.nextEdge;
             }
         }
         return false;
@@ -191,20 +166,17 @@ public class Sociograph {
         Vertex adjVertex = vertices.get(indexOf(adjName));
         Edge newSrcEdge = new Edge(adjVertex, srcRep, rel, srcVertex.firstEdge);
         srcVertex.firstEdge = newSrcEdge;
-        srcVertex.indeg++;
-        srcVertex.outdeg++;
         srcVertex.studentInfo.setRepPoints(adjName, srcRep);
 
         Edge newAdjEdge = new Edge(srcVertex, adjRep, rel, adjVertex.firstEdge);
         adjVertex.firstEdge = newAdjEdge;
-        adjVertex.indeg++;
-        adjVertex.outdeg++;
         adjVertex.studentInfo.setRepPoints(srcName, adjRep);
 
-        add2WaysRelationToStudent(srcVertex.studentInfo, adjVertex.studentInfo, rel);
+        srcVertex.studentInfo.setRelationship(adjVertex.studentInfo, null, rel);
+        adjVertex.studentInfo.setRelationship(srcVertex.studentInfo, null, rel);
 
-        GraphDao.db_addOrUpdateNode(srcVertex.studentInfo);
-        GraphDao.db_addOrUpdateNode(adjVertex.studentInfo);
+//        GraphDao.db_addOrUpdateNode(srcVertex.studentInfo);
+//        GraphDao.db_addOrUpdateNode(adjVertex.studentInfo);
 
         return true;
     }
@@ -228,11 +200,7 @@ public class Sociograph {
             Edge newSrcEdge = new Edge(adjVertex, srcRep, Relationship.NONE, srcVertex.firstEdge);
             srcVertex.firstEdge = newSrcEdge;
             srcVertex.studentInfo.setRepPoints(adjName, srcRep);
-            srcVertex.indeg++;
-            srcVertex.outdeg++;
-            srcVertex.studentInfo.addNone(adjVertex.studentInfo);
-
-            GraphDao.db_addOrUpdateNode(srcVertex.studentInfo);
+            srcVertex.studentInfo.setRelationship(adjVertex.studentInfo, null, Relationship.NONE);
 
             return true;
         }
@@ -269,7 +237,7 @@ public class Sociograph {
      * @param relationship relationship to set to both of the edges
      * @return true if the relationship is successfully set, otherwise false
      */
-    public boolean setRelationship(String srcName, String adjName, Relationship relationship) {
+    public boolean setRelationshipOnEdge(String srcName, String adjName, Relationship relationship) {
         if (hasUndirectedEdge(srcName, adjName)) {
             Vertex srcVertex = vertices.get(indexOf(srcName));
             Vertex adjVertex = vertices.get(indexOf(adjName));
@@ -293,11 +261,8 @@ public class Sociograph {
                 adjEdge = adjEdge.nextEdge;
             }
 
-            remove2WaysRelationFromStudent(srcVertex.studentInfo, adjVertex.studentInfo, prevRel);
-            add2WaysRelationToStudent(srcVertex.studentInfo, adjVertex.studentInfo, relationship);
-
-            GraphDao.db_addOrUpdateNode(srcVertex.studentInfo);
-            GraphDao.db_addOrUpdateNode(adjVertex.studentInfo);
+            srcVertex.studentInfo.setRelationship(adjVertex.studentInfo, prevRel, relationship);
+            adjVertex.studentInfo.setRelationship(srcVertex.studentInfo, prevRel, relationship);
 
             return true;
         } else {
@@ -344,8 +309,6 @@ public class Sociograph {
                 if (srcEdge.adjVertex.studentInfo.getName().equals(adjName)) {
                     srcEdge.repRelativeToAdj = newRep;
                     srcVertex.studentInfo.setRepPoints(adjName, newRep);
-
-                    GraphDao.db_addOrUpdateNode(srcVertex.studentInfo);
 
                     return;
                 }
@@ -479,45 +442,15 @@ public class Sociograph {
         return index;
     }
 
-    private static void add2WaysRelationToStudent(Student src, Student adj, Relationship newRel) {
-        if (newRel == Relationship.FRIEND) {
-            src.addFriend(adj);
-            adj.addFriend(src);
-        } else if (newRel == Relationship.ENEMY) {
-            src.addEnemy(adj);
-            adj.addEnemy(src);
-        } else if (newRel == Relationship.NONE) {
-            src.addNone(adj);
-            adj.addNone(src);
-        }
-    }
-
-    private static void remove2WaysRelationFromStudent(Student src, Student adj, Relationship relToRemove) {
-        if (relToRemove == Relationship.FRIEND) {
-            src.unfriend(adj);
-            adj.unfriend(src);
-        } else if (relToRemove == Relationship.ENEMY) {
-            src.unEnemy(adj);
-            adj.unEnemy(src);
-        } else if (relToRemove == Relationship.NONE) {
-            src.unNone(adj);
-            adj.unNone(src);
-        }
-    }
-
     /**
      * Static class for vertex of the graph
      */
     public static class Vertex {
         private Student studentInfo;
-        private int indeg;
-        private int outdeg;
         private Edge firstEdge;
 
         public Vertex(Student studentInfo) {
             this.studentInfo = studentInfo;
-            this.indeg = 0;
-            this.outdeg = 0;
             this.firstEdge = null;
         }
     }

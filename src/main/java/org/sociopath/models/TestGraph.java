@@ -1,15 +1,12 @@
 package org.sociopath.models;
 
-import org.sociopath.dao.GraphDao;
 import org.sociopath.events.SocialActivities;
-import org.sociopath.utils.DBConnect;
 
 public class TestGraph {
     public static void main(String[] args) {
         Sociograph sociograph = new Sociograph();
 
         initialization(sociograph);
-        System.out.println(sociograph);
 //        event1Test(sociograph);
 //        event2Test(sociograph);
 //        event3Test(sociograph);
@@ -19,8 +16,8 @@ public class TestGraph {
 
     public static void initialization(Sociograph sociograph) {
 
-        DBConnect.startCon();
-        GraphDao.deleteGraph();     // reset
+//        DBConnect.startCon();
+//        GraphDao.deleteGraph();     // reset
 
 //                            {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10"}
         String[] nodesToAdd = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J"};
@@ -37,10 +34,7 @@ public class TestGraph {
         sociograph.addUndirectedEdge("H", "D", 7, 10, Relationship.FRIEND);
         sociograph.addUndirectedEdge("D", "J", 7, 7, Relationship.FRIEND);
         sociograph.addUndirectedEdge("I", "J", 6, 5, Relationship.FRIEND);
-
-        sociograph.setRelationship("G", "A" , Relationship.FRIEND);
-        System.out.println(sociograph + "\n");
-        sociograph.removeEdge("A", "G");
+        sociograph.addDirectedEdge("A", "C", 3);
 
         // Graph Tests
         /*

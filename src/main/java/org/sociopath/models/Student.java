@@ -39,9 +39,6 @@ public class Student {
     @Relationship(type = "ENEMY")
     private Set<Student> enemies;
 
-//    @Relationship(type = "CRUSH")
-//    private Set<Student> crushes;
-
     @Relationship(type = "NONE")
     private Set<Student> nones;
 
@@ -117,42 +114,48 @@ public class Student {
         return repPoints;
     }
 
-    void addFriend(Student friend) {
-        friends.add(friend);
+    void setRelationship(Student person, org.sociopath.models.Relationship prevRelation, org.sociopath.models.Relationship newRelation) {
+        // if prevRelation is null add relationship, if not null, change relationship
+        if (prevRelation != null) { // change relationship
+            switch (prevRelation) {
+                case NONE:
+                    nones.remove(person);
+                    break;
+                case FRIEND:
+                    friends.remove(person);
+                    break;
+                case ENEMY:
+                    enemies.remove(person);
+                    break;
+            }
+        }
+        switch (newRelation) {
+            case NONE:
+                nones.add(person);
+                break;
+            case FRIEND:
+                friends.add(person);
+                break;
+            case ENEMY:
+                enemies.add(person);
+                break;
+        }
     }
 
-    void unfriend(Student friend) {
-        friends.remove(friend);
+    void deleteRelationship(Student person, org.sociopath.models.Relationship prevRelation) {
+        // Remove person from nones / friends / enemies HashSet
+        switch (prevRelation) {
+            case NONE:
+                nones.remove(person);
+            case FRIEND:
+                friends.remove(person);
+            case ENEMY:
+                enemies.remove(person);
+        }
+
+        // Remove person from rep points HashMap
+        this.repPoints.remove(person.getName());
     }
-
-    void addEnemy(Student enemy) {
-        enemies.add(enemy);
-    }
-
-    void unEnemy(Student enemy) {
-        enemies.remove(enemy);
-    }
-
-//    void addCrush(Student crush) {
-//        crushes.add(crush);
-//    }
-//
-//    void unCrush(Student crush) {
-//        crushes.remove(crush);
-//    }
-
-    void addNone(Student none) {
-        nones.add(none);
-    }
-
-    void unNone(Student none) {
-        nones.remove(none);
-    }
-
-//    public void setAvgLunchStart(int hour, int minute) {
-//        this.avgLunchStart = LocalTime.of(hour, minute);
-//        this.lunchEnd = avgLunchStart.plusMinutes(avgLunchPeriod);
-//    }
 
     @Override
     public String toString() {
