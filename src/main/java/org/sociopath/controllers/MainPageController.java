@@ -38,7 +38,7 @@ public class MainPageController implements Initializable {
     }
 
     public void startHandler(ActionEvent actionEvent) throws IOException {
-        Parent mainMenuRoot = FXMLLoader.load(getClass().getResource("../fxml/mainMenu.fxml"));
+        Parent mainMenuRoot = FXMLLoader.load(getClass().getResource("../fxml/main_menu.fxml"));
         Scene mainMenuScene = new Scene(mainMenuRoot);
         mainMenuScene.getStylesheets().add(getClass().getResource("../style/style.css").toExternalForm());
         App.sceneManager.push(mainMenuScene);

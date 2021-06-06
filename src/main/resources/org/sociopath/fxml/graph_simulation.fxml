@@ -7,17 +7,18 @@
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TitledPane?>
 <?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.control.ToggleGroup?>
 <?import javafx.scene.effect.DropShadow?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.paint.Color?>
 <?import javafx.scene.text.Font?>
 
-<?import javafx.scene.layout.Pane?>
 <AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="900.0" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="org.sociopath.controllers.GraphSimulationController">
    <children>
       <GridPane prefHeight="600.0" prefWidth="900.0">
@@ -193,9 +194,21 @@
                                       <rowConstraints>
                                         <RowConstraints minHeight="-Infinity" prefHeight="55.0" vgrow="SOMETIMES" />
                                         <RowConstraints minHeight="-Infinity" prefHeight="55.0" vgrow="SOMETIMES" />
+                                          <RowConstraints minHeight="-Infinity" prefHeight="55.0" vgrow="SOMETIMES" />
                                       </rowConstraints>
                                        <children>
-                                          <ToggleButton fx:id="addStudentBtn" mnemonicParsing="false" prefHeight="47.0" prefWidth="196.0" style="-fx-background-radius: 5;" text="Add Student" GridPane.halignment="CENTER" GridPane.valignment="CENTER">
+                                          <ToggleButton fx:id="addStudentBtn" mnemonicParsing="false" prefHeight="47.0" prefWidth="196.0" style="-fx-background-radius: 5;" text="Add student" GridPane.halignment="CENTER" GridPane.valignment="CENTER">
+                                             <font>
+                                                <Font name="Consolas Bold" size="20.0" />
+                                             </font>
+                                             <effect>
+                                                <DropShadow />
+                                             </effect>
+                                             <toggleGroup>
+                                                <ToggleGroup fx:id="toggleGroup" />
+                                             </toggleGroup>
+                                          </ToggleButton>
+                                          <ToggleButton fx:id="addRepBtn" mnemonicParsing="false" prefHeight="47.0" prefWidth="196.0" style="-fx-background-radius: 5;" text="Add reputation" toggleGroup="$toggleGroup" GridPane.rowIndex="1">
                                              <font>
                                                 <Font name="Consolas Bold" size="20.0" />
                                              </font>
@@ -203,14 +216,14 @@
                                                 <DropShadow />
                                              </effect>
                                           </ToggleButton>
-                                          <Button mnemonicParsing="false" prefHeight="47.0" prefWidth="196.0" style="-fx-background-radius: 5;" text="Delete Student" textAlignment="CENTER" GridPane.halignment="CENTER" GridPane.rowIndex="1" GridPane.valignment="CENTER">
+                                          <ToggleButton fx:id="addRelationBtn" mnemonicParsing="false" prefHeight="47.0" prefWidth="196.0" style="-fx-background-radius: 5;" text="Add relation" toggleGroup="$toggleGroup" GridPane.rowIndex="2">
                                              <font>
                                                 <Font name="Consolas Bold" size="20.0" />
                                              </font>
                                              <effect>
                                                 <DropShadow />
                                              </effect>
-                                          </Button>
+                                          </ToggleButton>
                                        </children>
                                        <effect>
                                           <DropShadow>
@@ -271,7 +284,7 @@
                <children>
                   <Group fx:id="canvasGroup" layoutX="15.0" layoutY="15.0" onMouseClicked="#canvasHandler" onMouseDragged="#canvasHandler" onMousePressed="#canvasHandler" onMouseReleased="#canvasHandler">
                      <children>
-                        <Pane fx:id="viewer" prefHeight="571.0" prefWidth="670.0" onMouseClicked="#canvasHandler" onMouseDragged="#canvasHandler" onMousePressed="#canvasHandler" onMouseReleased="#canvasHandler">
+                        <Pane fx:id="viewer" onMouseClicked="#canvasHandler" onMouseDragged="#canvasHandler" onMousePressed="#canvasHandler" onMouseReleased="#canvasHandler" prefHeight="571.0" prefWidth="670.0">
                            <cursor>
                               <Cursor fx:constant="CROSSHAIR" />
                            </cursor>

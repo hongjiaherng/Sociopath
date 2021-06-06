@@ -94,6 +94,27 @@ public class Student {
         this.dive = dive;
     }
 
+    public LocalTime[] getLunchStart() {
+        return lunchStart;
+    }
+
+    public int[] getLunchPeriod() {
+        return lunchPeriod;
+    }
+
+    public Set<Student> getFriends() {
+        return friends;
+    }
+
+    public Set<Student> getEnemies() {
+        return enemies;
+    }
+
+    public Set<Student> getNones() {
+        return nones;
+    }
+
+
     public LocalTime getAvgLunchStart() {
         return avgLunchStart;
     }

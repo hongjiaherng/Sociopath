@@ -88,6 +88,15 @@ public class Sociograph {
         return false;
     }
 
+    public boolean changeVertexName(String oldName, String newName) {
+        Student student = getStudent(oldName);
+        if (!hasVertex(newName)) {
+            student.setName(newName);
+            return true;
+        }
+        return false;
+    }
+
     public boolean deleteVertex(String name) {
         if (hasVertex(name)) {
             int vertexIndex = indexOf(name);

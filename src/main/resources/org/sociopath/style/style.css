@@ -1,6 +1,7 @@
 .button {
     -fx-background-color: #585858;
     -fx-text-fill: #000000;
+    -fx-text-alignment: center;
 }
 
 .button:pressed {
@@ -46,11 +47,11 @@
     -fx-font-size: 14px;
 }
 
-.dialog:header *.header-panel{
+.dialog > *.header-panel{
     -fx-background-color: #5689e8;
 }
 
-.dialog:header *.header-panel *.label{
+.dialog > *.header-panel *.label{
     -fx-font-size: 18px;
     -fx-font-weight: bold;
 }

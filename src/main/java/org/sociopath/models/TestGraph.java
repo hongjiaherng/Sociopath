@@ -2,6 +2,9 @@ package org.sociopath.models;
 
 import org.sociopath.events.SocialActivities;
 
+import java.util.Map;
+import java.util.Set;
+
 public class TestGraph {
     public static void main(String[] args) {
         Sociograph sociograph = new Sociograph();
