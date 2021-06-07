@@ -19,7 +19,7 @@
 <?import javafx.scene.paint.Color?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="900.0" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="org.sociopath.controllers.GraphSimulationController">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.sociopath.controllers.GraphSimulationController">
    <children>
       <GridPane prefHeight="600.0" prefWidth="900.0">
         <columnConstraints>
@@ -252,7 +252,7 @@
                                         <RowConstraints minHeight="10.0" prefHeight="55.0" vgrow="SOMETIMES" />
                                       </rowConstraints>
                                        <children>
-                                          <Button mnemonicParsing="false" prefHeight="47.0" prefWidth="196.0" style="-fx-background-radius: 5;" text="Reset" textAlignment="CENTER" GridPane.halignment="CENTER" GridPane.valignment="CENTER">
+                                          <Button mnemonicParsing="false" onAction="#clearGraphFX" prefHeight="47.0" prefWidth="196.0" style="-fx-background-radius: 5;" text="Clear" textAlignment="CENTER" GridPane.halignment="CENTER" GridPane.valignment="CENTER">
                                              <font>
                                                 <Font name="Consolas Bold" size="20.0" />
                                              </font>

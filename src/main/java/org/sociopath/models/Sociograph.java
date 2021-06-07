@@ -148,6 +148,11 @@ public class Sociograph {
         return false;
     }
 
+    public void clear() {
+        this.vertices.clear();
+        this.size = 0;
+    }
+
     /**
      * Add the undirected edges from srcName and adjName but with different weight. Can also be rewritten as
      * <br> - addDirectedEdge(srcName, adjName, srcRep)

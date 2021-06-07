@@ -3,8 +3,10 @@ package org.sociopath.controllers;
 import javafx.animation.FillTransition;
 import javafx.animation.Interpolator;
 import javafx.animation.ScaleTransition;
+import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
+import javafx.beans.property.DoubleProperty;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -13,6 +15,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -31,10 +34,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
-import javafx.scene.shape.LineTo;
-import javafx.scene.shape.MoveTo;
-import javafx.scene.shape.Path;
+import javafx.scene.shape.*;
 import javafx.scene.shape.Shape;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
@@ -471,7 +471,7 @@ public class GraphSimulationController implements Initializable {
     EventHandler<MouseEvent> mouseHandler = event -> {
 
         VertexFX destVertexFX = (VertexFX) event.getSource();
-        if (event.getEventType() == MouseEvent.MOUSE_PRESSED && event.getButton() == MouseButton.PRIMARY) {
+        if (event.getEventType() == MouseEvent.MOUSE_CLICKED && event.getButton() == MouseButton.PRIMARY) {
             if (!destVertexFX.isSelected) {
 
                 if (selectedVertex != null) {
@@ -544,14 +544,12 @@ public class GraphSimulationController implements Initializable {
                         if (srcRepStr != null && destRepStr != null && relType != null) {
                             // Delete directed edge from dest to src in allEdges and canvasGroup
                             LinkedList<EdgeFX> connectedEdges = allCircles.get(allCircles.indexOf(destVertexFX)).connectedEdges;
-                            System.out.println(connectedEdges + "\n");
                             connectedEdges.removeIf(edge -> {
                                 if (edge.destVertex.nameText.getText().equals(srcVertexName)) {
                                     return canvasGroup.getChildren().remove(edge.edgeHolder);
                                 }
                                 return false;
                             });
-                            System.out.println(connectedEdges);
 
                             // Delete directed edge from dest to src in sociograph
                             sociograph.removeEdge(destVertexName, srcVertexName);
@@ -695,8 +693,54 @@ public class GraphSimulationController implements Initializable {
                 destVertexFX.isSelected = false;
                 selectedVertex = null;
             }
+        } else if (event.getEventType() == MouseEvent.MOUSE_PRESSED && event.getButton() == MouseButton.PRIMARY) {
+            destVertexFX.vertexHolder.setCursor(Cursor.CLOSED_HAND);
+            FillTransition ftDrag = new FillTransition(Duration.millis(300), destVertexFX, Color.BLACK, Color.RED);
+            ftDrag.play();
+            System.out.println("Press");
+//            destVertexFX.coordinate.x = (int) event.getX();
+//            destVertexFX.coordinate.y = (int) event.getY();
+
+        } else if (event.getEventType() == MouseEvent.MOUSE_RELEASED && event.getButton() == MouseButton.PRIMARY) {
+            destVertexFX.vertexHolder.setCursor(Cursor.DEFAULT);
+            FillTransition ftDrag = new FillTransition(Duration.millis(300), destVertexFX, Color.RED, Color.BLACK);
+            ftDrag.play();
+
+        } else if (event.getEventType() == MouseEvent.MOUSE_DRAGGED && event.getButton() == MouseButton.PRIMARY) {
+
+            destVertexFX.dragVertex((int) event.getX(), (int) event.getY());
         }
     };
+
+    public void clearGraphFX(ActionEvent event) {
+        // Remove all vertices from sociograph
+        this.sociograph.clear();
+
+        List<Node> allNodesOnCanvas = new ArrayList<>();
+        for (VertexFX vertex : allCircles) {
+            allNodesOnCanvas.add(vertex.vertexHolder);
+            for (EdgeFX edge : vertex.connectedEdges) {
+                allNodesOnCanvas.add(edge.edgeHolder);
+            }
+        }
+
+        // Remove all VertexFX from allCircles
+        this.allCircles.clear();
+
+        // Remove all VertexFX's holder & EdgeFX's holder from canvasGroup
+        this.canvasGroup.getChildren().removeAll(allNodesOnCanvas);
+
+        // Clear the selectedVertex to make sure no vertex remained
+        this.selectedVertex = null;
+
+        // Disable add relation & add reputation button
+        addRelationBtn.setDisable(true);
+        addRepBtn.setDisable(true);
+        addRepBtn.setSelected(false);
+        addRelationBtn.setSelected(false);
+
+        allNodesOnCanvas.clear();
+    }
 
     public class VertexFX extends Circle {
         Point coordinate;
@@ -719,6 +763,7 @@ public class GraphSimulationController implements Initializable {
             this.setBlendMode(BlendMode.MULTIPLY);
             this.setId("vertex");
 
+            this.setOnMouseClicked(mouseHandler);
             this.setOnMouseReleased(mouseHandler);
             this.setOnMouseDragged(mouseHandler);
             this.setOnMousePressed(mouseHandler);
@@ -734,18 +779,19 @@ public class GraphSimulationController implements Initializable {
                 menu.show(this, e.getScreenX(), e.getScreenY());
             });
 
-            System.out.println(sociograph + "\n");
-        }
-
-        public void showVertex() {
             vertexHolder.getChildren().addAll(nameText, this);
-            canvasGroup.getChildren().addAll(vertexHolder);
 
             ScaleTransition tr = new ScaleTransition(Duration.millis(100), this);
             tr.setByX(10f);
             tr.setByY(10f);
             tr.setInterpolator(Interpolator.EASE_OUT);
             tr.play();
+
+            System.out.println(sociograph + "\n");
+        }
+
+        public void showVertex() {
+            canvasGroup.getChildren().addAll(vertexHolder);
         }
 
         public void setNameText(String name) {
@@ -754,6 +800,21 @@ public class GraphSimulationController implements Initializable {
             nameText.setY(this.coordinate.y);
             nameText.setX(nameText.getX() - nameText.getLayoutBounds().getWidth() / 2);
             nameText.setY(nameText.getY() + nameText.getLayoutBounds().getHeight() / 4);
+        }
+
+        public void dragVertex(int x, int y) {
+            this.coordinate.x = x;
+            this.coordinate.y = y;
+
+            nameText.setX(this.coordinate.x);
+            nameText.setY(this.coordinate.y);
+            nameText.setX(nameText.getX() - nameText.getLayoutBounds().getWidth() / 2);
+            nameText.setY(nameText.getY() + nameText.getLayoutBounds().getHeight() / 4);
+
+            this.setCenterX(x);
+            this.setCenterY(y);
+
+
         }
     }
 
@@ -815,7 +876,6 @@ public class GraphSimulationController implements Initializable {
         // Undirected edge
         public EdgeFX(VertexFX srcVertex, VertexFX destVertex, Relationship rel, String srcRep, String destRep) {
             this(srcVertex, destVertex, rel);
-
             this.isDirected = false;
             this.srcRepPointText = new Text(srcRep);
             this.srcRepPointText.setStyle("-fx-font-weight: bold");
@@ -828,7 +888,6 @@ public class GraphSimulationController implements Initializable {
             // Line
             getElements().add(new MoveTo(srcX, srcY));
             getElements().add(new LineTo(destX, destY));
-
             // Arrow head at dest point
             drawArrowHead(srcX, srcY, destX, destY);
 
