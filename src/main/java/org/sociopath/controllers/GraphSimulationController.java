@@ -3,10 +3,7 @@ package org.sociopath.controllers;
 import javafx.animation.FillTransition;
 import javafx.animation.Interpolator;
 import javafx.animation.ScaleTransition;
-import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
-import javafx.beans.binding.BooleanBinding;
-import javafx.beans.property.DoubleProperty;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -14,13 +11,11 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.canvas.Canvas;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.Dialog;
@@ -31,18 +26,14 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.*;
-import javafx.scene.shape.Shape;
+import javafx.scene.shape.Polygon;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
-import javafx.stage.Popup;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Duration;
-import javafx.util.Pair;
 import org.sociopath.App;
 import org.sociopath.models.Relationship;
 import org.sociopath.models.Sociograph;
@@ -68,7 +59,6 @@ public class GraphSimulationController implements Initializable {
     private Sociograph sociograph = new Sociograph();
     private List<VertexFX> allCircles = new ArrayList<>();
     private VertexFX selectedVertex = null;
-
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -227,16 +217,15 @@ public class GraphSimulationController implements Initializable {
             canvasGroup.getChildren().remove(vertex.vertexHolder);
 
             // Delete edges that use this vertex as srcVertex
-            List<Group> edgeFXHolders = new ArrayList<>();
-            vertex.connectedEdges.forEach(edge -> edgeFXHolders.add(edge.edgeHolder));
+            List<Group> edgeFXHolders = new ArrayList<>(vertex.connectedEdges);
             System.out.println("Remove edges use this as source: " + canvasGroup.getChildren().removeAll(edgeFXHolders));
 
             // Delete the remaining edges that use this vertex as destVertex
             for (VertexFX vertexFX : allCircles) {
                 List<EdgeFX> list = vertexFX.connectedEdges;
                 list.removeIf(edge -> {
-                    if (edge.destVertex.nameText.getText().equals(vertex.nameText.getText())) {
-                        boolean removeresult = canvasGroup.getChildren().remove(edge.edgeHolder);
+                    if (edge.endVertex.nameText.getText().equals(vertex.nameText.getText())) {
+                        boolean removeresult = canvasGroup.getChildren().remove(edge);
                         System.out.println("Remove edges use this as destination: " + removeresult);
                         return removeresult;
                     }
@@ -253,6 +242,7 @@ public class GraphSimulationController implements Initializable {
 
             // Make sure the selectedVertex is cleared, because this vertex is already deleted
             selectedVertex = null;
+            System.out.println(canvasGroup.getChildren().size());
         } else {
             System.out.println("return");
             return;
@@ -301,7 +291,7 @@ public class GraphSimulationController implements Initializable {
             arrow = " <-> ";
         }
 
-        String contextStr = "Are you sure you want to delete this edge (" + edge.srcVertex.nameText.getText() + arrow + edge.destVertex.nameText.getText() +") ?";
+        String contextStr = "Are you sure you want to delete this edge (" + edge.srcVertex.nameText.getText() + arrow + edge.endVertex.nameText.getText() +") ?";
         Alert confirmDialog = new Alert(Alert.AlertType.CONFIRMATION, contextStr, ButtonType.YES, ButtonType.NO);
         confirmDialog.setGraphic(null);
         confirmDialog.setHeaderText("Are you sure ?");
@@ -314,11 +304,12 @@ public class GraphSimulationController implements Initializable {
 
         if (result.isPresent() && result.get() == ButtonType.YES) {
             if (!edge.isDirected) {
-                System.out.println(sociograph.removeEdge(edge.destVertex.nameText.getText(), edge.srcVertex.nameText.getText()));
+                System.out.println(sociograph.removeEdge(edge.endVertex.nameText.getText(), edge.srcVertex.nameText.getText()));
             }
-            System.out.println(sociograph.removeEdge(edge.srcVertex.nameText.getText(), edge.destVertex.nameText.getText()));
+            System.out.println(sociograph.removeEdge(edge.srcVertex.nameText.getText(), edge.endVertex.nameText.getText()));
+            System.out.println(allCircles.get(allCircles.indexOf(edge.endVertex)).connectedEdges.remove(edge));
             System.out.println(allCircles.get(allCircles.indexOf(edge.srcVertex)).connectedEdges.remove(edge));
-            System.out.println(canvasGroup.getChildren().remove(edge.edgeHolder));
+            System.out.println(canvasGroup.getChildren().remove(edge));
 
         } else {
             return;
@@ -329,7 +320,7 @@ public class GraphSimulationController implements Initializable {
         TextInputDialog dialog = new TextInputDialog();
         dialog.getDialogPane().setPrefWidth(300);
         dialog.setGraphic(null);
-        dialog.setHeaderText("Enter new properties between student " + edge.srcVertex.nameText.getText() + " and " + edge.destVertex.nameText.getText());
+        dialog.setHeaderText("Enter new properties between student " + edge.srcVertex.nameText.getText() + " and " + edge.endVertex.nameText.getText());
         dialog.initStyle(StageStyle.UTILITY);
         DialogPane dialogPane = dialog.getDialogPane();
         dialogPane.getStyleClass().add("dialog");
@@ -344,7 +335,7 @@ public class GraphSimulationController implements Initializable {
             dialog.getDialogPane().setPrefHeight(200);
             dialog.setTitle("Modify directed edge's properties");
 
-            TextField prevRepTF = new TextField(edge.srcRepPointText.getText());
+            TextField prevRepTF = new TextField(edge.srcRepText.getText());
             prevRepTF.setEditable(false);
             prevRepTF.setPrefWidth(100);
             TextField newRepTF = new TextField();
@@ -379,18 +370,18 @@ public class GraphSimulationController implements Initializable {
 
             if (srcRepStr != null) {
                 // Change rep points
-                edge.changeSrcRepPoint(srcRepStr);
-                sociograph.setSrcRepRelativeToAdj(edge.srcVertex.nameText.getText(), edge.destVertex.nameText.getText(), Double.parseDouble(srcRepStr));
+                edge.changeSrcRepText(srcRepStr);
+                sociograph.setSrcRepRelativeToAdj(edge.srcVertex.nameText.getText(), edge.endVertex.nameText.getText(), Double.parseDouble(srcRepStr));
             }
 
         } else {    // Undirected edge pane
             dialog.getDialogPane().setPrefHeight(400);
             dialog.setTitle("Modify undirected edge's properties");
 
-            TextField prevSrcRepTF = new TextField(edge.srcRepPointText.getText());
+            TextField prevSrcRepTF = new TextField(edge.srcRepText.getText());
             prevSrcRepTF.setEditable(false);
             prevSrcRepTF.setPrefWidth(100);
-            TextField prevDestRepTF = new TextField(edge.destRepPointText.getText());
+            TextField prevDestRepTF = new TextField(edge.endRepText.getText());
             prevDestRepTF.setEditable(false);
             prevDestRepTF.setPrefWidth(100);
             TextField prevRelTypeTF = new TextField(edge.rel + "");
@@ -401,7 +392,7 @@ public class GraphSimulationController implements Initializable {
             newSrcRepTF.setPromptText(edge.srcVertex.nameText.getText() + "'s rep pts");
             newSrcRepTF.setPrefWidth(100);
             TextField newDestRepTF = new TextField();
-            newDestRepTF.setPromptText(edge.destVertex.nameText.getText() + "'s rep pts");
+            newDestRepTF.setPromptText(edge.endVertex.nameText.getText() + "'s rep pts");
             newDestRepTF.setPrefWidth(100);
             ComboBox<Relationship> newRelTypeCB = new ComboBox<>(FXCollections.observableArrayList(Relationship.NONE, Relationship.FRIEND, Relationship.ENEMY));
             newRelTypeCB.setValue(Relationship.NONE);
@@ -411,14 +402,14 @@ public class GraphSimulationController implements Initializable {
             originalLabel.setStyle("-fx-font-size: 16; -fx-font-weight: bold");
             gridPane.add(originalLabel, 0, 0);
             gridPane.add(new Label("Original " + edge.srcVertex.nameText.getText() + "'s reputation"), 0, 1);
-            gridPane.add(new Label("Original " + edge.destVertex.nameText.getText() + "'s reputation"), 0, 2);
+            gridPane.add(new Label("Original " + edge.endVertex.nameText.getText() + "'s reputation"), 0, 2);
             gridPane.add(new Label("Original relationship"), 0, 3);
 
             Label newLabel = new Label("New properties");
             newLabel.setStyle("-fx-font-size: 16; -fx-font-weight: bold");
             gridPane.add(newLabel, 0, 5);
             gridPane.add(new Label("New " + edge.srcVertex.nameText.getText() + "'s reputation"), 0, 6);
-            gridPane.add(new Label("New " + edge.destVertex.nameText.getText() + "'s reputation"), 0, 7);
+            gridPane.add(new Label("New " + edge.endVertex.nameText.getText() + "'s reputation"), 0, 7);
             gridPane.add(new Label("New relationship"), 0, 8);
 
             gridPane.add(prevSrcRepTF, 1, 1);
@@ -456,14 +447,14 @@ public class GraphSimulationController implements Initializable {
 
             if (srcRepStr != null && relType != null && destRepStr != null) {
                 // Change rep points
-                edge.changeSrcRepPoint(srcRepStr);
-                edge.changeDestRepPoint(destRepStr);
-                sociograph.setSrcRepRelativeToAdj(edge.srcVertex.nameText.getText(), edge.destVertex.nameText.getText(), Double.parseDouble(srcRepStr));
-                sociograph.setSrcRepRelativeToAdj(edge.destVertex.nameText.getText(), edge.srcVertex.nameText.getText(), Double.parseDouble(destRepStr));
+                edge.changeSrcRepText(srcRepStr);
+                edge.changeEndRepText(destRepStr);
+                sociograph.setSrcRepRelativeToAdj(edge.srcVertex.nameText.getText(), edge.endVertex.nameText.getText(), Double.parseDouble(srcRepStr));
+                sociograph.setSrcRepRelativeToAdj(edge.endVertex.nameText.getText(), edge.srcVertex.nameText.getText(), Double.parseDouble(destRepStr));
 
                 // Change relation
-                sociograph.setRelationshipOnEdge(edge.srcVertex.nameText.getText(), edge.destVertex.nameText.getText(), relType);
-                edge.setEdgeRelation(relType);
+                sociograph.setRelationshipOnEdge(edge.srcVertex.nameText.getText(), edge.endVertex.nameText.getText(), relType);
+                edge.changeRel(relType);
             }
         }
     }
@@ -543,19 +534,26 @@ public class GraphSimulationController implements Initializable {
 
                         if (srcRepStr != null && destRepStr != null && relType != null) {
                             // Delete directed edge from dest to src in allEdges and canvasGroup
-                            LinkedList<EdgeFX> connectedEdges = allCircles.get(allCircles.indexOf(destVertexFX)).connectedEdges;
-                            connectedEdges.removeIf(edge -> {
-                                if (edge.destVertex.nameText.getText().equals(srcVertexName)) {
-                                    return canvasGroup.getChildren().remove(edge.edgeHolder);
-                                }
-                                return false;
+                            LinkedList<EdgeFX> destConnectedEdges = allCircles.get(allCircles.indexOf(destVertexFX)).connectedEdges;
+                            LinkedList<EdgeFX> srcConnectedEdges = allCircles.get(allCircles.indexOf(srcVertexFX)).connectedEdges;
+
+                            srcConnectedEdges.removeIf(edge ->
+                                edge.srcVertex.nameText.getText().equals(destVertexName) &&
+                                        edge.endVertex.nameText.getText().equals(srcVertexName)
+                            );
+                            boolean resultB = destConnectedEdges.removeIf(edge -> {
+                                    if (edge.srcVertex.nameText.getText().equals(destVertexName) &&
+                                            edge.endVertex.nameText.getText().equals(srcVertexName)) {
+                                        return canvasGroup.getChildren().remove(edge);
+                                    }
+                                    return false;
                             });
 
                             // Delete directed edge from dest to src in sociograph
                             sociograph.removeEdge(destVertexName, srcVertexName);
 
                             // create a new EdgeFX object to represent the new undirected edge
-                            EdgeFX newUndirectedEdge = new EdgeFX(srcVertexFX, destVertexFX, relType, srcRepStr, destRepStr);
+                            EdgeFX newUndirectedEdge = new EdgeFX(srcVertexFX, destVertexFX, srcRepStr, destRepStr, relType);
                             newUndirectedEdge.showEdge();
                         }
 
@@ -662,7 +660,7 @@ public class GraphSimulationController implements Initializable {
                         }
 
                         if (srcRepStr != null && destRepStr != null && relType != null) {
-                            EdgeFX undirectedEdge = new EdgeFX(srcVertexFX, destVertexFX, relType, srcRepStr, destRepStr);
+                            EdgeFX undirectedEdge = new EdgeFX(srcVertexFX, destVertexFX, srcRepStr, destRepStr, relType);
                             undirectedEdge.showEdge();
                         }
 
@@ -698,8 +696,6 @@ public class GraphSimulationController implements Initializable {
             FillTransition ftDrag = new FillTransition(Duration.millis(300), destVertexFX, Color.BLACK, Color.RED);
             ftDrag.play();
             System.out.println("Press");
-//            destVertexFX.coordinate.x = (int) event.getX();
-//            destVertexFX.coordinate.y = (int) event.getY();
 
         } else if (event.getEventType() == MouseEvent.MOUSE_RELEASED && event.getButton() == MouseButton.PRIMARY) {
             destVertexFX.vertexHolder.setCursor(Cursor.DEFAULT);
@@ -707,8 +703,8 @@ public class GraphSimulationController implements Initializable {
             ftDrag.play();
 
         } else if (event.getEventType() == MouseEvent.MOUSE_DRAGGED && event.getButton() == MouseButton.PRIMARY) {
-
             destVertexFX.dragVertex((int) event.getX(), (int) event.getY());
+
         }
     };
 
@@ -719,9 +715,7 @@ public class GraphSimulationController implements Initializable {
         List<Node> allNodesOnCanvas = new ArrayList<>();
         for (VertexFX vertex : allCircles) {
             allNodesOnCanvas.add(vertex.vertexHolder);
-            for (EdgeFX edge : vertex.connectedEdges) {
-                allNodesOnCanvas.add(edge.edgeHolder);
-            }
+            allNodesOnCanvas.addAll(vertex.connectedEdges);     // Here might contains same edge (e.g.: A connect B with edge X, connectedEdges of A & B both contain edge X)
         }
 
         // Remove all VertexFX from allCircles
@@ -814,163 +808,189 @@ public class GraphSimulationController implements Initializable {
             this.setCenterX(x);
             this.setCenterY(y);
 
+            for (EdgeFX edge : connectedEdges) {
+                edge.update();
+            }
 
         }
     }
 
-    public class EdgeFX extends Path {
+    public class EdgeFX extends Group {
+        // Line
+        // Arrow
+        // Reputation text
+        Line line;
+        Polygon arrowSrc;
+        Polygon arrowEnd;
+        Text srcRepText;
+        Text endRepText;
 
-        static final int ARROWHEADSIZE = 7;
-        VertexFX srcVertex, destVertex;
-        Text srcRepPointText;
-        Text destRepPointText;
+        VertexFX srcVertex;
+        VertexFX endVertex;
         Relationship rel;
-        Group edgeHolder;
-        double srcX, srcY, destX, destY;
         boolean isDirected;
 
-        public EdgeFX(VertexFX srcVertex, VertexFX destVertex, Relationship rel) {
-            super();
-
-            this.edgeHolder = new Group();
+        private EdgeFX(VertexFX srcVertex, VertexFX endVertex, Relationship rel) {
+            double[] arrowPoints = {0.0, 5.0, -5.0, -5.0, 5.0, -5.0};
 
             this.srcVertex = srcVertex;
-            this.destVertex = destVertex;
-            this.setEdgeRelation(rel);
-            this.computeSrcDestCoordinates(srcVertex.coordinate.x, srcVertex.coordinate.y, destVertex.coordinate.x, destVertex.coordinate.y);
-            this.setId("edge");
-            this.setOpacity(0.5);
+            this.endVertex = endVertex;
+            this.rel = rel;
 
-            this.strokeProperty().bind(fillProperty());
+            this.line = new Line();
+            this.arrowSrc = new Polygon(arrowPoints);
+            this.arrowEnd = new Polygon(arrowPoints);
+            this.srcRepText = new Text();
+            this.endRepText = new Text();
+
+            this.line.setOpacity(0.5);
+            this.arrowSrc.setOpacity(0.8);
+            this.arrowEnd.setOpacity(0.8);
+            this.srcRepText.setStyle("-fx-font-weight: bold");
+            this.endRepText.setStyle("-fx-font-weight: bold");
+            changeRel(rel);
 
             RightClickMenu rt = new RightClickMenu(this);
             ContextMenu menu = rt.getMenu();
-            edgeHolder.setOnContextMenuRequested(e -> {
+            this.setOnContextMenuRequested(e -> {
                 menu.show(this, e.getScreenX(), e.getScreenY());
             });
         }
 
-        // Directed edge
-        public EdgeFX(VertexFX srcVertex, VertexFX destVertex, String srcRep) {
-            this(srcVertex, destVertex, Relationship.NONE);
+        public EdgeFX(VertexFX srcVertex, VertexFX endVertex, String srcRep) {
+            this(srcVertex, endVertex, Relationship.NONE);
 
             this.isDirected = true;
-            this.srcRepPointText = new Text(srcRep);
-            this.srcRepPointText.setStyle("-fx-font-weight: bold");
-            this.setRepPointText(srcRepPointText, srcRep, srcX, srcY, destX, destY);
+            this.srcRepText.setText(Double.parseDouble(srcRep) + "");
 
-            // Line
-            getElements().add(new MoveTo(srcX, srcY));
-            getElements().add(new LineTo(destX, destY));
+            initializeLine();
+            initializeArrow();
+            initializeRep();
+            this.getChildren().addAll(line, arrowEnd, srcRepText);
 
-            // Arrow head
-            drawArrowHead(srcX, srcY, destX, destY);
-
-            edgeHolder.getChildren().addAll(this, srcRepPointText);
-            sociograph.addDirectedEdge(srcVertex.nameText.getText(), destVertex.nameText.getText(), Double.parseDouble(srcRep));
             srcVertex.connectedEdges.add(this);
+            endVertex.connectedEdges.add(this);
+            sociograph.addDirectedEdge(srcVertex.nameText.getText(), endVertex.nameText.getText(), Double.parseDouble(srcRep));
 
             System.out.println(sociograph + "\n");
         }
 
-        // Undirected edge
-        public EdgeFX(VertexFX srcVertex, VertexFX destVertex, Relationship rel, String srcRep, String destRep) {
-            this(srcVertex, destVertex, rel);
+        public EdgeFX(VertexFX srcVertex, VertexFX endVertex, String srcRep, String endRep, Relationship rel) {
+            this(srcVertex, endVertex, rel);
+
             this.isDirected = false;
-            this.srcRepPointText = new Text(srcRep);
-            this.srcRepPointText.setStyle("-fx-font-weight: bold");
-            setRepPointText(srcRepPointText, srcRep, srcX, srcY, destX, destY);
+            this.srcRepText.setText(Double.parseDouble(srcRep) + "");
+            this.endRepText.setText(Double.parseDouble(endRep) + "");
 
-            this.destRepPointText = new Text(destRep);
-            this.destRepPointText.setStyle("-fx-font-weight: bold");
-            setRepPointText(destRepPointText, destRep, destX, destY, srcX, srcY);
+            initializeLine();
+            initializeArrow();
+            initializeRep();
+            this.getChildren().addAll(line, arrowSrc, arrowEnd, srcRepText, endRepText);
 
-            // Line
-            getElements().add(new MoveTo(srcX, srcY));
-            getElements().add(new LineTo(destX, destY));
-            // Arrow head at dest point
-            drawArrowHead(srcX, srcY, destX, destY);
-
-            // Move to src point
-            getElements().add(new MoveTo(srcX, srcY));
-
-            // Arrow head at src point
-            drawArrowHead(destX, destY, srcX, srcY);
-
-            edgeHolder.getChildren().addAll(this, srcRepPointText, destRepPointText);
-            sociograph.addUndirectedEdge(srcVertex.nameText.getText(), destVertex.nameText.getText(), Double.parseDouble(srcRep), Double.parseDouble(destRep), rel);
             srcVertex.connectedEdges.add(this);
+            endVertex.connectedEdges.add(this);
+            sociograph.addUndirectedEdge(srcVertex.nameText.getText(), endVertex.nameText.getText(), Double.parseDouble(srcRep), Double.parseDouble(endRep), rel);
 
             System.out.println(sociograph + "\n");
         }
 
         public void showEdge() {
-            canvasGroup.getChildren().add(edgeHolder);
+            canvasGroup.getChildren().add(this);
         }
 
-        public void setEdgeRelation(Relationship relationship) {
-            this.rel = relationship;
-            switch (relationship) {
-                case FRIEND:
-                    setFill(Color.BLUE);
-                    break;
+        public void changeRel(Relationship rel) {
+            this.rel = rel;
+            switch (rel) {
                 case NONE:
-                    setFill(Color.BLACK);
+                    this.line.setStroke(Color.BLACK);
+                    this.arrowEnd.setStyle("-fx-fill: BLACK");
+                    this.arrowSrc.setStyle("-fx-fill: BLACK");
+                    break;
+                case FRIEND:
+                    this.line.setStroke(Color.web("#1b2389"));
+                    this.arrowEnd.setStyle("-fx-fill: #1b2389");
+                    this.arrowSrc.setStyle("-fx-fill: #1b2389");
                     break;
                 case ENEMY:
-                    setFill(Color.RED);
+                    this.line.setStroke(Color.web("#ff0c0c"));
+                    this.arrowEnd.setStyle("-fx-fill: #ff0c0c");
+                    this.arrowSrc.setStyle("-fx-fill: #ff0c0c");
                     break;
             }
         }
 
-        public void changeSrcRepPoint(String newRepStr) {
-            double repDouble = Double.parseDouble(newRepStr);
-            this.srcRepPointText.setText("" + repDouble);
+        public void changeSrcRepText(String srcRepStr) {
+            this.srcRepText.setText(Double.parseDouble(srcRepStr) + "");
         }
 
-        public void changeDestRepPoint(String newRepStr) {
-            double repDouble = Double.parseDouble(newRepStr);
-            this.destRepPointText.setText("" + repDouble);
+        public void changeEndRepText(String endRepStr) {
+            this.endRepText.setText(Double.parseDouble(endRepStr) + "");
         }
 
-        private void setRepPointText(Text repPointText, String repStr, double x1, double y1, double x2, double y2) {
-            double repDouble = Double.parseDouble(repStr);
-            repPointText.setText("" + repDouble);
-            // Math formula to find coordinate between two points, ratio (0.2 to 0.8)
-            // (x, y) = (((m * x2) + (n * x1)) / (m + n) , ((m * y2) + (n * y1)) / (m + n))
-            double resultX = ((0.2 * x2) + (0.8 * x1));
-            double resultY = ((0.2 * y2) + (0.8 * y1));
-            repPointText.setX((int) resultX);
-            repPointText.setY((int) resultY);
+        public void update() {
+            initializeLine();
+            initializeArrow();
+            initializeRep();
         }
 
-        private void computeSrcDestCoordinates(double srcX, double srcY, double destX, double destY) {
-            double distance = Math.sqrt(Math.pow(destX - srcX , 2) + Math.pow(destY - srcY , 2));
+        private void initializeLine() {
+            double distance = Math.sqrt(Math.pow(endVertex.getCenterX() - srcVertex.getCenterX(), 2) + Math.pow(endVertex.getCenterY() - srcVertex.getCenterY(), 2));
             double m = 12;
             double n = distance - m;
-            this.srcX = (m * destX + n * srcX) / distance;
-            this.srcY = (m * destY + n * srcY) / distance;
-            this.destX = (m * srcX + n * destX) / distance;
-            this.destY = (m * srcY + n * destY) / distance;
+            line.setStartX((m * endVertex.getCenterX() + n * srcVertex.getCenterX()) / distance);
+            line.setStartY((m * endVertex.getCenterY() + n * srcVertex.getCenterY()) / distance);
+            line.setEndX((m * srcVertex.getCenterX() + n * endVertex.getCenterX()) / distance);
+            line.setEndY((m * srcVertex.getCenterY() + n * endVertex.getCenterY()) / distance);
         }
 
-        private void drawArrowHead(double srcX, double srcY, double destX, double destY) {
-            // Arrow head at dest point
-            double angle = Math.atan2((destY - srcY), (destX - srcX)) - Math.PI / 2.0;
-            double sin = Math.sin(angle);
-            double cos = Math.cos(angle);
+        private void initializeArrow() {
+            double angle, height, width, length, subtractWidth, subtractHeight;
+            if (!isDirected) {  // Also set arrow at src if undirected
+                angle = Math.atan2(line.getStartY() - line.getEndY(), line.getStartX() - line.getEndX()) * 180 / 3.14;
 
-            // point 1
-            double x1 = (- 1.0 / 2.0 * cos + Math.sqrt(3) / 2 * sin) * ARROWHEADSIZE + destX;
-            double y1 = (- 1.0 / 2.0 * sin - Math.sqrt(3) / 2 * cos) * ARROWHEADSIZE + destY;
+                height = line.getStartY() - line.getEndY();
+                width = line.getStartX() - line.getEndX();
+                length = Math.sqrt(Math.pow(height, 2) + Math.pow(width, 2));
 
-            // point 2
-            double x2 = (1.0 / 2.0 * cos + Math.sqrt(3) / 2 * sin) * ARROWHEADSIZE + destX;
-            double y2 = (1.0 / 2.0 * sin - Math.sqrt(3) / 2 * cos) * ARROWHEADSIZE + destY;
+                subtractWidth = 5 * width / length;
+                subtractHeight = 5 * height / length;
 
-            getElements().add(new LineTo(x1, y1));
-            getElements().add(new LineTo(x2, y2));
-            getElements().add(new LineTo(destX, destY));
+                arrowSrc.setRotate(angle - 90);
+                arrowSrc.setTranslateX(line.getEndX());
+                arrowSrc.setTranslateY(line.getEndY());
+                arrowSrc.setTranslateX(line.getStartX() - subtractWidth);
+                arrowSrc.setTranslateY(line.getStartY() - subtractHeight);
+            }
+            // Set arrow at end no matter directed or undirected
+            angle = Math.atan2(line.getEndY() - line.getStartY(), line.getEndX() - line.getStartX()) * 180 / 3.14;
+
+            height = line.getEndY() - line.getStartY();
+            width = line.getEndX() - line.getStartX();
+            length = Math.sqrt(Math.pow(height, 2) + Math.pow(width, 2));
+
+            subtractWidth = 5 * width / length;
+            subtractHeight = 5 * height / length;
+
+            arrowEnd.setRotate(angle - 90);
+            arrowEnd.setTranslateX(line.getStartX());
+            arrowEnd.setTranslateY(line.getStartY());
+            arrowEnd.setTranslateX(line.getEndX() - subtractWidth);
+            arrowEnd.setTranslateY(line.getEndY() - subtractHeight);
+        }
+
+        private void initializeRep() {
+            double resultX, resultY;
+            if (!isDirected) {
+                resultX = ((0.2 * srcVertex.getCenterX()) + (0.8 * endVertex.getCenterX()));
+                resultY = ((0.2 * srcVertex.getCenterY()) + (0.8 * endVertex.getCenterY()));
+                endRepText.setX(resultX);
+                endRepText.setY(resultY);
+            }
+            resultX = ((0.2 * endVertex.getCenterX()) + (0.8 * srcVertex.getCenterX()));
+            resultY = ((0.2 * endVertex.getCenterY()) + (0.8 * srcVertex.getCenterY()));
+            srcRepText.setX(resultX);
+            srcRepText.setY(resultY);
+
         }
     }
 
