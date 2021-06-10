@@ -150,7 +150,7 @@ public class GraphSimulationController implements Initializable {
         DBConnect.closeCon();
     }
 
-    public void loadGraphFX(ActionEvent actionEvent) {
+    public void loadGraphFX(ActionEvent actionEvent) {      // TODO: Might need to catch the exception of not connecting to DB and display the error box
         DBConnect.startCon();
 
         if(!sociograph.getAllStudents().isEmpty()){

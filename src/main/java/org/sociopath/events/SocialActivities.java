@@ -197,6 +197,50 @@ public class SocialActivities {
 
     }
 
+    public static void event4(){
+        Scanner sc = new Scanner(System.in);
+        Stack<Integer> stack1 = new Stack<>();
+        Stack<Integer> stack2 = new Stack<>();
+        int a,b;
+        int round=0;
+        System.out.print("Enter the number of book: ");
+        int n = sc.nextInt();
+        // input height of n books
+        System.out.print("Enter the height of the books: ");
+        for(int i=0; i<n; i++){
+            stack1.push(sc.nextInt());
+        }
+
+        while(true){
+            int stack1size = stack1.size();
+
+            while(!stack1.isEmpty()) {
+                a = stack1.pop();
+                b = 0;
+
+                if (!stack1.isEmpty()) {
+                    b = stack1.peek();
+                }
+
+                if(a<b || stack1.isEmpty()){
+                    stack2.push(a);
+                }
+            }
+
+            if(stack1size == stack2.size()){
+                break;
+            }
+
+            // Push Back height of books into stack1
+            while(!stack2.isEmpty()){
+                stack1.push(stack2.pop());
+            }
+            // increment round
+            round++;
+        }
+        System.out.println("Rounds needed to make the height in non-increasing order: " + round);
+    }
+
     public static void event5(Sociograph sociograph, String you, String crush) {
         // Get the stranger object randomly
         ArrayList<String> possibleStrangers = new ArrayList<>();
@@ -273,6 +317,28 @@ public class SocialActivities {
             System.out.println("No path from " + stranger + " to " + crush);
         }
 
+    }
+
+    public static void event6() {
+        Scanner sc = new Scanner(System.in);
+        int n = sc.nextInt();
+        Sociograph g = new Sociograph(n+1);
+
+        for(int i=0; i<n; i++){
+            int s = sc.nextInt();
+            int d = sc.nextInt();
+            g.addEdge(s,d);
+        }
+
+        System.out.println("You can form the following friendship (s): ");
+        for(int i=1; i<=n; i++){
+            for(int j=1; j<=n; j++){
+                if(i!=j){
+                    g.printAllPath(i,j);
+                }
+            }
+        }
+        System.out.println(g.clearPath());
     }
 
     public static void doAssignments(Sociograph sociograph){

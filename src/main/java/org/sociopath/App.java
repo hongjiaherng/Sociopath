@@ -31,11 +31,6 @@ public class App extends Application {
         primaryStage.show();
     }
 
-    @Override
-    public void stop() throws Exception {
-
-    }
-
     public static void main(String[] args) {
         launch(args);
     }
@@ -43,6 +38,5 @@ public class App extends Application {
     public static Stage getPrimaryStage() {
         return primaryStage;
     }
-
 
 }

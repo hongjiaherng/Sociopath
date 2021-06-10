@@ -94,9 +94,9 @@ public class GraphDao {
             db_MakeRelationToSociograph(student, names,  Relationship.ENEMY, repPoints, sociograph);
             db_MakeRelationToSociograph(student, names,  Relationship.NONE, repPoints, sociograph);
 //            db_MakeRelationToSociograph(student, names,  Relationship.CRUSH, repPoints, sociograph);
-            // TODO: Check here
-            db_MakeRelationToSociograph(student, names,  Relationship.ADMIRED_BY, repPoints, sociograph);
-            db_MakeRelationToSociograph(student, names,  Relationship.THE_OTHER_HALF, repPoints, sociograph);
+            // TODO: Check here because the previouos CRUSH is not being used anymore
+            db_MakeRelationToSociograph(student, names,  Relationship.ADMIRED_BY, repPoints, sociograph);   // TODO: I added this, not sure if works
+            db_MakeRelationToSociograph(student, names,  Relationship.THE_OTHER_HALF, repPoints, sociograph);   // TODO: I added this, not sure if works
 
         }
 
@@ -144,7 +144,7 @@ public class GraphDao {
 
             else if (rel == Relationship.ADMIRED_BY && !sociograph.hasDirectedEdge(student.getName(), fr.getName()))
                 sociograph.addDirectedEdge(student.getName(), fr.getName(), repPoints.get(fr.getName()), Relationship.ADMIRED_BY);
-            // TODO: Check here
+            // TODO: Check here because i changed the previous CRUSH to ADMIRED_BY, and need to consider about THE_OTHER_HALF
         }
     }
 }

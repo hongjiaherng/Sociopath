@@ -14,12 +14,11 @@ public class DBConnect {
     public static void startCon() {
         configuration = new Configuration.Builder()
                 .uri("bolt://localhost")
-                .credentials("neo4j", "QWERTyuiop12#")
+                .credentials("neo4j", "<your-password-here>")
                 .build();
         LogManager.getLogManager().reset();
 
         sessionFactory = new SessionFactory(configuration, "models", "org.sociopath");
-
     }
 
     public static Session getSession() {

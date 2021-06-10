@@ -42,11 +42,11 @@ public class Student {
     @Relationship(type = "NONE")
     private Set<Student> nones = new HashSet<>();
 
+    // TODO: Newly added admired by
     @Relationship(type = "ADMIRED_BY")
     private Set<Student> admirers = new HashSet<>();     // This crush means who ever secretly like this student should be included in this list
-    // TODO: admirer
 
-    // TODO: couple, see if it can be a single variable to make a relationship
+    // TODO: the other half, see if it can be a single variable to make a relationship
     @Relationship(type = "THE_OTHER_HALF")
     private Set<Student> theOtherHalf = new HashSet<>();      // can only contain one
 
@@ -117,10 +117,6 @@ public class Student {
     public Set<Student> getNones() {
         return nones;
     }
-
-//    public Set<Student> getCrushes() {
-//        return crushes;
-//    }
 
     public Set<Student> getAdmirers() {
         return admirers;
