@@ -124,6 +124,14 @@ public class GraphSimulationController implements Initializable {
 
     public void saveGraphFX(ActionEvent actionEvent) {
         DBConnect.startCon();
+//        try {
+//            GraphDao.deleteGraph();
+//        } catch(ConnectionException e){
+//            Alert alertDialog = new Alert(Alert.AlertType.WARNING);
+//            setDefaultDialogConfig(alertDialog);
+//            alertDialog.setContentText("Error connecting to the database!");
+//            alertDialog.show();
+//        }
 
         if(sociograph.getAllStudents().isEmpty()) {
             Alert alertDialog = new Alert(Alert.AlertType.WARNING);
