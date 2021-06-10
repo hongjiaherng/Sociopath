@@ -241,6 +241,17 @@ public class SocialActivities {
         System.out.println("Rounds needed to make the height in non-increasing order: " + round);
     }
 
+    public static void event4x() {
+        System.out.println("Event 4 - Arranging Books");
+        System.out.print("Enter the number of book: ");
+        int numOfBooks = sc.nextInt();
+
+//        Stack<>
+
+        System.out.print("Enter the height of the books: ");
+
+    }
+
     public static void event5(Sociograph sociograph, String you, String crush) {
         // Get the stranger object randomly
         ArrayList<String> possibleStrangers = new ArrayList<>();

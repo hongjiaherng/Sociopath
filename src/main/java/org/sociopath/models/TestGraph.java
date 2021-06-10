@@ -10,7 +10,7 @@ public class TestGraph {
 //        event1Test(sociograph);
 //        event2Test(sociograph);
 //        event3Test(sociograph);
-//        event4Test(sociograph);
+        event4Test(sociograph);
 //        event5Test(sociograph);
 //        event6Test(sociograph);
     }
@@ -109,12 +109,10 @@ public class TestGraph {
         System.out.println("\n" + sociograph);
     }
 
-    // TODO: Jia Hong path
+    // TODO: Jia Hong part
     public static void event4Test(Sociograph sociograph) {
         System.out.println("Event 4 - Arranging Books");
-        System.out.println(sociograph + "\n");
         SocialActivities.event4();
-        System.out.println("\n" + sociograph);
     }
 
     // Working well
@@ -124,7 +122,7 @@ public class TestGraph {
         SocialActivities.event5(sociograph, "F", "C");
     }
 
-    // TODO: Jia Hong path
+    // TODO: Jia Hong part
     public static void event6Test(Sociograph sociograph) {
         System.out.println("Event 6 - Friendship");
         System.out.println(sociograph + "\n");
