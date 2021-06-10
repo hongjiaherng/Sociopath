@@ -2,9 +2,6 @@ package org.sociopath.models;
 
 import org.sociopath.events.SocialActivities;
 
-import java.util.Map;
-import java.util.Set;
-
 public class TestGraph {
     public static void main(String[] args) {
         Sociograph sociograph = new Sociograph();
@@ -37,7 +34,7 @@ public class TestGraph {
         sociograph.addUndirectedEdge("H", "D", 7, 10, Relationship.FRIEND);
         sociograph.addUndirectedEdge("D", "J", 7, 7, Relationship.FRIEND);
         sociograph.addUndirectedEdge("I", "J", 6, 5, Relationship.FRIEND);
-        sociograph.addDirectedEdge("A", "C", 3);
+        sociograph.addDirectedEdge("A", "C", 3, Relationship.NONE);
 
         // Graph Tests
         /*
@@ -54,7 +51,7 @@ public class TestGraph {
 
     public static void event1Test(Sociograph sociograph) {
         // Event 1 Tests
-        SocialActivities.event1("B" , "D", sociograph);
+        SocialActivities.event1(sociograph);
         // test whether if they are friends then can the event run??
 //        event1("A", "B", sociograph);
 
@@ -124,5 +121,13 @@ public class TestGraph {
 
     public static void event6Test(Sociograph sociograph) {
 
+    }
+
+    public static void sixDegreesOfKenThompson(Sociograph sociograph){
+        SocialActivities.sixDegreeOfKenThompson(sociograph);
+    }
+
+    public static void doAssignmentsTest(Sociograph sociograph){
+        SocialActivities.doAssignments(sociograph);
     }
 }

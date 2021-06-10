@@ -1,6 +1,9 @@
 package org.sociopath.dao;
 
+import org.neo4j.ogm.cypher.ComparisonOperator;
+import org.neo4j.ogm.cypher.Filter;
 import org.neo4j.ogm.session.Session;
+import org.sociopath.models.Relationship;
 import org.sociopath.models.Sociograph;
 import org.sociopath.models.Student;
 import org.sociopath.utils.DBConnect;
@@ -12,25 +15,24 @@ public class GraphDao {
      * Connection for Neo4j database
      */
     private static final Session session = DBConnect.getSession();
+    private static ArrayList<Student> allStudents;
 
     /**
      * Save the graph into the database
      * @param graph A Sociograph object that is going to be saved
      */
     public static void saveGraph(Sociograph graph){
-
         List<Student> vertices = graph.getAllStudents();
         for(Student student : vertices){
             session.save(student);
         }
-
     }
 
     /**
      * Delete all nodes and relationship in the database
      */
     public static void deleteGraph(){
-        session.deleteAll(Student.class);
+        session.purgeDatabase();
     }
 
     /**
@@ -46,63 +48,99 @@ public class GraphDao {
         return students;
     }
 
-//    public static Sociograph getGraph(){
-//        Sociograph sociograph = new Sociograph();
-//        HashMapConverter converter = new HashMapConverter();
-//
-//        ArrayList<Student> allStudents = new ArrayList<>(session.loadAll(Student.class));
-//
-//        System.out.println(allStudents);
-//        for(Student student : allStudents)
-//            sociograph.addVertexFromDB(student);
-//
-//        getRelationship(allStudents, sociograph);
-//
-//
-//        return sociograph;
-//    }
+    /**
+     * Delete a certain node in the database that has the provided name
+     *
+     * @param name name of the node
+     */
+    public static void deleteNode(String name){
+        Filter filter = new Filter("Name", ComparisonOperator.EQUALS, name);
+        Collection<Filter> filters = new ArrayList<>();
+        filters.add(filter);
 
+        session.delete(Student.class, filters, true);
+    }
 
+    /**
+     * Save or update the node in the database
+     *
+     * @param node the Student object that wanted to be updated
+     */
     public static void db_addOrUpdateNode(Student node) {
         session.save(node);
     }
 
-    private static void getRelationship(ArrayList<Student> allStudents, Sociograph sociograph){
-        for(Student s : allStudents){
-            String cypher = "MATCH (n1:Student {Name:'" + s.getName() + "'})-[r:FRIEND]->(n2) RETURN n2.Name";
-            Iterable<Map<String, Object>> collection = session.query(cypher, Collections.EMPTY_MAP);
+    /**
+     * Get the graph from the database and make the relationship in the Sociograph
+     *
+     * @return a Socioraph object that contains all the relationship
+     */
+    public static Sociograph db_getGraph(){
+        allStudents = GraphDao.getAllVertices();
+        String[] names = new String[allStudents.size()];
+        ArrayList<HashMap<String, Double>> allRepPoints = new ArrayList<>();
+        allStudents.forEach(e -> allRepPoints.add(e.getRepPoints()));
+        Sociograph sociograph = new Sociograph();
 
-            String repPointsCypher = "MATCH (n1:Student {Name:'" + s.getName() + "'}) RETURN n1.repPoints";
-            Iterable<Map<String, Object>> repPoints = session.query(repPointsCypher, Collections.EMPTY_MAP);
-
-            List<Map<String, Object>> friends = new ArrayList<>();
-            collection.forEach(friends::add);
-
-            List<Map<String, Object>> repPointList = new ArrayList<>();
-            repPoints.forEach(repPointList::add);
-
-            HashMap<String, Double> mapping = StringSplitter(repPointList);
-            System.out.println(mapping);
-
-            for(int i = 0; i<friends.size(); i++){
-                Map<String, Object> friend = friends.get(i);
-                String name = (String) friend.get("n2.Name");
-
-
-                System.out.println(friend);
-
-            }
+        int i = 0;
+        for(Student student : allStudents) {
+            sociograph.addVertexFromDB(student);
+            names[i++] = student.getName();
         }
+
+        for(Student student : allStudents){
+            HashMap<String, Double> repPoints = allRepPoints.get(findIndex(names, student.getName()));
+            db_MakeRelationToSociograph(student, names,  Relationship.FRIEND, repPoints, sociograph);
+            db_MakeRelationToSociograph(student, names,  Relationship.ENEMY, repPoints, sociograph);
+            db_MakeRelationToSociograph(student, names,  Relationship.NONE, repPoints, sociograph);
+            db_MakeRelationToSociograph(student, names,  Relationship.CRUSH, repPoints, sociograph);
+        }
+
+        return sociograph;
     }
 
-    private static HashMap<String, Double> StringSplitter(List<Map<String, Object>> repPoints){
-        HashMap<String, Double> rep = new HashMap<>();
-        String[] temp = (String[]) repPoints.get(0).get("n1.repPoints");
+    private static String[] getRelationFromDB(Student node, Relationship rel){
+        String friendsCyper = "Match (a:Student {Name:'" + node.getName() +"'})-[:" + rel +"]->(b:Student) return b.Name";
+        Iterable<Map<String, Object>> friends = session.query(friendsCyper, Collections.EMPTY_MAP);
+        ArrayList<Map<String, Object>> friendsList = new ArrayList<>();
+        friends.forEach(friendsList::add);
 
-        for(String map : temp){
-            String[] splitted = map.split(":");
-            rep.put(splitted[0], Double.parseDouble(splitted[1]));
+        String[] friendArr = new String[friendsList.size()];
+        int j = 0;
+
+        for(Map<String, Object> k : friendsList){
+            friendArr[j++] = (String) k.get("b.Name");
         }
-        return rep;
+
+        return friendArr;
+    }
+
+    private static int findIndex(String[] names, String name){
+        for(int i = 0; i< names.length; i++)
+            if(name.equals(names[i]))
+                return i;
+
+        return -1;
+    }
+
+    private static void db_MakeRelationToSociograph(Student student,String[] names, Relationship rel, HashMap<String, Double> repPoints, Sociograph sociograph){
+        String[] studentRelation = getRelationFromDB(student, rel);
+        for (String s : studentRelation) {
+            int index = findIndex(names, s);
+            Student fr = allStudents.get(index);
+
+            HashMap<String, Double> rep = fr.getRepPoints();
+
+            boolean relationshipCheck = rel == Relationship.FRIEND || rel == Relationship.ENEMY;
+            if (!sociograph.hasUndirectedEdge(student.getName(), fr.getName()) && relationshipCheck)
+                sociograph.addUndirectedEdge(student.getName(), fr.getName(), repPoints.get(fr.getName()), rep.get(student.getName()), rel);
+
+            else if (rel == Relationship.NONE && !sociograph.hasDirectedEdge(student.getName(), fr.getName()))
+                sociograph.addDirectedEdge(student.getName(), fr.getName(), repPoints.get(fr.getName()), Relationship.NONE);
+
+            else if (rel == Relationship.CRUSH && !sociograph.hasDirectedEdge(student.getName(), fr.getName()))
+                sociograph.addDirectedEdge(student.getName(), fr.getName(), repPoints.get(fr.getName()), Relationship.CRUSH);
+
+        }
     }
 }

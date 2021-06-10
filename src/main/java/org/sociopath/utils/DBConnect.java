@@ -12,12 +12,14 @@ public class DBConnect {
     private static SessionFactory sessionFactory;
 
     public static void startCon() {
-        configuration= new Configuration.Builder()
+        configuration = new Configuration.Builder()
                 .uri("bolt://localhost")
                 .credentials("neo4j", "QWERTyuiop12#")
                 .build();
         LogManager.getLogManager().reset();
+
         sessionFactory = new SessionFactory(configuration, "models", "org.sociopath");
+
     }
 
     public static Session getSession() {
@@ -26,5 +28,9 @@ public class DBConnect {
 
     public static void closeCon(){
         sessionFactory.close();
+    }
+
+    public static boolean isConnected(){
+        return configuration != null;
     }
 }

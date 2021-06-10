@@ -35,9 +35,11 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import org.sociopath.App;
+import org.sociopath.dao.GraphDao;
 import org.sociopath.models.Relationship;
 import org.sociopath.models.Sociograph;
 import org.sociopath.models.Student;
+import org.sociopath.utils.DBConnect;
 
 import java.awt.*;
 import java.io.IOException;
@@ -121,6 +123,60 @@ public class GraphSimulationController implements Initializable {
 
     }
 
+    public void saveGraphFX(ActionEvent actionEvent) {  // TODO: Might need to catch the exception of not connecting to DB and display the error box
+        DBConnect.startCon();
+        GraphDao.deleteGraph();
+
+        if(sociograph.getAllStudents().isEmpty()) {
+            alertWindow("No vertex and edge can be saved!");
+        }
+
+        else if(!DBConnect.isConnected()){
+            alertWindow("No connection to database!");
+        }
+
+        else{
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setContentText("Save Successfully!");
+            alert.initStyle(StageStyle.UTILITY);
+            DialogPane alertDialog = alert.getDialogPane();
+            alertDialog.getStyleClass().add("dialog");
+            alertDialog.getStylesheets().add(getClass().getResource("../style/style.css").toExternalForm());
+            alert.show();
+            GraphDao.saveGraph(sociograph);
+        }
+
+        DBConnect.closeCon();
+    }
+
+    public void loadGraphFX(ActionEvent actionEvent) {
+        DBConnect.startCon();
+
+        if(!sociograph.getAllStudents().isEmpty()){
+            alertWindow("Cannot load a graph, there are vertices (and edges) on the canvas. ");
+        }
+
+        else if(!DBConnect.isConnected()){
+            alertWindow("No connection to database!");
+        }
+
+        else if(GraphDao.db_getGraph().getAllStudents().isEmpty()){
+            alertWindow("There is no graph in the database!");
+        }
+
+        else{
+            Sociograph newSociograph = GraphDao.db_getGraph();
+            HashMap<String, Boolean> isCreated = new HashMap<>();
+
+            for(Student student : newSociograph.getAllStudents())
+                isCreated.put(student.getName(), false);
+
+            drawAllVertexAndEdge(newSociograph, isCreated);
+        }
+
+        DBConnect.closeCon();
+    }
+
     public void studentInfoCard(VertexFX vertex) {
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("Student information card");
@@ -140,7 +196,7 @@ public class GraphSimulationController implements Initializable {
         Student student = sociograph.getStudent(vertex.nameText.getText());
 
         List<Object> textFieldList = convertStudentInfoToTextFields(student);
-        List<String> labelNameList = getStudentInfoAllFieldNames();
+        List<String> labelNameList = getStudentInfoAllFieldNames(student);
 
         for (int i = 0, rowpos = 0; i < textFieldList.size(); i++) {
             grid.add(new Label(labelNameList.get(i)), 0, rowpos);
@@ -453,7 +509,7 @@ public class GraphSimulationController implements Initializable {
                 sociograph.setSrcRepRelativeToAdj(edge.endVertex.nameText.getText(), edge.srcVertex.nameText.getText(), Double.parseDouble(destRepStr));
 
                 // Change relation
-                sociograph.setRelationshipOnEdge(edge.srcVertex.nameText.getText(), edge.endVertex.nameText.getText(), relType);
+                sociograph.setUndirectedRelationshipOnEdge(edge.srcVertex.nameText.getText(), edge.endVertex.nameText.getText(), relType);
                 edge.changeRel(relType);
             }
         }
@@ -470,6 +526,7 @@ public class GraphSimulationController implements Initializable {
                     String srcVertexName = srcVertexFX.nameText.getText();
                     String destVertexName = destVertexFX.nameText.getText();
 
+                    // Add directed edge to an existing connection (convert directed edge into undirected edge)
                     if (addRepBtn.isSelected() && sociograph.hasDirectedEdge(destVertexName, srcVertexName) &&
                             !sociograph.hasDirectedEdge(srcVertexName, destVertexName)) {
 
@@ -557,7 +614,7 @@ public class GraphSimulationController implements Initializable {
                             newUndirectedEdge.showEdge();
                         }
 
-                    } else if (addRepBtn.isSelected() && !sociograph.hasDirectedEdge(srcVertexName, destVertexName)) {
+                    } else if (addRepBtn.isSelected() && !sociograph.hasDirectedEdge(srcVertexName, destVertexName)) {      // Add directed edge (rep point) from src to dest
 
                         TextInputDialog dialog = new TextInputDialog();
                         dialog.getDialogPane().setPrefHeight(200);
@@ -565,35 +622,54 @@ public class GraphSimulationController implements Initializable {
                         dialog.setGraphic(null);
                         dialog.setTitle("Add directed edge");
                         dialog.setHeaderText("Enter student " + srcVertexName + " reputation point relative to " + destVertexName);
-                        dialog.setContentText("Reputation pts");
                         dialog.initStyle(StageStyle.UTILITY);
                         DialogPane dialogPane = dialog.getDialogPane();
                         dialogPane.getStyleClass().add("dialog");
                         dialogPane.getStylesheets().add(getClass().getResource("../style/style.css").toExternalForm());
 
-                        TextField textField = dialog.getEditor();
+                        GridPane gridPane = new GridPane();
+                        gridPane.setHgap(10);
+                        gridPane.setVgap(10);
+                        gridPane.setPadding(new Insets(20, 10, 30, 10));
+
+                        TextField repTF = new TextField();
+                        repTF.setPromptText(srcVertexName + "'s rep");
+                        repTF.setPrefWidth(100);
+                        ComboBox<Relationship> relCB = new ComboBox<>(FXCollections.observableArrayList(Relationship.NONE, Relationship.CRUSH));
+                        relCB.setValue(Relationship.NONE);
+                        relCB.setPrefWidth(100);
+
+                        gridPane.add(new Label(srcVertexName + "'s rep relative to " + destVertexName), 0, 0);
+                        gridPane.add(repTF, 1, 0);
+                        gridPane.add(new Label("Does " + destVertexName + " like " + srcVertexName), 0, 1);
+                        gridPane.add(relCB, 1, 1);
+
+                        dialogPane.setContent(gridPane);
+
                         Button okButton = (Button) dialogPane.lookupButton(ButtonType.OK);
 
                         okButton.disableProperty().bind(Bindings.createBooleanBinding(() -> {
                                     boolean isNumber;
                                     try {
-                                        double rep = Double.parseDouble(textField.getText());
+                                        double rep = Double.parseDouble(repTF.getText());
                                         isNumber = true;
                                     } catch (NumberFormatException e) {
                                         isNumber = false;
                                     }
                                     return !isNumber;
-                                }, textField.textProperty()
+                                }, repTF.textProperty()
                         ));
 
                         String repStr = null;
+                        Relationship rel = null;
                         Optional<String> result = dialog.showAndWait();
                         if (result.isPresent()) {
-                            repStr = result.get();
+                            repStr = repTF.getText();
+                            rel = relCB.getValue();
                         }
 
-                        if (repStr != null) {
-                            EdgeFX directedEdge = new EdgeFX(srcVertexFX, destVertexFX, repStr);
+                        if (repStr != null && rel != null) {
+                            EdgeFX directedEdge = new EdgeFX(srcVertexFX, destVertexFX, repStr, rel);
                             directedEdge.showEdge();
                         }
 
@@ -857,8 +933,8 @@ public class GraphSimulationController implements Initializable {
             });
         }
 
-        public EdgeFX(VertexFX srcVertex, VertexFX endVertex, String srcRep) {
-            this(srcVertex, endVertex, Relationship.NONE);
+        public EdgeFX(VertexFX srcVertex, VertexFX endVertex, String srcRep, Relationship rel) {
+            this(srcVertex, endVertex, rel);
 
             this.isDirected = true;
             this.srcRepText.setText(Double.parseDouble(srcRep) + "");
@@ -870,7 +946,7 @@ public class GraphSimulationController implements Initializable {
 
             srcVertex.connectedEdges.add(this);
             endVertex.connectedEdges.add(this);
-            sociograph.addDirectedEdge(srcVertex.nameText.getText(), endVertex.nameText.getText(), Double.parseDouble(srcRep));
+            sociograph.addDirectedEdge(srcVertex.nameText.getText(), endVertex.nameText.getText(), Double.parseDouble(srcRep), rel);
 
             System.out.println(sociograph + "\n");
         }
@@ -915,6 +991,11 @@ public class GraphSimulationController implements Initializable {
                     this.line.setStroke(Color.web("#ff0c0c"));
                     this.arrowEnd.setStyle("-fx-fill: #ff0c0c");
                     this.arrowSrc.setStyle("-fx-fill: #ff0c0c");
+                    break;
+                case CRUSH:
+                    this.line.setStroke(Color.web("#c843ff"));
+                    this.arrowEnd.setStyle("-fx-fill: #c843ff");
+                    this.arrowSrc.setStyle("-fx-fill: #c843ff");
                     break;
             }
         }
@@ -1004,6 +1085,7 @@ public class GraphSimulationController implements Initializable {
         Set<Student> friendsSet = student.getFriends();
         Set<Student> enemiesSet = student.getEnemies();
         Set<Student> nonesSet = student.getNones();
+        Set<Student> crushesSet = student.getCrushes();
 
         StringBuilder lunchStart = new StringBuilder();
         for (int i = 0; i < lunchStartArr.length; i++) {
@@ -1039,6 +1121,12 @@ public class GraphSimulationController implements Initializable {
         });
         String nones = nonesSet.size() == 0 ? "-" : nonesSB.substring(0, nonesSB.length() - 2);
 
+        StringBuilder crushesSB = new StringBuilder();
+        crushesSet.forEach(v -> {
+            crushesSB.append(v.getName()).append(", ");
+        });
+        String crushes = crushesSet.size() == 0 ? "-" : crushesSB.substring(0, crushesSB.length() - 2);
+
         TextField nameTF = new TextField(name);
         TextField diveTF = new TextField(dive + "");
         TextField lunchStartTF = new TextField(lunchStart.toString());
@@ -1047,6 +1135,7 @@ public class GraphSimulationController implements Initializable {
         TextField friendsTF = new TextField(friends);
         TextField enemiesTF = new TextField(enemies);
         TextField nonesTF = new TextField(nones);
+        TextField crushesTF = new TextField(crushes);
         List<TextField> repPointsTFs = new ArrayList<>();
         for (String key : repPointsMap.keySet()) {
             repPointsTFs.add(new TextField(repPointsMap.get(key) + " pts relative to " + key));
@@ -1062,11 +1151,12 @@ public class GraphSimulationController implements Initializable {
         textFieldList.add(friendsTF);
         textFieldList.add(enemiesTF);
         textFieldList.add(nonesTF);
+        textFieldList.add(crushesTF);
 
         return textFieldList;
     }
 
-    private List<String> getStudentInfoAllFieldNames() {
+    private List<String> getStudentInfoAllFieldNames(Student student) {
         List<String> labelNameList = new ArrayList<>();
         labelNameList.add("Name");
         labelNameList.add("Diving rate (%)");
@@ -1077,6 +1167,7 @@ public class GraphSimulationController implements Initializable {
         labelNameList.add("Friends");
         labelNameList.add("Enemies");
         labelNameList.add("No relationship");
+        labelNameList.add("Who likes " + student.getName());
         return labelNameList;
     }
 
@@ -1091,5 +1182,97 @@ public class GraphSimulationController implements Initializable {
         newWindow.initModality(Modality.APPLICATION_MODAL);
         newWindow.initStyle(StageStyle.UTILITY);
         return newWindow;
+    }
+
+    private void alertWindow(String message){
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setContentText(message);
+        DialogPane alertDialog = alert.getDialogPane();
+        alertDialog.getStyleClass().add("dialog");
+        alertDialog.getStylesheets().add(getClass().getResource("../style/style.css").toExternalForm());
+        alert.initStyle(StageStyle.UTILITY);
+        alert.show();
+    }
+
+    private void drawAllVertexAndEdge(Sociograph newSociograph, HashMap<String, Boolean> isCreated){
+        int xSize = 510 / 20;
+        int ySize = 570 / 20;
+
+        Point[][] coordinates = new Point[xSize][ySize];
+        boolean[][] hasNode = new boolean[xSize][ySize];
+        int startY = 50;
+
+        for(int i = 0; i< coordinates.length; i++){
+            int startX = 50;
+            for(int j = 0; j<coordinates[i].length; j++){
+                coordinates[i][j] =  new Point(startX, startY);
+                startX += 20;
+            }
+            startY += 20;
+        }
+
+        for(Student student : newSociograph.getAllStudents()) {
+            VertexFX srcVertex = getVertex(student, isCreated, hasNode, coordinates);
+            String srcName = srcVertex.nameText.getText();
+
+            Map<String, Double> srcReps = student.getRepPoints();
+            Set<Student> friends = student.getFriends();
+            Set<Student> enemies = student.getEnemies();
+            Set<Student> nones = student.getNones();
+            drawRelationship(srcVertex, srcReps, srcName, isCreated, friends, Relationship.FRIEND, coordinates, hasNode);
+            drawRelationship(srcVertex, srcReps, srcName, isCreated, enemies, Relationship.ENEMY, coordinates, hasNode);
+            drawRelationship(srcVertex, srcReps, srcName, isCreated, nones, Relationship.NONE, coordinates, hasNode);
+
+        }
+    }
+
+    private VertexFX getVertex(Student student, HashMap<String, Boolean> isCreated, boolean[][] hasNode, Point[][] coordinates){
+        String name = student.getName();
+
+        VertexFX vertex = null;
+        if(!isCreated.get(name)) {
+            int xRandom;
+            int yRandom;
+            do {
+                xRandom = (int) (Math.random() * coordinates.length);
+                yRandom = (int) (Math.random() * coordinates[xRandom].length);
+            } while(hasNode[xRandom][yRandom]);
+
+            hasNode[xRandom][yRandom] = true;
+            Point coordinate = coordinates[xRandom][yRandom];
+            vertex = new VertexFX(coordinate.x, coordinate.y  , 1.2, name);
+            isCreated.put(name, true);
+            vertex.showVertex();
+        }
+
+        else{
+            for (VertexFX allCircle : allCircles)
+                if (allCircle.nameText.getText().equals(name))
+                    vertex = allCircle;
+        }
+
+        return vertex;
+    }
+
+    private void drawRelationship(VertexFX srcVertex,Map<String, Double> srcReps,String srcName,HashMap<String, Boolean> isCreated,Set<Student> haveRelationStudents, Relationship relationship, Point[][] coordinates, boolean[][] hasNode){
+        for (Student dest : haveRelationStudents) {
+            VertexFX destVertex = getVertex(dest, isCreated, hasNode, coordinates);
+            String destName = destVertex.nameText.getText();
+
+            HashMap<String, Double> destReps = dest.getRepPoints();
+            String srcRep = String.valueOf(srcReps.get(destName));
+            String destRep = String.valueOf(destReps.get(srcName));
+
+            boolean checkUndirectedRelationship = relationship == Relationship.ENEMY || relationship == Relationship.FRIEND;
+            if(!sociograph.hasUndirectedEdge(srcName, destName) && checkUndirectedRelationship) {
+                EdgeFX edgeFX = new EdgeFX(srcVertex, destVertex, srcRep, destRep, relationship);
+                edgeFX.showEdge();
+            }
+
+            else if(!sociograph.hasDirectedEdge(srcName, destName)){
+                EdgeFX edgeFX = new EdgeFX(srcVertex, destVertex, srcRep, Relationship.NONE);   // TODO: Might have problem
+                edgeFX.showEdge();
+            }
+        }
     }
 }

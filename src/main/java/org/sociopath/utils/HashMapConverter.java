@@ -7,12 +7,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class HashMapConverter implements AttributeConverter<HashMap<String, Integer>, List<String>> {
+public class HashMapConverter implements AttributeConverter<HashMap<String, Double>, List<String>> {
 
     @Override
-    public List<String> toGraphProperty(HashMap<String, Integer> hashMap) {
+    public List<String> toGraphProperty(HashMap<String, Double> hashMap) {
         List<String> friends = new ArrayList<>();
-        for(Map.Entry<String, Integer> value : hashMap.entrySet()){
+
+        for(Map.Entry<String, Double> value : hashMap.entrySet()){
             String temp = value.getKey() + ":" + value.getValue();
             friends.add(temp);
         }
@@ -21,14 +22,15 @@ public class HashMapConverter implements AttributeConverter<HashMap<String, Inte
     }
 
     @Override
-    public HashMap<String, Integer> toEntityAttribute(List<String> list) {
-        HashMap<String, Integer> friends = new HashMap<>();
-        for(int i = 0; i<list.size(); i++){
-            String temp = list.get(i);
-            String [] separated = temp.split(":");
-            friends.put(separated[0], Integer.parseInt(separated[1]));
+    public HashMap<String, Double> toEntityAttribute(List<String> list) {
+        HashMap<String, Double> friends = new HashMap<>();
+        for (String temp : list) {
+            String[] separated = temp.split(":");
+            friends.put(separated[0], Double.parseDouble(separated[1]));
         }
 
-        return null;
+        return friends;
     }
+
 }
+

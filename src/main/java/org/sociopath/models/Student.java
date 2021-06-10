@@ -31,16 +31,22 @@ public class Student {
     private final int[] lunchPeriod = new int[3];                    // 5 < lunchPeriod < 60
 
     @Property(name = "repPoints") @Convert(HashMapConverter.class)
-    private HashMap<String, Double> repPoints;  // 1 <= rep <= 10
+    private HashMap<String, Double> repPoints = new HashMap<>();  // 1 <= rep <= 10
 
     @Relationship(type = "FRIEND")
-    private Set<Student> friends;
+    private Set<Student> friends = new HashSet<>();
 
     @Relationship(type = "ENEMY")
-    private Set<Student> enemies;
+    private Set<Student> enemies = new HashSet<>();
 
     @Relationship(type = "NONE")
-    private Set<Student> nones;
+    private Set<Student> nones = new HashSet<>();
+
+    @Relationship(type = "CRUSH")
+    private Set<Student> crushes = new HashSet<>();     // This crush means who ever secretly like this student should be included in this list
+    // TODO: admirer
+
+    // TODO: couple
 
     private transient int avgLunchPeriod;
     private transient LocalTime avgLunchStart;
@@ -51,10 +57,6 @@ public class Student {
     public Student(String name) {
         this.name = name;
         this.dive = Math.round((rand.nextDouble() * 99 + 1) * 100.0) / 100.0;
-        this.repPoints = new HashMap<>();
-        this.friends = new HashSet<>();
-        this.enemies = new HashSet<>();
-//        this.crushes = new HashSet<>();
         this.nones = new HashSet<>();
         for (int i = 0; i < lunchStart.length; i++) {
             this.lunchStart[i] = LocalTime.of(11, 0).plusMinutes(rand.nextInt(181));
@@ -114,6 +116,9 @@ public class Student {
         return nones;
     }
 
+    public Set<Student> getCrushes() {
+        return crushes;
+    }
 
     public LocalTime getAvgLunchStart() {
         return avgLunchStart;
@@ -148,6 +153,9 @@ public class Student {
                 case ENEMY:
                     enemies.remove(person);
                     break;
+                case CRUSH:
+                    crushes.remove(person);
+                    break;
             }
         }
         switch (newRelation) {
@@ -160,6 +168,9 @@ public class Student {
             case ENEMY:
                 enemies.add(person);
                 break;
+            case CRUSH:
+                crushes.add(person);
+                break;
         }
     }
 
@@ -168,10 +179,16 @@ public class Student {
         switch (prevRelation) {
             case NONE:
                 nones.remove(person);
+                break;
             case FRIEND:
                 friends.remove(person);
+                break;
             case ENEMY:
                 enemies.remove(person);
+                break;
+            case CRUSH:
+                crushes.remove(person);
+                break;
         }
 
         // Remove person from rep points HashMap
@@ -197,11 +214,11 @@ public class Student {
             sb.append(enemy.getName()).append(" ");
         });
         sb.append("]\n");
-//        sb.append("Crushes").append("\t\t\t: [ ");
-//        crushes.forEach(crush -> {
-//            sb.append(crush.getName()).append(" ");
-//        });
-//        sb.append("]\n");
+        sb.append("Crushes").append("\t\t\t: [ ");
+        crushes.forEach(crush -> {
+            sb.append(crush.getName()).append(" ");
+        });
+        sb.append("]\n");
         sb.append("Nones").append("\t\t\t: [ ");
         nones.forEach(none -> {
             sb.append(none.getName()).append(" ");
