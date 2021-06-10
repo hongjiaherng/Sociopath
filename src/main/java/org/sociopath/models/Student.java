@@ -48,7 +48,7 @@ public class Student {
 
     // TODO: the other half, see if it can be a single variable to make a relationship
     @Relationship(type = "THE_OTHER_HALF")
-    private Set<Student> theOtherHalf = new HashSet<>();      // can only contain one
+    private Student theOtherHalf ;      // can only contain one
 
     private transient int avgLunchPeriod;
     private transient LocalTime avgLunchStart;
@@ -122,7 +122,7 @@ public class Student {
         return admirers;
     }
 
-    public Set<Student> getTheOtherHalf() {
+    public Student getTheOtherHalf() {
         return theOtherHalf;
     }
 
@@ -163,7 +163,10 @@ public class Student {
                     admirers.remove(person);
                     break;
                 case THE_OTHER_HALF:
-                    theOtherHalf.remove(person);
+                    if(theOtherHalf != null)
+                        System.out.println(theOtherHalf.getName() + " is being removed from the relationship.");
+
+                    theOtherHalf = null;
                     break;
             }
         }
@@ -181,13 +184,14 @@ public class Student {
                 admirers.add(person);
                 break;
             case THE_OTHER_HALF:
-                theOtherHalf.add(person);
+                theOtherHalf = person;
                 break;
         }
     }
 
     void deleteRelationship(Student person, org.sociopath.models.Relationship prevRelation) {   // also remove the rep point
         // Remove person from nones / friends / enemies HashSet
+
         switch (prevRelation) {
             case NONE:
                 nones.remove(person);
@@ -202,8 +206,11 @@ public class Student {
                 admirers.remove(person);
                 break;
             case THE_OTHER_HALF:
-                theOtherHalf.remove(person);
+                if(theOtherHalf != null)
+                    System.out.println(theOtherHalf.getName() + " is being removed from the relationship.");
+                theOtherHalf = null;
                 break;
+
         }
 
         // Remove person from rep points HashMap
@@ -244,11 +251,11 @@ public class Student {
             sb.append(admirer.getName()).append(" ");
         });
         sb.append("]\n");
-        sb.append("The Other Half").append("\t\t\t: [ ");
-        theOtherHalf.forEach(theOtherHalf -> {
-            sb.append(theOtherHalf.getName()).append(" ");
-        });
-        sb.append("]");
+//        sb.append("The Other Half").append("\t\t\t: [ ");
+//        theOtherHalf.forEach(theOtherHalf -> {
+//            sb.append(theOtherHalf.getName()).append(" ");
+//        });
+//        sb.append("]");
         return sb.toString();
     }
 }

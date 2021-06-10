@@ -260,14 +260,14 @@ public class Sociograph {
     }
 
     /**
-     * Check the relationship between vertex srcName and vertex adjName. Return the relationship if there exist one.
+     * Check the relationship from a vertex srcName to a vertex adjName.(Directed) Return the relationship if there exist one.
      * Otherwise, return null
      * @param srcName student's name as source vertex
      * @param adjName student's name as adjacent vertex
-     * @return relationship type in enum (Either FRIEND, ENEMY, THE_OTHER_HALF, or NONE)
+     * @return relationship type in enum (Either FRIEND, ENEMY, THE_OTHER_HALF, ADMIRED_BY, or NONE), null if no relationship
      */
     public Relationship checkRelationship(String srcName, String adjName) {
-        if(hasUndirectedEdge(srcName, adjName)){
+        if(hasDirectedEdge(srcName, adjName)){
             Vertex srcVertex = vertices.get(indexOf(srcName));
             Edge srcEdge = srcVertex.firstEdge;
 
@@ -278,6 +278,7 @@ public class Sociograph {
             }
         }
         return Relationship.NONE;
+        // TODO : MIGHT have problem (if return null will throw exception in Student.setRelationship())
     }
 
     public boolean isAdmiredBy(String srcName, String adjName) {
@@ -320,7 +321,7 @@ public class Sociograph {
                         Relationship oriRelationship = currentEdge.relationship;
                         currentEdge.relationship = relationship;
 
-                        srcStudent.setRelationship(adjStudent, oriRelationship, relationship);      // TODO: Might have problem
+                        srcStudent.setRelationship(adjStudent, oriRelationship, relationship);
 
                         return true;
                     }
