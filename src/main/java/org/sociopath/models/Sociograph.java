@@ -176,7 +176,7 @@ public class Sociograph {
      * @param rel relationship to set to both of the edges
      * @return true if both the edges is successfully added, otherwise false
      */
-    public boolean addUndirectedEdge(String srcName, String adjName, double srcRep, double adjRep, Relationship rel) {
+    public boolean addUndirectedEdge(String srcName, String adjName, double srcRep, double adjRep, Relationship rel) {      // possible rel : FRIEND, ENEMY, THE_OTHER_HALF, NONE
 
         if (size == 0) {
             return false;
@@ -187,9 +187,9 @@ public class Sociograph {
             return false;
         }
 
-        if (rel == Relationship.CRUSH) {
-            System.out.println("Crush can't be undirected relationship!");
-            throw new IllegalArgumentException("Crush can't be undirected relationship!");
+        if (rel == Relationship.ADMIRED_BY) {
+            System.out.println("Admirer can't be undirected relationship!");
+            throw new IllegalArgumentException("Admirer can't be undirected relationship!");
         }
 
         Vertex srcVertex = vertices.get(indexOf(srcName));
@@ -216,9 +216,14 @@ public class Sociograph {
      * @param srcRep rep point of vertex srcName relative to vertex adjName / weight of edge from vertex srcName to vertex adjName
      * @return true if the edge is successfully added, otherwise false
      */
-    public boolean addDirectedEdge(String srcName, String adjName, double srcRep, Relationship rel) {     // NONE or CRUSH is possible
+    public boolean addDirectedEdge(String srcName, String adjName, double srcRep, Relationship rel) {     // possible rel : NONE or ADMIRED_BY
         if(srcName.equals(adjName))
             return false;
+
+        if (rel != Relationship.NONE && rel != Relationship.ADMIRED_BY) {
+            System.out.println("Only NONE & ADMIRED_BY is allowed in directed edge");
+            throw new IllegalArgumentException("Only NONE & ADMIRED_BY is allowed in directed edge");
+        }
 
         if(hasVertex(srcName) && hasVertex(adjName)){
             Vertex srcVertex = vertices.get(indexOf(srcName));
@@ -240,7 +245,7 @@ public class Sociograph {
      * Otherwise, return null
      * @param srcName student's name as source vertex
      * @param adjName student's name as adjacent vertex
-     * @return relationship type in enum
+     * @return relationship type in enum (Either FRIEND, ENEMY, THE_OTHER_HALF, or NONE)
      */
     public Relationship checkRelationship(String srcName, String adjName) {
         if(hasUndirectedEdge(srcName, adjName)){
@@ -256,6 +261,20 @@ public class Sociograph {
         return Relationship.NONE;
     }
 
+    public boolean isAdmiredBy(String srcName, String adjName) {
+        if (!hasUndirectedEdge(srcName, adjName)) {
+            Vertex srcVertex = vertices.get(indexOf(srcName));
+            Edge srcEdge = srcVertex.firstEdge;
+
+            while(srcEdge != null){
+                if(srcEdge.adjVertex.studentInfo.getName().equals(adjName))
+                    return srcEdge.relationship == Relationship.ADMIRED_BY;
+                srcEdge = srcEdge.nextEdge;
+            }
+        }
+        return false;
+    }
+
     /**
      * Set a new relationship from the source Student to the adjacent Student
      * The relationship can be only directed only (CRUSH or NONE)
@@ -267,7 +286,7 @@ public class Sociograph {
      */
     public boolean setDirectedRelationshipOnEdge(String srcName, String adjName, Relationship relationship){
         if (!hasUndirectedEdge(srcName, adjName)) {
-            if (relationship == Relationship.CRUSH || relationship == Relationship.NONE) {
+            if (relationship == Relationship.ADMIRED_BY || relationship == Relationship.NONE) {
 
                 int srcIndex = indexOf(srcName);
                 int adjIndex = indexOf(adjName);

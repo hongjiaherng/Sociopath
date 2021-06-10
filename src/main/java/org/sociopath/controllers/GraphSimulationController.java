@@ -8,14 +8,11 @@ import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.scene.Cursor;
 import javafx.scene.Group;
 import javafx.scene.Node;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.Dialog;
@@ -30,7 +27,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.*;
 import javafx.scene.shape.Polygon;
 import javafx.scene.text.Text;
-import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Duration;
@@ -79,7 +75,7 @@ public class GraphSimulationController implements Initializable {
     }
 
     @FXML
-    public void canvasHandler(MouseEvent mouseEvent) throws IOException {
+    public void canvasHandler(MouseEvent mouseEvent) {
         if (allCircles.size() < 2) {
             addRelationBtn.setDisable(true);
             addRepBtn.setDisable(true);
@@ -91,36 +87,38 @@ public class GraphSimulationController implements Initializable {
         }
         if (!mouseEvent.getSource().equals(canvasGroup)) {
             if (addStudentBtn.isSelected() && mouseEvent.getEventType() == MouseEvent.MOUSE_RELEASED && mouseEvent.getButton() == MouseButton.PRIMARY) {
-                Stage enterStudentDetailsWindow = openDialogWindow("../fxml/enter_name_dialog.fxml", "Enter student details");
-                enterStudentDetailsWindow.setOnHiding(event -> {
-                    if (EnterNameDialogController.studentName == null) {
-                        EnterNameDialogController.stopAddStudent = true;
-                    } else {
-                        EnterNameDialogController.stopAddStudent = false;
-                    }
-                });
-                enterStudentDetailsWindow.showAndWait();
+                TextInputDialog dialog = new TextInputDialog();
+                setDefaultDialogConfig(dialog);
+                dialog.getDialogPane().setPrefWidth(250);
+                dialog.getDialogPane().setPrefHeight(100);
+                dialog.setTitle("Create new student");
+                dialog.setHeaderText("Enter student name");
+                dialog.setContentText("Name");
 
-                if (EnterNameDialogController.stopAddStudent) {
-                    return;
+                TextField textField = dialog.getEditor();
+                Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
+
+                okButton.disableProperty().bind(Bindings.createBooleanBinding(() ->
+                        textField.getText().trim().isEmpty() ||
+                                textField.getText().trim().contains(" ") ||
+                                sociograph.hasVertex(textField.getText().trim())
+                        , textField.textProperty()));
+
+                String newStudentName = null;
+                Optional<String> result = dialog.showAndWait();
+
+                if (result.isPresent()) {
+                    newStudentName = result.get().trim();
                 }
 
-                String obtainedName = EnterNameDialogController.studentName;
-                if (!sociograph.hasVertex(obtainedName)) {
-                    VertexFX circle = new VertexFX(mouseEvent.getX(), mouseEvent.getY(), 1.2, obtainedName);
-                    circle.showVertex();
+                if (newStudentName == null) {
+                    return;
                 } else {
-                    Alert alert = new Alert(Alert.AlertType.ERROR);
-                    alert.setContentText(obtainedName + " is already exist in the graph!");
-                    DialogPane alertDialog = alert.getDialogPane();
-                    alertDialog.getStyleClass().add("dialog");
-                    alertDialog.getStylesheets().add(getClass().getResource("../style/style.css").toExternalForm());
-                    alert.initStyle(StageStyle.UTILITY);
-                    alert.show();
+                    VertexFX circle = new VertexFX(mouseEvent.getX(), mouseEvent.getY(), 1.2, newStudentName);
+                    circle.showVertex();
                 }
             }
         }
-
     }
 
     public void saveGraphFX(ActionEvent actionEvent) {  // TODO: Might need to catch the exception of not connecting to DB and display the error box
@@ -128,21 +126,24 @@ public class GraphSimulationController implements Initializable {
         GraphDao.deleteGraph();
 
         if(sociograph.getAllStudents().isEmpty()) {
-            alertWindow("No vertex and edge can be saved!");
+            Alert alertDialog = new Alert(Alert.AlertType.WARNING);
+            setDefaultDialogConfig(alertDialog);
+            alertDialog.setContentText("No vertex and edge can be saved!");
+            alertDialog.show();
         }
 
         else if(!DBConnect.isConnected()){
-            alertWindow("No connection to database!");
+            Alert alertDialog = new Alert(Alert.AlertType.WARNING);
+            setDefaultDialogConfig(alertDialog);
+            alertDialog.setContentText("No connection to database!");
+            alertDialog.show();
         }
 
         else{
-            Alert alert = new Alert(Alert.AlertType.WARNING);
-            alert.setContentText("Save Successfully!");
-            alert.initStyle(StageStyle.UTILITY);
-            DialogPane alertDialog = alert.getDialogPane();
-            alertDialog.getStyleClass().add("dialog");
-            alertDialog.getStylesheets().add(getClass().getResource("../style/style.css").toExternalForm());
-            alert.show();
+            Alert alertDialog = new Alert(Alert.AlertType.WARNING);
+            setDefaultDialogConfig(alertDialog);
+            alertDialog.setContentText("Save Successfully!");
+            alertDialog.show();
             GraphDao.saveGraph(sociograph);
         }
 
@@ -153,15 +154,24 @@ public class GraphSimulationController implements Initializable {
         DBConnect.startCon();
 
         if(!sociograph.getAllStudents().isEmpty()){
-            alertWindow("Cannot load a graph, there are vertices (and edges) on the canvas. ");
+            Alert alertDialog = new Alert(Alert.AlertType.WARNING);
+            setDefaultDialogConfig(alertDialog);
+            alertDialog.setContentText("Cannot load a graph, there are vertices (and edges) on the canvas.");
+            alertDialog.show();
         }
 
         else if(!DBConnect.isConnected()){
-            alertWindow("No connection to database!");
+            Alert alertDialog = new Alert(Alert.AlertType.WARNING);
+            setDefaultDialogConfig(alertDialog);
+            alertDialog.setContentText("No connection to database!");
+            alertDialog.show();
         }
 
         else if(GraphDao.db_getGraph().getAllStudents().isEmpty()){
-            alertWindow("There is no graph in the database!");
+            Alert alertDialog = new Alert(Alert.AlertType.WARNING);
+            setDefaultDialogConfig(alertDialog);
+            alertDialog.setContentText("There is no graph in the database!");
+            alertDialog.show();
         }
 
         else{
@@ -179,9 +189,10 @@ public class GraphSimulationController implements Initializable {
 
     public void studentInfoCard(VertexFX vertex) {
         Dialog<ButtonType> dialog = new Dialog<>();
+        setDefaultDialogConfig(dialog);
+
         dialog.setTitle("Student information card");
         dialog.setHeaderText("Student " + vertex.nameText.getText());
-        dialog.initStyle(StageStyle.UTILITY);
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.NEXT, ButtonType.PREVIOUS, ButtonType.CLOSE);
 
         Node closeButton = dialog.getDialogPane().lookupButton(ButtonType.CLOSE);
@@ -227,9 +238,6 @@ public class GraphSimulationController implements Initializable {
         }
 
         dialog.getDialogPane().setContent(grid);
-        dialog.getDialogPane().getStyleClass().add("dialog");
-        dialog.getDialogPane().getStylesheets().add(getClass().getResource("../style/style.css").toExternalForm());
-
 
         Optional<ButtonType> result = dialog.showAndWait();
 
@@ -257,12 +265,8 @@ public class GraphSimulationController implements Initializable {
     public void deleteVertexFX(VertexFX vertex) {
         String contextStr = "Are you sure you want to delete vertex " + vertex.nameText.getText() + " ? All the underlying edges will be removed too.";
         Alert confirmDialog = new Alert(Alert.AlertType.CONFIRMATION, contextStr, ButtonType.YES, ButtonType.NO);
-        confirmDialog.setGraphic(null);
         confirmDialog.setHeaderText("Are you sure ?");
-        DialogPane confirmDialogPane = confirmDialog.getDialogPane();
-        confirmDialogPane.getStyleClass().add("dialog");
-        confirmDialogPane.getStylesheets().add(getClass().getResource("../style/style.css").toExternalForm());
-        confirmDialog.initStyle(StageStyle.UTILITY);
+        setDefaultDialogConfig(confirmDialog);
 
         Optional<ButtonType> result = confirmDialog.showAndWait();
 
@@ -307,25 +311,26 @@ public class GraphSimulationController implements Initializable {
 
     public void changeVertexFXName(VertexFX vertex) {
         TextInputDialog dialog = new TextInputDialog();
-        dialog.setGraphic(null);
+        setDefaultDialogConfig(dialog);
+        dialog.getDialogPane().setPrefWidth(250);
+        dialog.getDialogPane().setPrefHeight(100);
         dialog.setTitle("Change student name");
         dialog.setHeaderText("Enter new name");
         dialog.setContentText("Name");
-        dialog.initStyle(StageStyle.UTILITY);
-        DialogPane dialogPane = dialog.getDialogPane();
-        dialogPane.getStyleClass().add("dialog");
-        dialogPane.getStylesheets().add(getClass().getResource("../style/style.css").toExternalForm());
 
         TextField textField = dialog.getEditor();
-        Button okButton = (Button) dialogPane.lookupButton(ButtonType.OK);
+        Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
 
         okButton.disableProperty().bind(Bindings.createBooleanBinding(() ->
-            textField.getText().trim().isEmpty() || textField.getText().trim().contains(" ") || sociograph.hasVertex(textField.getText().trim())
+            textField.getText().trim().isEmpty() ||
+                    textField.getText().trim().contains(" ") ||
+                    sociograph.hasVertex(textField.getText().trim())
                 , textField.textProperty()
         ));
 
         String nameToChange = null;
         Optional<String> result = dialog.showAndWait();
+
         if (result.isPresent()) {
             nameToChange = result.get().trim();
         }
@@ -349,12 +354,8 @@ public class GraphSimulationController implements Initializable {
 
         String contextStr = "Are you sure you want to delete this edge (" + edge.srcVertex.nameText.getText() + arrow + edge.endVertex.nameText.getText() +") ?";
         Alert confirmDialog = new Alert(Alert.AlertType.CONFIRMATION, contextStr, ButtonType.YES, ButtonType.NO);
-        confirmDialog.setGraphic(null);
+        setDefaultDialogConfig(confirmDialog);
         confirmDialog.setHeaderText("Are you sure ?");
-        DialogPane confirmDialogPane = confirmDialog.getDialogPane();
-        confirmDialogPane.getStyleClass().add("dialog");
-        confirmDialogPane.getStylesheets().add(getClass().getResource("../style/style.css").toExternalForm());
-        confirmDialog.initStyle(StageStyle.UTILITY);
 
         Optional<ButtonType> result = confirmDialog.showAndWait();
 
@@ -374,18 +375,16 @@ public class GraphSimulationController implements Initializable {
 
     public void changeRepOrRelationTypeFX(EdgeFX edge) {
         TextInputDialog dialog = new TextInputDialog();
-        dialog.getDialogPane().setPrefWidth(300);
-        dialog.setGraphic(null);
+        setDefaultDialogConfig(dialog);
+        dialog.getDialogPane().setPrefWidth(350);
         dialog.setHeaderText("Enter new properties between student " + edge.srcVertex.nameText.getText() + " and " + edge.endVertex.nameText.getText());
-        dialog.initStyle(StageStyle.UTILITY);
-        DialogPane dialogPane = dialog.getDialogPane();
-        dialogPane.getStyleClass().add("dialog");
-        dialogPane.getStylesheets().add(getClass().getResource("../style/style.css").toExternalForm());
 
         GridPane gridPane = new GridPane();
         gridPane.setHgap(10);
         gridPane.setVgap(10);
         gridPane.setPadding(new Insets(20, 10, 30, 10));
+
+        DialogPane dialogPane = dialog.getDialogPane();
 
         if (edge.isDirected) {  // Directed edge pane
             dialog.getDialogPane().setPrefHeight(200);
@@ -393,15 +392,25 @@ public class GraphSimulationController implements Initializable {
 
             TextField prevRepTF = new TextField(edge.srcRepText.getText());
             prevRepTF.setEditable(false);
-            prevRepTF.setPrefWidth(100);
+            prevRepTF.setPrefWidth(150);
             TextField newRepTF = new TextField();
             newRepTF.setPromptText(edge.srcVertex.nameText.getText() + "'s rep pts");
-            newRepTF.setPrefWidth(100);
+            newRepTF.setPrefWidth(150);
+            TextField prevEdgeRelTF = new TextField((edge.rel == Relationship.NONE) ? "No" : "Yes");
+            prevEdgeRelTF.setEditable(false);
+            prevEdgeRelTF.setPrefWidth(150);
+            ComboBox<String> newEdgeRelCB = new ComboBox<>(FXCollections.observableArrayList("Yes", "No"));
+            newEdgeRelCB.setValue(prevEdgeRelTF.getText());
+            newEdgeRelCB.setPrefWidth(150);
 
             gridPane.add(new Label("Original reputation"), 0, 0);
             gridPane.add(prevRepTF, 1, 0);
-            gridPane.add(new Label("New reputation"), 0, 1);
-            gridPane.add(newRepTF, 1, 1);
+            gridPane.add(new Label("Original does " + edge.endVertex.nameText.getText() + " like " + edge.srcVertex.nameText.getText() + " ?"), 0, 1);
+            gridPane.add(prevEdgeRelTF, 1, 1);
+            gridPane.add(new Label("New reputation"), 0, 2);
+            gridPane.add(newRepTF, 1, 2);
+            gridPane.add(new Label("For now, does " + edge.endVertex.nameText.getText() + " like " + edge.srcVertex.nameText.getText() + " ?"), 0, 3);
+            gridPane.add(newEdgeRelCB, 1, 3);
 
             dialogPane.setContent(gridPane);
 
@@ -419,40 +428,43 @@ public class GraphSimulationController implements Initializable {
                     , newRepTF.textProperty()));
 
             String srcRepStr = null;
+            Relationship newRel = null;
             Optional<String> result = dialog.showAndWait();
             if (result.isPresent()) {
                 srcRepStr = newRepTF.getText().trim();
+                newRel = (newEdgeRelCB.getValue().equals("Yes")) ? Relationship.ADMIRED_BY : Relationship.NONE;
             }
 
             if (srcRepStr != null) {
                 // Change rep points
                 edge.changeSrcRepText(srcRepStr);
+                edge.changeRel(newRel);
                 sociograph.setSrcRepRelativeToAdj(edge.srcVertex.nameText.getText(), edge.endVertex.nameText.getText(), Double.parseDouble(srcRepStr));
+                sociograph.setDirectedRelationshipOnEdge(edge.srcVertex.nameText.getText(), edge.endVertex.nameText.getText(), newRel);
             }
 
         } else {    // Undirected edge pane
-            dialog.getDialogPane().setPrefHeight(400);
             dialog.setTitle("Modify undirected edge's properties");
 
             TextField prevSrcRepTF = new TextField(edge.srcRepText.getText());
             prevSrcRepTF.setEditable(false);
-            prevSrcRepTF.setPrefWidth(100);
+            prevSrcRepTF.setPrefWidth(150);
             TextField prevDestRepTF = new TextField(edge.endRepText.getText());
             prevDestRepTF.setEditable(false);
-            prevDestRepTF.setPrefWidth(100);
+            prevDestRepTF.setPrefWidth(150);
             TextField prevRelTypeTF = new TextField(edge.rel + "");
             prevRelTypeTF.setEditable(false);
-            prevRelTypeTF.setPrefWidth(100);
+            prevRelTypeTF.setPrefWidth(150);
 
             TextField newSrcRepTF = new TextField();
             newSrcRepTF.setPromptText(edge.srcVertex.nameText.getText() + "'s rep pts");
-            newSrcRepTF.setPrefWidth(100);
+            newSrcRepTF.setPrefWidth(150);
             TextField newDestRepTF = new TextField();
             newDestRepTF.setPromptText(edge.endVertex.nameText.getText() + "'s rep pts");
-            newDestRepTF.setPrefWidth(100);
-            ComboBox<Relationship> newRelTypeCB = new ComboBox<>(FXCollections.observableArrayList(Relationship.NONE, Relationship.FRIEND, Relationship.ENEMY));
+            newDestRepTF.setPrefWidth(150);
+            ComboBox<Relationship> newRelTypeCB = new ComboBox<>(FXCollections.observableArrayList(Relationship.NONE, Relationship.FRIEND, Relationship.ENEMY, Relationship.THE_OTHER_HALF));
             newRelTypeCB.setValue(Relationship.NONE);
-            newRelTypeCB.setPrefWidth(100);
+            newRelTypeCB.setPrefWidth(150);
 
             Label originalLabel = new Label("Original properties");
             originalLabel.setStyle("-fx-font-size: 16; -fx-font-weight: bold");
@@ -515,275 +527,6 @@ public class GraphSimulationController implements Initializable {
         }
     }
 
-    EventHandler<MouseEvent> mouseHandler = event -> {
-
-        VertexFX destVertexFX = (VertexFX) event.getSource();
-        if (event.getEventType() == MouseEvent.MOUSE_CLICKED && event.getButton() == MouseButton.PRIMARY) {
-            if (!destVertexFX.isSelected) {
-
-                if (selectedVertex != null) {
-                    VertexFX srcVertexFX = selectedVertex;
-                    String srcVertexName = srcVertexFX.nameText.getText();
-                    String destVertexName = destVertexFX.nameText.getText();
-
-                    // Add directed edge to an existing connection (convert directed edge into undirected edge)
-                    if (addRepBtn.isSelected() && sociograph.hasDirectedEdge(destVertexName, srcVertexName) &&
-                            !sociograph.hasDirectedEdge(srcVertexName, destVertexName)) {
-
-                        TextInputDialog dialog = new TextInputDialog();
-                        dialog.getDialogPane().setPrefHeight(300);
-                        dialog.getDialogPane().setPrefWidth(350);
-                        dialog.setGraphic(null);
-                        dialog.setTitle("Convert to undirected edge");
-                        dialog.setHeaderText(srcVertexName + " and " + destVertexName + " can have a relation when they know each other, what do you want their relationship to be?");
-                        dialog.initStyle(StageStyle.UTILITY);
-                        DialogPane dialogPane = dialog.getDialogPane();
-                        dialogPane.getStyleClass().add("dialog");
-                        dialogPane.getStylesheets().add(getClass().getResource("../style/style.css").toExternalForm());
-
-                        GridPane gridPane = new GridPane();
-                        gridPane.setHgap(10);
-                        gridPane.setVgap(10);
-                        gridPane.setPadding(new Insets(20, 10, 30, 10));
-
-                        TextField srcRepTF = new TextField();
-                        srcRepTF.setPromptText(srcVertexName + "'s rep pts");
-                        srcRepTF.setPrefWidth(100);
-                        TextField destRepTF = new TextField();
-                        destRepTF.setText("" + sociograph.getSrcRepRelativeToAdj(destVertexName, srcVertexName));
-                        destRepTF.setEditable(false);
-                        destRepTF.setPrefWidth(100);
-                        ComboBox<Relationship> relationCB = new ComboBox<>(FXCollections.observableArrayList(Relationship.NONE, Relationship.FRIEND, Relationship.ENEMY));
-                        relationCB.setValue(Relationship.NONE);
-                        relationCB.setPrefWidth(100);
-
-                        gridPane.add(new Label(srcVertexName + "'s rep relative to " + destVertexName), 0, 0);
-                        gridPane.add(new Label(destVertexName + "'s rep relative to " + srcVertexName), 0, 1);
-                        gridPane.add(new Label("Relationship type"), 0, 2);
-                        gridPane.add(srcRepTF, 1, 0);
-                        gridPane.add(destRepTF, 1, 1);
-                        gridPane.add(relationCB, 1, 2);
-
-                        dialog.getDialogPane().setContent(gridPane);
-
-                        Button okButton = (Button) dialogPane.lookupButton(ButtonType.OK);
-                        okButton.disableProperty().bind(Bindings.createBooleanBinding(() -> {
-                                    boolean isNumber;
-                                    try {
-                                        double rep = Double.parseDouble(srcRepTF.getText());
-                                        isNumber = true;
-                                    } catch (NumberFormatException e) {
-                                        isNumber = false;
-                                    }
-                                    return !isNumber || relationCB.getSelectionModel().isEmpty();
-                                }
-                                , srcRepTF.textProperty(), relationCB.buttonCellProperty()));
-
-                        String srcRepStr = null;
-                        String destRepStr = null;
-                        Relationship relType = null;
-                        Optional<String> result = dialog.showAndWait();
-                        if (result.isPresent()) {
-                            srcRepStr = srcRepTF.getText();
-                            destRepStr = destRepTF.getText();
-                            relType = relationCB.getValue();
-                        }
-
-                        if (srcRepStr != null && destRepStr != null && relType != null) {
-                            // Delete directed edge from dest to src in allEdges and canvasGroup
-                            LinkedList<EdgeFX> destConnectedEdges = allCircles.get(allCircles.indexOf(destVertexFX)).connectedEdges;
-                            LinkedList<EdgeFX> srcConnectedEdges = allCircles.get(allCircles.indexOf(srcVertexFX)).connectedEdges;
-
-                            srcConnectedEdges.removeIf(edge ->
-                                edge.srcVertex.nameText.getText().equals(destVertexName) &&
-                                        edge.endVertex.nameText.getText().equals(srcVertexName)
-                            );
-                            boolean resultB = destConnectedEdges.removeIf(edge -> {
-                                    if (edge.srcVertex.nameText.getText().equals(destVertexName) &&
-                                            edge.endVertex.nameText.getText().equals(srcVertexName)) {
-                                        return canvasGroup.getChildren().remove(edge);
-                                    }
-                                    return false;
-                            });
-
-                            // Delete directed edge from dest to src in sociograph
-                            sociograph.removeEdge(destVertexName, srcVertexName);
-
-                            // create a new EdgeFX object to represent the new undirected edge
-                            EdgeFX newUndirectedEdge = new EdgeFX(srcVertexFX, destVertexFX, srcRepStr, destRepStr, relType);
-                            newUndirectedEdge.showEdge();
-                        }
-
-                    } else if (addRepBtn.isSelected() && !sociograph.hasDirectedEdge(srcVertexName, destVertexName)) {      // Add directed edge (rep point) from src to dest
-
-                        TextInputDialog dialog = new TextInputDialog();
-                        dialog.getDialogPane().setPrefHeight(200);
-                        dialog.getDialogPane().setPrefWidth(300);
-                        dialog.setGraphic(null);
-                        dialog.setTitle("Add directed edge");
-                        dialog.setHeaderText("Enter student " + srcVertexName + " reputation point relative to " + destVertexName);
-                        dialog.initStyle(StageStyle.UTILITY);
-                        DialogPane dialogPane = dialog.getDialogPane();
-                        dialogPane.getStyleClass().add("dialog");
-                        dialogPane.getStylesheets().add(getClass().getResource("../style/style.css").toExternalForm());
-
-                        GridPane gridPane = new GridPane();
-                        gridPane.setHgap(10);
-                        gridPane.setVgap(10);
-                        gridPane.setPadding(new Insets(20, 10, 30, 10));
-
-                        TextField repTF = new TextField();
-                        repTF.setPromptText(srcVertexName + "'s rep");
-                        repTF.setPrefWidth(100);
-                        ComboBox<Relationship> relCB = new ComboBox<>(FXCollections.observableArrayList(Relationship.NONE, Relationship.CRUSH));
-                        relCB.setValue(Relationship.NONE);
-                        relCB.setPrefWidth(100);
-
-                        gridPane.add(new Label(srcVertexName + "'s rep relative to " + destVertexName), 0, 0);
-                        gridPane.add(repTF, 1, 0);
-                        gridPane.add(new Label("Does " + destVertexName + " like " + srcVertexName), 0, 1);
-                        gridPane.add(relCB, 1, 1);
-
-                        dialogPane.setContent(gridPane);
-
-                        Button okButton = (Button) dialogPane.lookupButton(ButtonType.OK);
-
-                        okButton.disableProperty().bind(Bindings.createBooleanBinding(() -> {
-                                    boolean isNumber;
-                                    try {
-                                        double rep = Double.parseDouble(repTF.getText());
-                                        isNumber = true;
-                                    } catch (NumberFormatException e) {
-                                        isNumber = false;
-                                    }
-                                    return !isNumber;
-                                }, repTF.textProperty()
-                        ));
-
-                        String repStr = null;
-                        Relationship rel = null;
-                        Optional<String> result = dialog.showAndWait();
-                        if (result.isPresent()) {
-                            repStr = repTF.getText();
-                            rel = relCB.getValue();
-                        }
-
-                        if (repStr != null && rel != null) {
-                            EdgeFX directedEdge = new EdgeFX(srcVertexFX, destVertexFX, repStr, rel);
-                            directedEdge.showEdge();
-                        }
-
-                    } else if (addRelationBtn.isSelected() && !sociograph.hasDirectedEdge(srcVertexName, destVertexName) &&
-                            !sociograph.hasDirectedEdge(destVertexName, srcVertexName)) {
-
-                        TextInputDialog dialog = new TextInputDialog();
-                        dialog.getDialogPane().setPrefHeight(200);
-                        dialog.getDialogPane().setPrefWidth(300);
-                        dialog.setGraphic(null);
-                        dialog.setTitle("Add undirected edge");
-                        dialog.setHeaderText("Enter details between student " + srcVertexName + " and " + destVertexName);
-                        dialog.initStyle(StageStyle.UTILITY);
-                        DialogPane dialogPane = dialog.getDialogPane();
-                        dialogPane.getStyleClass().add("dialog");
-                        dialogPane.getStylesheets().add(getClass().getResource("../style/style.css").toExternalForm());
-
-                        GridPane gridPane = new GridPane();
-                        gridPane.setHgap(10);
-                        gridPane.setVgap(10);
-                        gridPane.setPadding(new Insets(20, 10, 30, 10));
-
-                        TextField srcRepTF = new TextField();
-                        srcRepTF.setPromptText(srcVertexName + "'s rep pts");
-                        srcRepTF.setPrefWidth(100);
-                        TextField destRepTF = new TextField();
-                        destRepTF.setPromptText(destVertexName + "'s rep pts");
-                        destRepTF.setPrefWidth(100);
-                        ComboBox<Relationship> relationCB = new ComboBox<>(FXCollections.observableArrayList(Relationship.NONE, Relationship.FRIEND, Relationship.ENEMY));
-                        relationCB.setValue(Relationship.NONE);
-                        relationCB.setPrefWidth(100);
-
-                        gridPane.add(new Label(srcVertexName + "'s rep relative to " + destVertexName), 0, 0);
-                        gridPane.add(new Label(destVertexName + "'s rep relative to " + srcVertexName), 0, 1);
-                        gridPane.add(new Label("Relationship type"), 0, 2);
-                        gridPane.add(srcRepTF, 1, 0);
-                        gridPane.add(destRepTF, 1, 1);
-                        gridPane.add(relationCB, 1, 2);
-
-                        dialog.getDialogPane().setContent(gridPane);
-
-                        Button okButton = (Button) dialogPane.lookupButton(ButtonType.OK);
-                        okButton.disableProperty().bind(Bindings.createBooleanBinding(() -> {
-                            boolean isNumber;
-                            try {
-                                double rep = Double.parseDouble(srcRepTF.getText());
-                                rep = Double.parseDouble(destRepTF.getText());
-                                isNumber = true;
-                            } catch (NumberFormatException e) {
-                                isNumber = false;
-                            }
-                            return !isNumber || relationCB.getSelectionModel().isEmpty();
-                            }
-                                , srcRepTF.textProperty(), destRepTF.textProperty(), relationCB.buttonCellProperty()));
-
-                        String srcRepStr = null;
-                        String destRepStr = null;
-                        Relationship relType = null;
-                        Optional<String> result = dialog.showAndWait();
-                        if (result.isPresent()) {
-                            srcRepStr = srcRepTF.getText();
-                            destRepStr = destRepTF.getText();
-                            relType = relationCB.getValue();
-                        }
-
-                        if (srcRepStr != null && destRepStr != null && relType != null) {
-                            EdgeFX undirectedEdge = new EdgeFX(srcVertexFX, destVertexFX, srcRepStr, destRepStr, relType);
-                            undirectedEdge.showEdge();
-                        }
-
-                    } else if (addRelationBtn.isSelected() || addRepBtn.isSelected()) {
-                        Alert alert = new Alert(Alert.AlertType.ERROR);
-                        alert.setContentText(srcVertexName + " and " + destVertexName + " are already connected!");
-                        DialogPane alertDialog = alert.getDialogPane();
-                        alertDialog.getStyleClass().add("dialog");
-                        alertDialog.getStylesheets().add(getClass().getResource("../style/style.css").toExternalForm());
-                        alert.initStyle(StageStyle.UTILITY);
-                        alert.show();
-                    }
-
-                    selectedVertex.isSelected = false;
-                    FillTransition ft1 = new FillTransition(Duration.millis(300), selectedVertex, Color.RED, Color.BLACK);
-                    ft1.play();
-                    selectedVertex = null;
-                    return;
-                }
-
-                FillTransition ftSelect = new FillTransition(Duration.millis(300), destVertexFX, Color.BLACK, Color.RED);
-                ftSelect.play();
-                destVertexFX.isSelected = true;
-                selectedVertex = destVertexFX;
-            } else {
-                FillTransition ftUnselect = new FillTransition(Duration.millis(300), destVertexFX, Color.RED, Color.BLACK);
-                ftUnselect.play();
-                destVertexFX.isSelected = false;
-                selectedVertex = null;
-            }
-        } else if (event.getEventType() == MouseEvent.MOUSE_PRESSED && event.getButton() == MouseButton.PRIMARY) {
-            destVertexFX.vertexHolder.setCursor(Cursor.CLOSED_HAND);
-            FillTransition ftDrag = new FillTransition(Duration.millis(300), destVertexFX, Color.BLACK, Color.RED);
-            ftDrag.play();
-            System.out.println("Press");
-
-        } else if (event.getEventType() == MouseEvent.MOUSE_RELEASED && event.getButton() == MouseButton.PRIMARY) {
-            destVertexFX.vertexHolder.setCursor(Cursor.DEFAULT);
-            FillTransition ftDrag = new FillTransition(Duration.millis(300), destVertexFX, Color.RED, Color.BLACK);
-            ftDrag.play();
-
-        } else if (event.getEventType() == MouseEvent.MOUSE_DRAGGED && event.getButton() == MouseButton.PRIMARY) {
-            destVertexFX.dragVertex((int) event.getX(), (int) event.getY());
-
-        }
-    };
-
     public void clearGraphFX(ActionEvent event) {
         // Remove all vertices from sociograph
         this.sociograph.clear();
@@ -811,6 +554,299 @@ public class GraphSimulationController implements Initializable {
 
         allNodesOnCanvas.clear();
     }
+
+    EventHandler<MouseEvent> mouseHandler = event -> {
+
+        VertexFX destVertexFX = (VertexFX) event.getSource();
+        if (event.getEventType() == MouseEvent.MOUSE_CLICKED && event.getButton() == MouseButton.PRIMARY) {
+            if (!destVertexFX.isSelected) {
+
+                if (selectedVertex != null) {
+                    VertexFX srcVertexFX = selectedVertex;
+                    String srcVertexName = srcVertexFX.nameText.getText();
+                    String destVertexName = destVertexFX.nameText.getText();
+
+                    // Add directed edge to an existing connection (convert directed edge into undirected edge)
+                    if (addRepBtn.isSelected() && sociograph.hasDirectedEdge(destVertexName, srcVertexName) &&
+                            !sociograph.hasDirectedEdge(srcVertexName, destVertexName)) {
+
+                        TextInputDialog dialog = new TextInputDialog();
+                        setDefaultDialogConfig(dialog);
+
+                        DialogPane dialogPane = dialog.getDialogPane();
+                        dialogPane.setPrefHeight(300);
+                        dialogPane.setPrefWidth(350);
+
+                        GridPane gridPane = new GridPane();
+                        gridPane.setHgap(10);
+                        gridPane.setVgap(10);
+                        gridPane.setPadding(new Insets(20, 10, 30, 10));
+
+                        TextField srcRepTF = new TextField();
+                        srcRepTF.setPromptText(srcVertexName + "'s rep pts");
+                        srcRepTF.setPrefWidth(100);
+
+                        TextField destRepTF = new TextField();
+                        destRepTF.setText("" + sociograph.getSrcRepRelativeToAdj(destVertexName, srcVertexName));
+                        destRepTF.setEditable(false);
+                        destRepTF.setPrefWidth(100);
+
+                        ComboBox relationCB = new ComboBox();
+                        relationCB.setPrefWidth(100);
+
+                        boolean isTryingToFormLove = false;     // A flag to tell which condition is entered
+
+                        // If dest is admired by src, ask if dest also admire src, if yes, they form THE_OTHER_HALF relationship, else, they become enemy.
+                        if (sociograph.isAdmiredBy(destVertexName, srcVertexName)) {
+
+                            isTryingToFormLove = true;
+
+                            dialog.setTitle("Does " + destVertexName + " like " + srcVertexName + " back ?");
+                            dialog.setHeaderText(srcVertexName + " is admiring " + destVertexName + ", if " + destVertexName + " likes " + srcVertexName + " back, they can be the other half of each other");
+
+                            relationCB.setItems(FXCollections.observableArrayList("Love " + srcVertexName, "Hate " + srcVertexName));
+                            relationCB.setValue("Love " + srcVertexName);
+
+                        } else {        // If dest to src is a NONE relationship, we are going to make a new relationship among src and dest
+                            isTryingToFormLove = false;
+
+                            dialog.setTitle("Convert to undirected edge");
+                            dialog.setHeaderText(srcVertexName + " and " + destVertexName + " can have a relation when they know each other, what do you want their relationship to be?");
+
+                            relationCB.setItems(FXCollections.observableArrayList(Relationship.NONE, Relationship.FRIEND, Relationship.ENEMY));
+                            relationCB.setValue(Relationship.NONE);
+
+                        }
+
+                        gridPane.add(new Label(srcVertexName + "'s rep relative to " + destVertexName), 0, 0);
+                        gridPane.add(new Label(destVertexName + "'s rep relative to " + srcVertexName), 0, 1);
+                        gridPane.add(new Label("Relationship type"), 0, 2);
+                        gridPane.add(srcRepTF, 1, 0);
+                        gridPane.add(destRepTF, 1, 1);
+                        gridPane.add(relationCB, 1, 2);
+
+                        dialogPane.setContent(gridPane);
+                        Button okButton = (Button) dialogPane.lookupButton(ButtonType.OK);
+                        okButton.disableProperty().bind(Bindings.createBooleanBinding(() -> {
+                                    boolean isNumber;
+                                    try {
+                                        double rep = Double.parseDouble(srcRepTF.getText());
+                                        isNumber = true;
+                                    } catch (NumberFormatException e) {
+                                        isNumber = false;
+                                    }
+                                    return !isNumber || relationCB.getSelectionModel().isEmpty();
+                                }
+                                , srcRepTF.textProperty(), relationCB.buttonCellProperty()));
+
+                        String srcRepStr = null;
+                        String destRepStr = null;
+                        Relationship relType = null;
+                        Optional<String> result = dialog.showAndWait();
+
+                        if (result.isPresent()) {
+                            srcRepStr = srcRepTF.getText();
+                            destRepStr = destRepTF.getText();
+
+                            if (isTryingToFormLove) {
+                                relType = relationCB.getValue().equals("Love " + srcVertexName) ? Relationship.THE_OTHER_HALF : Relationship.ENEMY;
+                            } else {
+                                relType = (Relationship) relationCB.getValue();
+                            }
+                        }
+
+                        // Delete the previous directed edge and add a new undirected edge
+                        if (srcRepStr != null && destRepStr != null && relType != null) {
+                            // Delete directed edge from dest to src in allEdges and canvasGroup
+                            LinkedList<EdgeFX> destConnectedEdges = allCircles.get(allCircles.indexOf(destVertexFX)).connectedEdges;
+                            LinkedList<EdgeFX> srcConnectedEdges = allCircles.get(allCircles.indexOf(srcVertexFX)).connectedEdges;
+
+                            srcConnectedEdges.removeIf(edge ->
+                                edge.srcVertex.nameText.getText().equals(destVertexName) &&
+                                        edge.endVertex.nameText.getText().equals(srcVertexName)
+                            );
+                            destConnectedEdges.removeIf(edge -> {
+                                    if (edge.srcVertex.nameText.getText().equals(destVertexName) &&
+                                            edge.endVertex.nameText.getText().equals(srcVertexName)) {
+                                        return canvasGroup.getChildren().remove(edge);
+                                    }
+                                    return false;
+                            });
+
+                            // Delete directed edge from dest to src in sociograph
+                            sociograph.removeEdge(destVertexName, srcVertexName);
+
+                            // create a new EdgeFX object to represent the new undirected edge
+                            EdgeFX newUndirectedEdge = new EdgeFX(srcVertexFX, destVertexFX, srcRepStr, destRepStr, relType);
+                            newUndirectedEdge.showEdge();
+                        }
+
+                    } else if (addRepBtn.isSelected() && !sociograph.hasDirectedEdge(srcVertexName, destVertexName)) {      // Add directed edge (rep point) from src to dest
+
+                        TextInputDialog dialog = new TextInputDialog();
+                        setDefaultDialogConfig(dialog);
+                        dialog.getDialogPane().setPrefHeight(200);
+                        dialog.getDialogPane().setPrefWidth(300);
+                        dialog.setTitle("Add directed edge");
+                        dialog.setHeaderText("Enter student " + srcVertexName + " reputation point relative to " + destVertexName);
+
+                        DialogPane dialogPane = dialog.getDialogPane();
+
+                        GridPane gridPane = new GridPane();
+                        gridPane.setHgap(10);
+                        gridPane.setVgap(10);
+                        gridPane.setPadding(new Insets(20, 10, 30, 10));
+
+                        TextField repTF = new TextField();
+                        repTF.setPromptText(srcVertexName + "'s rep");
+                        repTF.setPrefWidth(100);
+
+                        ComboBox<String> relCB = new ComboBox<>(FXCollections.observableArrayList("No", "Yes"));
+                        relCB.setValue("No");
+                        relCB.setPrefWidth(100);
+
+                        gridPane.add(new Label(srcVertexName + "'s rep relative to " + destVertexName), 0, 0);
+                        gridPane.add(repTF, 1, 0);
+                        gridPane.add(new Label("Does " + destVertexName + " like " + srcVertexName + " ?"), 0, 1);
+                        gridPane.add(relCB, 1, 1);
+
+                        dialogPane.setContent(gridPane);
+
+                        Button okButton = (Button) dialogPane.lookupButton(ButtonType.OK);
+
+                        okButton.disableProperty().bind(Bindings.createBooleanBinding(() -> {
+                                    boolean isNumber;
+                                    try {
+                                        double rep = Double.parseDouble(repTF.getText());
+                                        isNumber = true;
+                                    } catch (NumberFormatException e) {
+                                        isNumber = false;
+                                    }
+                                    return !isNumber;
+                                }, repTF.textProperty()
+                        ));
+
+                        String repStr = null;
+                        Relationship rel = null;
+                        Optional<String> result = dialog.showAndWait();
+
+                        if (result.isPresent()) {
+                            repStr = repTF.getText();
+                            rel = relCB.getValue().equals("No") ? Relationship.NONE : Relationship.ADMIRED_BY;
+                        }
+
+                        if (repStr != null && rel != null) {
+                            EdgeFX directedEdge = new EdgeFX(srcVertexFX, destVertexFX, repStr, rel);
+                            directedEdge.showEdge();
+                        }
+
+                    } else if (addRelationBtn.isSelected() && !sociograph.hasDirectedEdge(srcVertexName, destVertexName) &&
+                            !sociograph.hasDirectedEdge(destVertexName, srcVertexName)) {
+
+                        TextInputDialog dialog = new TextInputDialog();
+                        setDefaultDialogConfig(dialog);
+                        dialog.getDialogPane().setPrefHeight(200);
+                        dialog.getDialogPane().setPrefWidth(340);
+                        dialog.setTitle("Add undirected edge");
+                        dialog.setHeaderText("Enter details between student " + srcVertexName + " and " + destVertexName);
+
+                        DialogPane dialogPane = dialog.getDialogPane();
+
+                        GridPane gridPane = new GridPane();
+                        gridPane.setHgap(10);
+                        gridPane.setVgap(10);
+                        gridPane.setPadding(new Insets(20, 10, 30, 10));
+
+                        TextField srcRepTF = new TextField();
+                        srcRepTF.setPromptText(srcVertexName + "'s rep pts");
+                        srcRepTF.setPrefWidth(150);
+
+                        TextField destRepTF = new TextField();
+                        destRepTF.setPromptText(destVertexName + "'s rep pts");
+                        destRepTF.setPrefWidth(150);
+
+                        ComboBox<Relationship> relationCB = new ComboBox<>(FXCollections.observableArrayList(Relationship.NONE, Relationship.FRIEND, Relationship.ENEMY, Relationship.THE_OTHER_HALF));
+                        relationCB.setValue(Relationship.NONE);
+                        relationCB.setPrefWidth(150);
+
+                        gridPane.add(new Label(srcVertexName + "'s rep relative to " + destVertexName), 0, 0);
+                        gridPane.add(new Label(destVertexName + "'s rep relative to " + srcVertexName), 0, 1);
+                        gridPane.add(new Label("Relationship type"), 0, 2);
+                        gridPane.add(srcRepTF, 1, 0);
+                        gridPane.add(destRepTF, 1, 1);
+                        gridPane.add(relationCB, 1, 2);
+
+                        dialogPane.setContent(gridPane);
+
+                        Button okButton = (Button) dialogPane.lookupButton(ButtonType.OK);
+                        okButton.disableProperty().bind(Bindings.createBooleanBinding(() -> {
+                            boolean isNumber;
+                            try {
+                                double rep = Double.parseDouble(srcRepTF.getText());
+                                rep = Double.parseDouble(destRepTF.getText());
+                                isNumber = true;
+                            } catch (NumberFormatException e) {
+                                isNumber = false;
+                            }
+                            return !isNumber || relationCB.getSelectionModel().isEmpty();
+                            }
+                                , srcRepTF.textProperty(), destRepTF.textProperty(), relationCB.buttonCellProperty()));
+
+                        String srcRepStr = null;
+                        String destRepStr = null;
+                        Relationship relType = null;
+                        Optional<String> result = dialog.showAndWait();
+
+                        if (result.isPresent()) {
+                            srcRepStr = srcRepTF.getText();
+                            destRepStr = destRepTF.getText();
+                            relType = relationCB.getValue();
+                        }
+
+                        if (srcRepStr != null && destRepStr != null && relType != null) {
+                            EdgeFX undirectedEdge = new EdgeFX(srcVertexFX, destVertexFX, srcRepStr, destRepStr, relType);
+                            undirectedEdge.showEdge();
+                        }
+
+                    } else if (addRelationBtn.isSelected() || addRepBtn.isSelected()) {
+                        Alert alert = new Alert(Alert.AlertType.ERROR);
+                        setDefaultDialogConfig(alert);
+                        alert.setContentText(srcVertexName + " and " + destVertexName + " are already connected!");
+                        alert.show();
+                    }
+
+                    selectedVertex.isSelected = false;
+                    FillTransition ft1 = new FillTransition(Duration.millis(300), selectedVertex, Color.RED, Color.BLACK);
+                    ft1.play();
+                    selectedVertex = null;
+                    return;
+                }
+
+                FillTransition ftSelect = new FillTransition(Duration.millis(300), destVertexFX, Color.BLACK, Color.RED);
+                ftSelect.play();
+                destVertexFX.isSelected = true;
+                selectedVertex = destVertexFX;
+
+            } else {
+                FillTransition ftUnselect = new FillTransition(Duration.millis(300), destVertexFX, Color.RED, Color.BLACK);
+                ftUnselect.play();
+                destVertexFX.isSelected = false;
+                selectedVertex = null;
+            }
+        } else if (event.getEventType() == MouseEvent.MOUSE_PRESSED && event.getButton() == MouseButton.PRIMARY) {
+            destVertexFX.vertexHolder.setCursor(Cursor.CLOSED_HAND);
+            FillTransition ftDrag = new FillTransition(Duration.millis(300), destVertexFX, Color.BLACK, Color.RED);
+            ftDrag.play();
+
+        } else if (event.getEventType() == MouseEvent.MOUSE_RELEASED && event.getButton() == MouseButton.PRIMARY) {
+            destVertexFX.vertexHolder.setCursor(Cursor.DEFAULT);
+            FillTransition ftDrag = new FillTransition(Duration.millis(300), destVertexFX, Color.RED, Color.BLACK);
+            ftDrag.play();
+
+        } else if (event.getEventType() == MouseEvent.MOUSE_DRAGGED && event.getButton() == MouseButton.PRIMARY) {
+            destVertexFX.dragVertex((int) event.getX(), (int) event.getY());
+        }
+    };
 
     public class VertexFX extends Circle {
         Point coordinate;
@@ -992,10 +1028,15 @@ public class GraphSimulationController implements Initializable {
                     this.arrowEnd.setStyle("-fx-fill: #ff0c0c");
                     this.arrowSrc.setStyle("-fx-fill: #ff0c0c");
                     break;
-                case CRUSH:
+                case ADMIRED_BY:
                     this.line.setStroke(Color.web("#c843ff"));
                     this.arrowEnd.setStyle("-fx-fill: #c843ff");
                     this.arrowSrc.setStyle("-fx-fill: #c843ff");
+                    break;
+                case THE_OTHER_HALF:
+                    this.line.setStroke(Color.web("#e0890c"));
+                    this.arrowEnd.setStyle("-fx-fill: #e0890c");
+                    this.arrowSrc.setStyle("-fx-fill: #e0890c");
                     break;
             }
         }
@@ -1085,7 +1126,8 @@ public class GraphSimulationController implements Initializable {
         Set<Student> friendsSet = student.getFriends();
         Set<Student> enemiesSet = student.getEnemies();
         Set<Student> nonesSet = student.getNones();
-        Set<Student> crushesSet = student.getCrushes();
+        Set<Student> admirersSet = student.getAdmirers();
+        Set<Student> theOtherHalfSet = student.getTheOtherHalf();
 
         StringBuilder lunchStart = new StringBuilder();
         for (int i = 0; i < lunchStartArr.length; i++) {
@@ -1121,11 +1163,17 @@ public class GraphSimulationController implements Initializable {
         });
         String nones = nonesSet.size() == 0 ? "-" : nonesSB.substring(0, nonesSB.length() - 2);
 
-        StringBuilder crushesSB = new StringBuilder();
-        crushesSet.forEach(v -> {
-            crushesSB.append(v.getName()).append(", ");
+        StringBuilder admirersSB = new StringBuilder();
+        admirersSet.forEach(v -> {
+            admirersSB.append(v.getName()).append(", ");
         });
-        String crushes = crushesSet.size() == 0 ? "-" : crushesSB.substring(0, crushesSB.length() - 2);
+        String admirers = admirersSet.size() == 0 ? "-" : admirersSB.substring(0, admirersSB.length() - 2);
+
+        StringBuilder theOtherHalfSB = new StringBuilder();
+        theOtherHalfSet.forEach(v -> {
+            theOtherHalfSB.append(v.getName()).append(", ");
+        });
+        String theOtherHalf = theOtherHalfSet.size() == 0 ? "-" : theOtherHalfSB.substring(0, theOtherHalfSB.length() - 2);
 
         TextField nameTF = new TextField(name);
         TextField diveTF = new TextField(dive + "");
@@ -1135,7 +1183,8 @@ public class GraphSimulationController implements Initializable {
         TextField friendsTF = new TextField(friends);
         TextField enemiesTF = new TextField(enemies);
         TextField nonesTF = new TextField(nones);
-        TextField crushesTF = new TextField(crushes);
+        TextField admirersTF = new TextField(admirers);
+        TextField theOtherHalfTF = new TextField(theOtherHalf);
         List<TextField> repPointsTFs = new ArrayList<>();
         for (String key : repPointsMap.keySet()) {
             repPointsTFs.add(new TextField(repPointsMap.get(key) + " pts relative to " + key));
@@ -1151,7 +1200,8 @@ public class GraphSimulationController implements Initializable {
         textFieldList.add(friendsTF);
         textFieldList.add(enemiesTF);
         textFieldList.add(nonesTF);
-        textFieldList.add(crushesTF);
+        textFieldList.add(admirersTF);
+        textFieldList.add(theOtherHalfTF);
 
         return textFieldList;
     }
@@ -1168,30 +1218,8 @@ public class GraphSimulationController implements Initializable {
         labelNameList.add("Enemies");
         labelNameList.add("No relationship");
         labelNameList.add("Who likes " + student.getName());
+        labelNameList.add("The other half of " + student.getName());
         return labelNameList;
-    }
-
-    private Stage openDialogWindow(String filepath, String title) throws IOException {
-        Stage newWindow = new Stage();
-        Parent newRoot = FXMLLoader.load(getClass().getResource(filepath));
-        Scene newScene = new Scene(newRoot);
-        newScene.getStylesheets().add(getClass().getResource("../style/style.css").toExternalForm());
-        newWindow.setTitle(title);
-        newWindow.setScene(newScene);
-        newWindow.alwaysOnTopProperty();
-        newWindow.initModality(Modality.APPLICATION_MODAL);
-        newWindow.initStyle(StageStyle.UTILITY);
-        return newWindow;
-    }
-
-    private void alertWindow(String message){
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setContentText(message);
-        DialogPane alertDialog = alert.getDialogPane();
-        alertDialog.getStyleClass().add("dialog");
-        alertDialog.getStylesheets().add(getClass().getResource("../style/style.css").toExternalForm());
-        alert.initStyle(StageStyle.UTILITY);
-        alert.show();
     }
 
     private void drawAllVertexAndEdge(Sociograph newSociograph, HashMap<String, Boolean> isCreated){
@@ -1274,5 +1302,13 @@ public class GraphSimulationController implements Initializable {
                 edgeFX.showEdge();
             }
         }
+    }
+
+    private void setDefaultDialogConfig(Dialog dialog) {
+        dialog.setGraphic(null);
+        dialog.initStyle(StageStyle.UTILITY);
+        DialogPane dialogPane = dialog.getDialogPane();
+        dialogPane.getStyleClass().add("dialog");
+        dialogPane.getStylesheets().add(getClass().getResource("../style/style.css").toExternalForm());
     }
 }

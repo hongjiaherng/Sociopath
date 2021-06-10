@@ -93,7 +93,11 @@ public class GraphDao {
             db_MakeRelationToSociograph(student, names,  Relationship.FRIEND, repPoints, sociograph);
             db_MakeRelationToSociograph(student, names,  Relationship.ENEMY, repPoints, sociograph);
             db_MakeRelationToSociograph(student, names,  Relationship.NONE, repPoints, sociograph);
-            db_MakeRelationToSociograph(student, names,  Relationship.CRUSH, repPoints, sociograph);
+//            db_MakeRelationToSociograph(student, names,  Relationship.CRUSH, repPoints, sociograph);
+            // TODO: Check here
+            db_MakeRelationToSociograph(student, names,  Relationship.ADMIRED_BY, repPoints, sociograph);
+            db_MakeRelationToSociograph(student, names,  Relationship.THE_OTHER_HALF, repPoints, sociograph);
+
         }
 
         return sociograph;
@@ -138,9 +142,9 @@ public class GraphDao {
             else if (rel == Relationship.NONE && !sociograph.hasDirectedEdge(student.getName(), fr.getName()))
                 sociograph.addDirectedEdge(student.getName(), fr.getName(), repPoints.get(fr.getName()), Relationship.NONE);
 
-            else if (rel == Relationship.CRUSH && !sociograph.hasDirectedEdge(student.getName(), fr.getName()))
-                sociograph.addDirectedEdge(student.getName(), fr.getName(), repPoints.get(fr.getName()), Relationship.CRUSH);
-
+            else if (rel == Relationship.ADMIRED_BY && !sociograph.hasDirectedEdge(student.getName(), fr.getName()))
+                sociograph.addDirectedEdge(student.getName(), fr.getName(), repPoints.get(fr.getName()), Relationship.ADMIRED_BY);
+            // TODO: Check here
         }
     }
 }

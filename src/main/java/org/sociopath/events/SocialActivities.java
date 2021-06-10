@@ -354,7 +354,7 @@ public class SocialActivities {
                             double crushPercentage = rd.nextDouble();
 
                             if (crushPercentage < 0.1) {
-                                sociograph.setDirectedRelationshipOnEdge(srcName, destName, Relationship.CRUSH);
+                                sociograph.setDirectedRelationshipOnEdge(srcName, destName, Relationship.ADMIRED_BY);    // TODO: Change to ADMIRED_BY
                                 sociograph.setSrcRepRelativeToAdj(srcName, destName, 10.0);
                                 System.out.println("***********");
                                 System.out.println(srcName + " has a crush on " + destName);

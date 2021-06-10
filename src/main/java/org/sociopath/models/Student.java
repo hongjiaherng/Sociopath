@@ -42,11 +42,13 @@ public class Student {
     @Relationship(type = "NONE")
     private Set<Student> nones = new HashSet<>();
 
-    @Relationship(type = "CRUSH")
-    private Set<Student> crushes = new HashSet<>();     // This crush means who ever secretly like this student should be included in this list
+    @Relationship(type = "ADMIRED_BY")
+    private Set<Student> admirers = new HashSet<>();     // This crush means who ever secretly like this student should be included in this list
     // TODO: admirer
 
-    // TODO: couple
+    // TODO: couple, see if it can be a single variable to make a relationship
+    @Relationship(type = "THE_OTHER_HALF")
+    private Set<Student> theOtherHalf = new HashSet<>();      // can only contain one
 
     private transient int avgLunchPeriod;
     private transient LocalTime avgLunchStart;
@@ -116,8 +118,16 @@ public class Student {
         return nones;
     }
 
-    public Set<Student> getCrushes() {
-        return crushes;
+//    public Set<Student> getCrushes() {
+//        return crushes;
+//    }
+
+    public Set<Student> getAdmirers() {
+        return admirers;
+    }
+
+    public Set<Student> getTheOtherHalf() {
+        return theOtherHalf;
     }
 
     public LocalTime getAvgLunchStart() {
@@ -153,8 +163,11 @@ public class Student {
                 case ENEMY:
                     enemies.remove(person);
                     break;
-                case CRUSH:
-                    crushes.remove(person);
+                case ADMIRED_BY:
+                    admirers.remove(person);
+                    break;
+                case THE_OTHER_HALF:
+                    theOtherHalf.remove(person);
                     break;
             }
         }
@@ -168,13 +181,16 @@ public class Student {
             case ENEMY:
                 enemies.add(person);
                 break;
-            case CRUSH:
-                crushes.add(person);
+            case ADMIRED_BY:
+                admirers.add(person);
+                break;
+            case THE_OTHER_HALF:
+                theOtherHalf.add(person);
                 break;
         }
     }
 
-    void deleteRelationship(Student person, org.sociopath.models.Relationship prevRelation) {
+    void deleteRelationship(Student person, org.sociopath.models.Relationship prevRelation) {   // also remove the rep point
         // Remove person from nones / friends / enemies HashSet
         switch (prevRelation) {
             case NONE:
@@ -186,8 +202,11 @@ public class Student {
             case ENEMY:
                 enemies.remove(person);
                 break;
-            case CRUSH:
-                crushes.remove(person);
+            case ADMIRED_BY:
+                admirers.remove(person);
+                break;
+            case THE_OTHER_HALF:
+                theOtherHalf.remove(person);
                 break;
         }
 
@@ -214,14 +233,24 @@ public class Student {
             sb.append(enemy.getName()).append(" ");
         });
         sb.append("]\n");
-        sb.append("Crushes").append("\t\t\t: [ ");
-        crushes.forEach(crush -> {
-            sb.append(crush.getName()).append(" ");
-        });
-        sb.append("]\n");
+//        sb.append("Crushes").append("\t\t\t: [ ");
+//        crushes.forEach(crush -> {
+//            sb.append(crush.getName()).append(" ");
+//        });
+//        sb.append("]\n");
         sb.append("Nones").append("\t\t\t: [ ");
         nones.forEach(none -> {
             sb.append(none.getName()).append(" ");
+        });
+        sb.append("]\n");
+        sb.append("Admirers").append("\t\t\t: [ ");
+        admirers.forEach(admirer -> {
+            sb.append(admirer.getName()).append(" ");
+        });
+        sb.append("]\n");
+        sb.append("The Other Half").append("\t\t\t: [ ");
+        theOtherHalf.forEach(theOtherHalf -> {
+            sb.append(theOtherHalf.getName()).append(" ");
         });
         sb.append("]");
         return sb.toString();
