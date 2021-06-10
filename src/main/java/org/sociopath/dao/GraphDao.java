@@ -34,7 +34,7 @@ public class GraphDao {
      * Delete all nodes and relationship in the database
      */
     public static void deleteGraph(){
-        session.purgeDatabase();
+        session.deleteAll(Student.class);
     }
 
     /**
