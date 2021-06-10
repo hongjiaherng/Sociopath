@@ -2,6 +2,7 @@ package org.sociopath.dao;
 
 import org.neo4j.ogm.cypher.ComparisonOperator;
 import org.neo4j.ogm.cypher.Filter;
+import org.neo4j.ogm.exception.ConnectionException;
 import org.neo4j.ogm.session.Session;
 import org.sociopath.models.Relationship;
 import org.sociopath.models.Sociograph;
@@ -21,6 +22,7 @@ public class GraphDao {
      * Save the graph into the database
      * @param graph A Sociograph object that is going to be saved
      */
+    // TODO : press second time save will remove all the graph
     public static void saveGraph(Sociograph graph){
         List<Student> vertices = graph.getAllStudents();
         for(Student student : vertices){
@@ -39,7 +41,7 @@ public class GraphDao {
      * Get all the nodes from the database
      * @return A list of Student object
      */
-    public static ArrayList<Student> getAllVertices(){
+    public static ArrayList<Student> getAllVertices() throws ConnectionException {
         ArrayList<Student> students ;
 
         Collection<Student> collection = session.loadAll(Student.class);
@@ -53,7 +55,7 @@ public class GraphDao {
      *
      * @param name name of the node
      */
-    public static void deleteNode(String name){
+    public static void deleteNode(String name) throws ConnectionException{
         Filter filter = new Filter("Name", ComparisonOperator.EQUALS, name);
         Collection<Filter> filters = new ArrayList<>();
         filters.add(filter);
@@ -75,7 +77,7 @@ public class GraphDao {
      *
      * @return a Socioraph object that contains all the relationship
      */
-    public static Sociograph db_getGraph(){
+    public static Sociograph db_getGraph() throws ConnectionException{
         allStudents = GraphDao.getAllVertices();
         String[] names = new String[allStudents.size()];
         ArrayList<HashMap<String, Double>> allRepPoints = new ArrayList<>();
@@ -93,7 +95,6 @@ public class GraphDao {
             db_MakeRelationToSociograph(student, names,  Relationship.FRIEND, repPoints, sociograph);
             db_MakeRelationToSociograph(student, names,  Relationship.ENEMY, repPoints, sociograph);
             db_MakeRelationToSociograph(student, names,  Relationship.NONE, repPoints, sociograph);
-//            db_MakeRelationToSociograph(student, names,  Relationship.CRUSH, repPoints, sociograph);
             // TODO: Check here because the previouos CRUSH is not being used anymore
             db_MakeRelationToSociograph(student, names,  Relationship.ADMIRED_BY, repPoints, sociograph);   // TODO: I added this, not sure if works
             db_MakeRelationToSociograph(student, names,  Relationship.THE_OTHER_HALF, repPoints, sociograph);   // TODO: I added this, not sure if works
@@ -135,7 +136,7 @@ public class GraphDao {
 
             HashMap<String, Double> rep = fr.getRepPoints();
 
-            boolean relationshipCheck = rel == Relationship.FRIEND || rel == Relationship.ENEMY;
+            boolean relationshipCheck = rel == Relationship.FRIEND || rel == Relationship.ENEMY || rel == Relationship.THE_OTHER_HALF;
             if (!sociograph.hasUndirectedEdge(student.getName(), fr.getName()) && relationshipCheck)
                 sociograph.addUndirectedEdge(student.getName(), fr.getName(), repPoints.get(fr.getName()), rep.get(student.getName()), rel);
 

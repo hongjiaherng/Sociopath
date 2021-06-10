@@ -8,17 +8,16 @@ import java.util.logging.LogManager;
 
 public class DBConnect {
 
-    private static Configuration configuration;
     private static SessionFactory sessionFactory;
 
     public static void startCon() {
-        configuration = new Configuration.Builder()
+        Configuration configuration = new Configuration.Builder()
                 .uri("bolt://localhost")
-                .credentials("neo4j", "<your-password-here>")       // TODO: Put your password here
+                .credentials("neo4j", "1234")
                 .build();
         LogManager.getLogManager().reset();
 
-        sessionFactory = new SessionFactory(configuration, "models", "org.sociopath");
+        sessionFactory = new SessionFactory(configuration,  "org.sociopath", "org.sociopath.models");
     }
 
     public static Session getSession() {
@@ -29,7 +28,4 @@ public class DBConnect {
         sessionFactory.close();
     }
 
-    public static boolean isConnected(){
-        return configuration != null;
-    }
 }
