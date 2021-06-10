@@ -246,7 +246,6 @@ public class SocialActivities {
         System.out.print("Enter the number of book: ");
         int numOfBooks = sc.nextInt();
 
-//        Stack<>
 
         System.out.print("Enter the height of the books: ");
 
