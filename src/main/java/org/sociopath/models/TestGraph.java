@@ -1,6 +1,7 @@
 package org.sociopath.models;
 
 import org.sociopath.dao.GraphDao;
+import org.sociopath.events.Event6;
 import org.sociopath.events.SocialActivities;
 import org.sociopath.utils.DBConnect;
 
@@ -8,16 +9,16 @@ public class TestGraph {
     public static void main(String[] args) {
         Sociograph sociograph = new Sociograph();
 
-        DBConnect.startCon();
+//        DBConnect.startCon();
         initialization(sociograph);
 //        event1Test(sociograph);
 //        event2Test(sociograph);
 //        event3Test(sociograph);
-        event4Test(sociograph);
+//        event4Test(sociograph);
 //        event5Test(sociograph);
-//        event6Test(sociograph);
-        GraphDao.saveGraph(sociograph);
-        DBConnect.closeCon();
+        event6Test(sociograph);
+//        GraphDao.saveGraph(sociograph);
+//        DBConnect.closeCon();
     }
 
     public static void initialization(Sociograph sociograph) {
@@ -130,9 +131,9 @@ public class TestGraph {
     // TODO: Jia Hong part
     public static void event6Test(Sociograph sociograph) {
         System.out.println("Event 6 - Friendship");
-        System.out.println(sociograph + "\n");
-        SocialActivities.event6();
-        System.out.println("\n" + sociograph);
+//        System.out.println(sociograph + "\n");
+        Event6.event6();
+//        System.out.println("\n" + sociograph);
     }
 
     public static void sixDegreesOfKenThompson(Sociograph sociograph){

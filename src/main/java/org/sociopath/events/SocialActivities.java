@@ -235,20 +235,11 @@ public class SocialActivities {
             while(!stack2.isEmpty()){
                 stack1.push(stack2.pop());
             }
+            System.out.println("Round " + (round + 1)  + ": " + stack1);
             // increment round
             round++;
         }
         System.out.println("Rounds needed to make the height in non-increasing order: " + round);
-    }
-
-    public static void event4x() {
-        System.out.println("Event 4 - Arranging Books");
-        System.out.print("Enter the number of book: ");
-        int numOfBooks = sc.nextInt();
-
-
-        System.out.print("Enter the height of the books: ");
-
     }
 
     public static void event5(Sociograph sociograph, String you, String crush) {
@@ -327,28 +318,6 @@ public class SocialActivities {
             System.out.println("No path from " + stranger + " to " + crush);
         }
 
-    }
-
-    public static void event6() {
-        Scanner sc = new Scanner(System.in);
-        int n = sc.nextInt();
-        Sociograph g = new Sociograph(n+1);
-
-        for(int i=0; i<n; i++){
-            int s = sc.nextInt();
-            int d = sc.nextInt();
-            g.addEdge(s,d);
-        }
-
-        System.out.println("You can form the following friendship (s): ");
-        for(int i=1; i<=n; i++){
-            for(int j=1; j<=n; j++){
-                if(i!=j){
-                    g.printAllPath(i,j);
-                }
-            }
-        }
-        System.out.println(g.clearPath());
     }
 
     public static void doAssignments(Sociograph sociograph){
