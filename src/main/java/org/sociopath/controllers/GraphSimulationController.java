@@ -604,11 +604,10 @@ public class GraphSimulationController implements Initializable {
 
         // If any event is running, don't execute click event on vertex
         if (isEventRunning) {
-            System.out.println("event is running");
+            System.out.println("event is running, you can't do this");
             return;
         }
 
-        System.out.println("You can't reach here");
         VertexFX destVertexFX = (VertexFX) event.getSource();
         if (event.getEventType() == MouseEvent.MOUSE_CLICKED && event.getButton() == MouseButton.PRIMARY) {
             if (!destVertexFX.isSelected) {
@@ -916,6 +915,7 @@ public class GraphSimulationController implements Initializable {
         }
         markEventRunning();
         Event1Controller.event1prompt(sociograph, selectedVertex);
+        // Event ended must be called inside the event method when it ends
     }
 
     public void event2Handler(ActionEvent event) {
