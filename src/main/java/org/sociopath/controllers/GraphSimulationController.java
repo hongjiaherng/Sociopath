@@ -170,7 +170,7 @@ public class GraphSimulationController implements Initializable {
             }
         }
 
-        System.out.println(isSaved);
+        System.out.println("Save method : " + isSaved);
         DBConnect.closeCon();
     }
 
@@ -567,7 +567,7 @@ public class GraphSimulationController implements Initializable {
     // TODO : add a state to the clear button, for the database to make sure that whether it is needed to clear the database
     public void clearGraphFX(ActionEvent event) {
         // Remove all vertices from sociograph
-        if(!allCircles.isEmpty())
+
             isSaved = false;
 
         this.sociograph.clear();
@@ -891,6 +891,7 @@ public class GraphSimulationController implements Initializable {
     };
 
     public void event1Handler(ActionEvent event) {
+        Event1Controller.event1prompt(this, sociograph, selectedVertex);
     }
 
     public void event2Handler(ActionEvent event) {
@@ -1398,5 +1399,18 @@ public class GraphSimulationController implements Initializable {
         ft.play();
         newUndirectedEdge.showEdge();
         return newUndirectedEdge;
+    }
+
+    public void deleteEdgeFXWithoutPrompt(EdgeFX edge){
+        if (!edge.isDirected) {
+            System.out.println(sociograph.removeEdge(edge.endVertex.nameText.getText(), edge.srcVertex.nameText.getText()));
+        }
+        System.out.println(sociograph.removeEdge(edge.srcVertex.nameText.getText(), edge.endVertex.nameText.getText()));
+        System.out.println(allCircles.get(allCircles.indexOf(edge.endVertex)).connectedEdges.remove(edge));
+        System.out.println(allCircles.get(allCircles.indexOf(edge.srcVertex)).connectedEdges.remove(edge));
+        System.out.println(canvasGroup.getChildren().remove(edge));
+        System.out.println(sociograph.getStudent(edge.endVertex.nameText.getText()));
+        System.out.println(sociograph.getStudent(edge.srcVertex.nameText.getText()));
+        System.out.println(sociograph);
     }
 }

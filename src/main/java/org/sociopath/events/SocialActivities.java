@@ -1,5 +1,4 @@
-package org.sociopath.events;2..
-...
+package org.sociopath.events;
 
 import org.sociopath.models.Relationship;
 import org.sociopath.models.Sociograph;
