@@ -1,6 +1,5 @@
 package org.sociopath.controllers;
 
-import javafx.animation.FadeTransition;
 import javafx.animation.FillTransition;
 import javafx.animation.Interpolator;
 import javafx.animation.ScaleTransition;
@@ -59,6 +58,8 @@ public class GraphSimulationController implements Initializable {
     public ToggleButton addRepBtn;
     public ToggleGroup toggleGroup;
     public Pane viewer;
+
+    public boolean isEventRunning = false;
 
     private Sociograph sociograph = new Sociograph();                    
     private List<VertexFX> allCircles = new ArrayList<>();
@@ -378,39 +379,23 @@ public class GraphSimulationController implements Initializable {
         }
     }
 
-    public void deleteEdgeFX(EdgeFX edge, boolean isMenu) {
-        if (isMenu) {
-            String arrow = "";
-            if (edge.isDirected) {
-                arrow = " -> ";
-            } else {
-                arrow = " <-> ";
-            }
-
-            String contextStr = "Are you sure you want to delete this edge (" + edge.srcVertex.nameText.getText() + arrow + edge.endVertex.nameText.getText() + ") ?";
-            Alert confirmDialog = new Alert(Alert.AlertType.CONFIRMATION, contextStr, ButtonType.YES, ButtonType.NO);
-            setDefaultDialogConfig(confirmDialog);
-            confirmDialog.setHeaderText("Are you sure ?");
-
-            Optional<ButtonType> result = confirmDialog.showAndWait();
-
-            if (result.isPresent() && result.get() == ButtonType.YES) {
-
-                if (!edge.isDirected) {
-                    System.out.println(sociograph.removeEdge(edge.endVertex.nameText.getText(), edge.srcVertex.nameText.getText()));
-                }
-                System.out.println(sociograph.removeEdge(edge.srcVertex.nameText.getText(), edge.endVertex.nameText.getText()));
-                System.out.println(allCircles.get(allCircles.indexOf(edge.endVertex)).connectedEdges.remove(edge));
-                System.out.println(allCircles.get(allCircles.indexOf(edge.srcVertex)).connectedEdges.remove(edge));
-                System.out.println(canvasGroup.getChildren().remove(edge));
-                System.out.println(sociograph.getStudent(edge.endVertex.nameText.getText()));
-                System.out.println(sociograph.getStudent(edge.srcVertex.nameText.getText()));
-                System.out.println(sociograph);
-
-            } else {
-                return;
-            }
+    public void deleteEdgeFX(EdgeFX edge) {
+        String arrow = "";
+        if (edge.isDirected) {
+            arrow = " -> ";
         } else {
+            arrow = " <-> ";
+        }
+
+        String contextStr = "Are you sure you want to delete this edge (" + edge.srcVertex.nameText.getText() + arrow + edge.endVertex.nameText.getText() + ") ?";
+        Alert confirmDialog = new Alert(Alert.AlertType.CONFIRMATION, contextStr, ButtonType.YES, ButtonType.NO);
+        setDefaultDialogConfig(confirmDialog);
+        confirmDialog.setHeaderText("Are you sure ?");
+
+        Optional<ButtonType> result = confirmDialog.showAndWait();
+
+        if (result.isPresent() && result.get() == ButtonType.YES) {
+
             if (!edge.isDirected) {
                 System.out.println(sociograph.removeEdge(edge.endVertex.nameText.getText(), edge.srcVertex.nameText.getText()));
             }
@@ -421,7 +406,11 @@ public class GraphSimulationController implements Initializable {
             System.out.println(sociograph.getStudent(edge.endVertex.nameText.getText()));
             System.out.println(sociograph.getStudent(edge.srcVertex.nameText.getText()));
             System.out.println(sociograph);
+
+        } else {
+            return;
         }
+
     }
 
     public void changeRepOrRelationTypeFX(EdgeFX edge) {
@@ -613,6 +602,13 @@ public class GraphSimulationController implements Initializable {
 
     EventHandler<MouseEvent> mouseHandler = event -> {
 
+        // If any event is running, don't execute click event on vertex
+        if (isEventRunning) {
+            System.out.println("event is running");
+            return;
+        }
+
+        System.out.println("You can't reach here");
         VertexFX destVertexFX = (VertexFX) event.getSource();
         if (event.getEventType() == MouseEvent.MOUSE_CLICKED && event.getButton() == MouseButton.PRIMARY) {
             if (!destVertexFX.isSelected) {
@@ -918,19 +914,57 @@ public class GraphSimulationController implements Initializable {
     }
 
     public void event2Handler(ActionEvent event) {
+        if (isEventRunning) {
+            return;
+        }
+
+        markEventRunning();
         Event2Controller.event2Prompt(sociograph, selectedVertex);
+        // Event ended must be called inside the event method when it ends
     }
 
     public void event3Handler(ActionEvent event) {
+        if (isEventRunning) {
+            return;
+        }
+
+        markEventRunning();
+//        Event2Controller.event2Prompt(sociograph, selectedVertex);
+
+        // Event ended must be called inside the event method when it ends
     }
 
     public void event4Handler(ActionEvent event) {
+        if (isEventRunning) {
+            return;
+        }
+
+        markEventRunning();
+//        Event2Controller.event2Prompt(sociograph, selectedVertex);
+
+        // Event ended must be called inside the event method when it ends
     }
 
     public void event5Handler(ActionEvent event) {
+        if (isEventRunning) {
+            return;
+        }
+
+        markEventRunning();
+//        Event2Controller.event2Prompt(sociograph, selectedVertex);
+
+        // Event ended must be called inside the event method when it ends
     }
 
     public void event6Handler(ActionEvent event) {
+        if (isEventRunning) {
+            return;
+        }
+
+        markEventRunning();
+//        Event2Controller.event2Prompt(sociograph, selectedVertex);
+
+        // Event ended must be called inside the event method when it ends
     }
 
     public class VertexFX extends Circle {
@@ -1427,23 +1461,18 @@ public class GraphSimulationController implements Initializable {
         return null;
     }
 
+    // TODO: I removed the Transition effect here, so that it works better with SequentialTransition
     public EdgeFX createNewUndirectedEdgeFX(VertexFX srcVertex, VertexFX endVertex, String srcRep, String endRep, Relationship rel) {
         EdgeFX newUndirectedEdge = new EdgeFX(srcVertex, endVertex, srcRep, endRep, rel);
-//        FadeTransition ft = new FadeTransition(Duration.millis(1000), newUndirectedEdge);
-//        ft.setFromValue(0.1);
-//        ft.setToValue(10);
-//        ft.play();
-//        newUndirectedEdge.showEdge();
+        newUndirectedEdge.showEdge();
         return newUndirectedEdge;
     }
 
+
+    // TODO: I removed the Transition effect here, so that it works better with SequentialTransition
     public EdgeFX createNewDirectedEdgeFX(VertexFX srcVertex, VertexFX endVertex, String srcRep, Relationship rel) {
         EdgeFX newDirectedEdge = new EdgeFX(srcVertex, endVertex, srcRep, rel);
-//        FadeTransition ft = new FadeTransition(Duration.millis(1000), newDirectedEdge);
-//        ft.setFromValue(0.1);
-//        ft.setToValue(10);
-//        ft.play();
-//        newDirectedEdge.showEdge();
+        newDirectedEdge.showEdge();
         return newDirectedEdge;
     }
 
@@ -1470,4 +1499,24 @@ public class GraphSimulationController implements Initializable {
         throw new IllegalArgumentException("This edge is not exist (" + srcName + " -> " + adjName + ") or (" + srcName + " <-> " + adjName + ")");
     }
 
+    public void markEventRunning() {
+        this.isEventRunning = true;
+    }
+
+    public void markEventEnded() {
+        this.isEventRunning = false;
+    }
+
+    public void deleteEdgeFXWithoutPrompt(EdgeFX edge){
+        if (!edge.isDirected) {
+            System.out.println(sociograph.removeEdge(edge.endVertex.nameText.getText(), edge.srcVertex.nameText.getText()));
+        }
+        System.out.println(sociograph.removeEdge(edge.srcVertex.nameText.getText(), edge.endVertex.nameText.getText()));
+        System.out.println(allCircles.get(allCircles.indexOf(edge.endVertex)).connectedEdges.remove(edge));
+        System.out.println(allCircles.get(allCircles.indexOf(edge.srcVertex)).connectedEdges.remove(edge));
+        System.out.println(canvasGroup.getChildren().remove(edge));
+        System.out.println(sociograph.getStudent(edge.endVertex.nameText.getText()));
+        System.out.println(sociograph.getStudent(edge.srcVertex.nameText.getText()));
+        System.out.println(sociograph);
+    }
 }

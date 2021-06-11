@@ -120,23 +120,23 @@ public class Event2Controller {
                 // If there's any relationship previously between host and newFriend, delete them and create new Friendship directly
                 GraphSimulationController.EdgeFX existingEdgeFX = canvasRef.getEdgeFX(hostName, newFriendName);
                 if (existingEdgeFX != null) {
-                    canvasRef.deleteEdgeFX(existingEdgeFX, false);
+                    canvasRef.deleteEdgeFXWithoutPrompt(existingEdgeFX);
                 }
+
+                // Clear all transition to avoid any leftover transition from the past event execution
+                st.getChildren().clear();
 
                 FillTransition ft = new FillTransition(Duration.millis(500), hostFX, Color.BLACK, Color.YELLOW);
                 st.getChildren().add(ft);
 
                 GraphSimulationController.EdgeFX newUndirectedEdge = canvasRef.createNewUndirectedEdgeFX(hostFX, newFriendFX, srcRep, destRep, Relationship.FRIEND);
+
                 FadeTransition ft1 = new FadeTransition(Duration.millis(500), newUndirectedEdge);
-                ft1.setFromValue(0.1);
+                ft1.setFromValue(0);
                 ft1.setToValue(10);
-                ft1.setOnFinished(event -> {
-                    newUndirectedEdge.showEdge();
-                });
-                ft1.onFinishedProperty();
                 st.getChildren().add(ft1);
 
-                // TODO: Apply transition effect here, light up newFriend
+                // Light up new friend
                 FillTransition ft2 = new FillTransition(Duration.millis(500), newFriendFX, Color.BLACK, Color.YELLOW);
                 st.getChildren().add(ft2);
 
@@ -175,20 +175,23 @@ public class Event2Controller {
             } else {
                 summary.setContentText("No any student hear about you from your new friend");
             }
-            Optional<ButtonType> result = summary.showAndWait();
-            if (result.isPresent()) {
-                for (Student visited : visitedRecord) {
-                    FillTransition ft = new FillTransition(Duration.millis(500), canvasRef.getVertexFX(visited.getName()), Color.YELLOW, Color.BLACK);
-                    ft.play();
-                }
-                FillTransition ftHost = new FillTransition(Duration.millis(500), canvasRef.getVertexFX(hostName), Color.YELLOW, Color.BLACK);
-                ftHost.play();
-                FillTransition ftFriend = new FillTransition(Duration.millis(500), canvasRef.getVertexFX(newFriendName), Color.YELLOW, Color.BLACK);
-                ftFriend.play();
+            summary.show();
+
+            // Changing all the light up vertex back to original color
+            for (Student visited : visitedRecord) {
+                FillTransition ft = new FillTransition(Duration.millis(500), canvasRef.getVertexFX(visited.getName()), Color.YELLOW, Color.BLACK);
+                ft.play();
             }
+            FillTransition ftHost = new FillTransition(Duration.millis(500), canvasRef.getVertexFX(hostName), Color.YELLOW, Color.BLACK);
+            ftHost.play();
+            FillTransition ftFriend = new FillTransition(Duration.millis(500), canvasRef.getVertexFX(newFriendName), Color.YELLOW, Color.BLACK);
+            ftFriend.play();
+
+            canvasRef.markEventEnded();
         });
-        st.onFinishedProperty();
+        st.onFinishedProperty();    // Mark the end
         st.play();
+
     }
 
     private static void event2Recur(Sociograph sociograph, String hostName, String newFriendName, HashSet<Student> visitedRecord) {
@@ -214,7 +217,7 @@ public class Event2Controller {
                     continue;
                 }
 
-                // TODO: Transition effect here to friend
+                // Light up newly propagated friend
                 FillTransition ft = new FillTransition(Duration.millis(500), canvasRef.getVertexFX(friend.getName()), Color.BLACK, Color.YELLOW);
                 st.getChildren().add(ft);
 
@@ -238,33 +241,26 @@ public class Event2Controller {
 
                     newOrExistingEdge = canvasRef.getEdgeFX(hostName, friend.getName());
 
+                    // A little fade effect for existing edge
                     FadeTransition ft1 = new FadeTransition(Duration.millis(500), newOrExistingEdge);
-                    ft1.setFromValue(0.1);
+                    ft1.setFromValue(5);
                     ft1.setToValue(10);
                     st.getChildren().add(ft1);
 
                 } else {    // If there's no edge at first, create a new directed edge
-                    sociograph.addDirectedEdge(hostName, friend.getName(), hostRepRelativeToFriend, Relationship.NONE);     // Add new directed edge
                     newOrExistingEdge = canvasRef.createNewDirectedEdgeFX(canvasRef.getVertexFX(hostName), canvasRef.getVertexFX(friend.getName()), hostRepRelativeToFriend + "", Relationship.NONE);
 
+                    // Fading in effect for new edge
                     FadeTransition ft1 = new FadeTransition(Duration.millis(500), newOrExistingEdge);
-                    ft1.setFromValue(0.1);
+                    ft1.setFromValue(0);
                     ft1.setToValue(10);
-                    ft1.setOnFinished(event -> {
-                        newOrExistingEdge.showEdge();
-                    });
-                    ft1.onFinishedProperty();
                     st.getChildren().add(ft1);
                 }
 
                 // Mark this friend as visited
                 visitedRecord.add(friend);
 
-//                System.out.println("Propagated: " + friend.getName());
-//                System.out.println(sociograph);
-//                System.out.println();
-
-                // TODO : Wait a while
+                // Wait for a while before proceeding to next student
                 PauseTransition pt = new PauseTransition(Duration.millis(3000));
                 st.getChildren().add(pt);
 
@@ -272,14 +268,6 @@ public class Event2Controller {
                 event2Recur(sociograph, hostName, friend.getName(), visitedRecord);
             }
         }
-    }
-
-    private static void lightUp(GraphSimulationController.VertexFX vertexFX) {
-        FillTransition ftUnselect = new FillTransition(Duration.millis(500), vertexFX, Color.BLACK, Color.YELLOW);
-    }
-
-    private static void lightOff(GraphSimulationController.VertexFX vertexFX) {
-        FillTransition ftUnselect = new FillTransition(Duration.millis(500), vertexFX, Color.YELLOW, Color.BLACK);
     }
 
 }
