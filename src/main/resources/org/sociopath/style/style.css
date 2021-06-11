@@ -1,0 +1,73 @@
+.button {
+    -fx-background-color: #585858;
+    -fx-text-fill: #000000;
+    -fx-text-alignment: center;
+}
+
+.button:pressed {
+    -fx-effect: dropshadow( three-pass-box , rgb(255, 255, 255), 5, 0.0 , 0 , 1 );
+}
+
+.button:hover {
+    -fx-background-color: rgba(0, 255, 93, 0.7);
+    -fx-text-fill: #ffffff;
+}
+
+.accordion > .titled-pane > .title {
+    -fx-background-color: #125e94;
+    -fx-background-insets: -1 0 0 0, 0 1 1 1, 1 2 2 2;
+    -fx-background-radius: 0, 0, 0;
+}
+
+.accordion > .titled-pane > .title > .arrow-button .arrow{
+    -fx-background-color: #ffffff;
+}
+
+.toggle-button {
+    -fx-background-color: #585858;
+    -fx-text-fill: #000000;
+}
+
+.toggle-button:selected {
+    -fx-background-color: #9c0000;
+    -fx-text-fill: #ffffff;
+}
+
+.toggle-button:hover {
+    -fx-background-color: rgba(0, 255, 93, 0.7);
+    -fx-text-fill: #ffffff;
+}
+
+.dialog{
+    -fx-font-family: Consolas;
+    -fx-text-fill: #000000;
+}
+
+.dialog > *.label.content{
+    -fx-font-size: 14px;
+}
+
+.dialog > *.header-panel{
+    -fx-background-color: #5689e8;
+}
+
+.dialog > *.header-panel *.label{
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+
+.context-menu, .context-menu:showing {
+    -fx-background-color: #219b66;
+    -fx-background-insets: 0;
+    -fx-padding: 3.5px;
+    -fx-background-radius: 2.5px;
+    -fx-border-radius: 2.5px;
+    -fx-border-color: #156841;
+    -fx-effect: dropshadow( one-pass-box , rgba(0,0,0,0.6) , 6, 0.0 , 0 , 0);
+    -fx-font-family: Consolas;
+}
+
+.context-menu > .menu-item:hover, .menu-item:focused {
+    -fx-background-color: #6bbd97;
+    -fx-font-weight: bold;
+}

@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.Cursor?>
+<?import javafx.scene.Group?>
+<?import javafx.scene.control.Accordion?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.effect.DropShadow?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.paint.Color?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/15.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.sociopath.controllers.GraphSimulationController">
+   <children>
+      <GridPane prefHeight="600.0" prefWidth="900.0">
+        <columnConstraints>
+          <ColumnConstraints hgrow="SOMETIMES" maxWidth="445.0" minWidth="10.0" prefWidth="200.0" />
+          <ColumnConstraints hgrow="SOMETIMES" maxWidth="701.0" minWidth="10.0" prefWidth="701.0" />
+        </columnConstraints>
+        <rowConstraints>
+          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+        </rowConstraints>
+         <children>
+            <GridPane prefHeight="600.0" prefWidth="200.0" style="-fx-background-color: #5bb3e3;">
+              <columnConstraints>
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+              </columnConstraints>
+              <rowConstraints>
+                <RowConstraints maxHeight="168.0" minHeight="10.0" prefHeight="83.0" vgrow="SOMETIMES" />
+                  <RowConstraints maxHeight="518.0" minHeight="10.0" prefHeight="516.0" vgrow="SOMETIMES" />
+              </rowConstraints>
+               <children>
+                  <GridPane style="-fx-background-color: #5bb3e3;">
+                    <columnConstraints>
+                      <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
+                    </columnConstraints>
+                    <rowConstraints>
+                      <RowConstraints maxHeight="40.0" minHeight="39.0" prefHeight="39.0" vgrow="SOMETIMES" />
+                        <RowConstraints maxHeight="45.0" minHeight="10.0" prefHeight="45.0" vgrow="SOMETIMES" />
+                    </rowConstraints>
+                     <children>
+                        <ImageView fitHeight="35.0" fitWidth="146.0" pickOnBounds="true" GridPane.halignment="CENTER" GridPane.rowIndex="1" GridPane.valignment="CENTER">
+                           <image>
+                              <Image url="@../style/sociopathLabel.png" />
+                           </image>
+                        </ImageView>
+                        <Button mnemonicParsing="false" onAction="#backToMenuHandler" prefHeight="35.0" prefWidth="200.0" style="-fx-background-color: #545454;" GridPane.valignment="TOP">
+                           <graphic>
+                              <ImageView fitHeight="27.0" fitWidth="27.0">
+                                 <image>
+                                    <Image url="@../style/back_button.png" />
+                                 </image>
+                              </ImageView>
+                           </graphic>
+                           <effect>
+                              <DropShadow />
+                           </effect>
+                        </Button>
+                     </children>
+                     <effect>
+                        <DropShadow>
+                           <color>
+                              <Color opacity="0.4217391312122345" />
+                           </color>
+                        </DropShadow>
+                     </effect>
+                  </GridPane>
+                  <Accordion prefHeight="516.0" prefWidth="200.0" GridPane.rowIndex="1">
+                    <panes>
+                      <TitledPane animated="false" style="-fx-background-color: #5bb3e3;" text="Events" textFill="WHITE">
+                        <content>
+                          <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" style="-fx-background-color: #5bb3e3;">
+                                 <children>
+                                    <ScrollPane prefHeight="440.0" prefWidth="200.0" style="-fx-background-color: #5bb3e3;">
+                                       <content>
+                                          <AnchorPane prefWidth="180.0" style="-fx-background-color: #5bb3e3;">
+                                             <children>
+                                                <GridPane layoutY="-3.0" prefHeight="444.0" prefWidth="184.0" style="-fx-background-color: #5bb3e3;">
+                                                   <columnConstraints>
+                                                      <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                                   </columnConstraints>
+                                                   <rowConstraints>
+                                                      <RowConstraints minHeight="-Infinity" prefHeight="55.0" vgrow="SOMETIMES" />
+                                                      <RowConstraints minHeight="-Infinity" prefHeight="55.0" vgrow="SOMETIMES" />
+                                                      <RowConstraints minHeight="-Infinity" prefHeight="55.0" vgrow="SOMETIMES" />
+                                                      <RowConstraints minHeight="-Infinity" prefHeight="55.0" vgrow="SOMETIMES" />
+                                                      <RowConstraints minHeight="-Infinity" prefHeight="55.0" vgrow="SOMETIMES" />
+                                                      <RowConstraints minHeight="-Infinity" prefHeight="55.0" vgrow="SOMETIMES" />
+                                                      <RowConstraints minHeight="-Infinity" prefHeight="55.0" vgrow="SOMETIMES" />
+                                                      <RowConstraints minHeight="-Infinity" prefHeight="55.0" vgrow="SOMETIMES" />
+                                                   </rowConstraints>
+                                                   <children>
+                                                      <Button mnemonicParsing="false" prefHeight="47.0" prefWidth="179.0" style="-fx-background-radius: 5;" text="Event 1" textAlignment="CENTER" GridPane.halignment="CENTER" GridPane.valignment="CENTER">
+                                                         <font>
+                                                            <Font name="Consolas Bold" size="20.0" />
+                                                         </font>
+                                                         <effect>
+                                                            <DropShadow />
+                                                         </effect>
+                                                      </Button>
+                                                      <Button mnemonicParsing="false" prefHeight="47.0" prefWidth="179.0" style="-fx-background-radius: 5;" text="Event 2" textAlignment="CENTER" GridPane.halignment="CENTER" GridPane.rowIndex="1" GridPane.valignment="CENTER">
+                                                         <font>
+                                                            <Font name="Consolas Bold" size="20.0" />
+                                                         </font>
+                                                         <effect>
+                                                            <DropShadow />
+                                                         </effect>
+                                                      </Button>
+                                                      <Button mnemonicParsing="false" prefHeight="47.0" prefWidth="179.0" style="-fx-background-radius: 5;" text="Event 3" textAlignment="CENTER" GridPane.halignment="CENTER" GridPane.rowIndex="2" GridPane.valignment="CENTER">
+                                                         <font>
+                                                            <Font name="Consolas Bold" size="20.0" />
+                                                         </font>
+                                                         <effect>
+                                                            <DropShadow />
+                                                         </effect>
+                                                      </Button>
+                                                      <Button mnemonicParsing="false" prefHeight="47.0" prefWidth="179.0" style="-fx-background-radius: 5;" text="Event 4" textAlignment="CENTER" GridPane.halignment="CENTER" GridPane.rowIndex="3" GridPane.valignment="CENTER">
+                                                         <font>
+                                                            <Font name="Consolas Bold" size="20.0" />
+                                                         </font>
+                                                         <effect>
+                                                            <DropShadow />
+                                                         </effect>
+                                                      </Button>
+                                                      <Button mnemonicParsing="false" prefHeight="47.0" prefWidth="179.0" style="-fx-background-radius: 5;" text="Event 5" textAlignment="CENTER" GridPane.halignment="CENTER" GridPane.rowIndex="4" GridPane.valignment="CENTER">
+                                                         <font>
+                                                            <Font name="Consolas Bold" size="20.0" />
+                                                         </font>
+                                                         <effect>
+                                                            <DropShadow />
+                                                         </effect>
+                                                      </Button>
+                                                      <Button mnemonicParsing="false" prefHeight="47.0" prefWidth="179.0" style="-fx-background-radius: 5;" text="Event 6" textAlignment="CENTER" GridPane.halignment="CENTER" GridPane.rowIndex="5" GridPane.valignment="CENTER">
+                                                         <font>
+                                                            <Font name="Consolas Bold" size="20.0" />
+                                                         </font>
+                                                         <effect>
+                                                            <DropShadow />
+                                                         </effect>
+                                                      </Button>
+                                                      <Button mnemonicParsing="false" prefHeight="47.0" prefWidth="179.0" style="-fx-background-radius: 5;" text="not yet" textAlignment="CENTER" GridPane.halignment="CENTER" GridPane.rowIndex="6" GridPane.valignment="CENTER">
+                                                         <font>
+                                                            <Font name="Consolas Bold" size="20.0" />
+                                                         </font>
+                                                         <effect>
+                                                            <DropShadow />
+                                                         </effect>
+                                                      </Button>
+                                                      <Button mnemonicParsing="false" prefHeight="47.0" prefWidth="179.0" style="-fx-background-radius: 5;" text="not yet" textAlignment="CENTER" GridPane.halignment="CENTER" GridPane.rowIndex="7" GridPane.valignment="CENTER">
+                                                         <font>
+                                                            <Font name="Consolas Bold" size="20.0" />
+                                                         </font>
+                                                         <effect>
+                                                            <DropShadow />
+                                                         </effect>
+                                                      </Button>
+                                                   </children>
+                                                </GridPane>
+                                             </children>
+                                          </AnchorPane>
+                                       </content>
+                                       <effect>
+                                          <DropShadow>
+                                             <color>
+                                                <Color opacity="0.4217391312122345" />
+                                             </color>
+                                          </DropShadow>
+                                       </effect>
+                                    </ScrollPane>
+                                 </children>
+                              </AnchorPane>
+                        </content>
+                           <font>
+                              <Font name="Consolas Bold" size="12.0" />
+                           </font>
+                      </TitledPane>
+                      <TitledPane animated="false" text="Add / Delete" textFill="WHITE">
+                        <content>
+                          <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" style="-fx-background-color: #5bb3e3;">
+                                 <children>
+                                    <GridPane layoutX="-1.0" prefHeight="110.0" prefWidth="200.0">
+                                      <columnConstraints>
+                                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                      </columnConstraints>
+                                      <rowConstraints>
+                                        <RowConstraints minHeight="-Infinity" prefHeight="55.0" vgrow="SOMETIMES" />
+                                        <RowConstraints minHeight="-Infinity" prefHeight="55.0" vgrow="SOMETIMES" />
+                                          <RowConstraints minHeight="-Infinity" prefHeight="55.0" vgrow="SOMETIMES" />
+                                      </rowConstraints>
+                                       <children>
+                                          <ToggleButton fx:id="addStudentBtn" mnemonicParsing="false" prefHeight="47.0" prefWidth="196.0" style="-fx-background-radius: 5;" text="Add student" GridPane.halignment="CENTER" GridPane.valignment="CENTER">
+                                             <font>
+                                                <Font name="Consolas Bold" size="20.0" />
+                                             </font>
+                                             <effect>
+                                                <DropShadow />
+                                             </effect>
+                                             <toggleGroup>
+                                                <ToggleGroup fx:id="toggleGroup" />
+                                             </toggleGroup>
+                                          </ToggleButton>
+                                          <ToggleButton fx:id="addRepBtn" mnemonicParsing="false" prefHeight="47.0" prefWidth="196.0" style="-fx-background-radius: 5;" text="Add reputation" toggleGroup="$toggleGroup" GridPane.rowIndex="1">
+                                             <font>
+                                                <Font name="Consolas Bold" size="20.0" />
+                                             </font>
+                                             <effect>
+                                                <DropShadow />
+                                             </effect>
+                                          </ToggleButton>
+                                          <ToggleButton fx:id="addRelationBtn" mnemonicParsing="false" prefHeight="47.0" prefWidth="196.0" style="-fx-background-radius: 5;" text="Add relation" toggleGroup="$toggleGroup" GridPane.rowIndex="2">
+                                             <font>
+                                                <Font name="Consolas Bold" size="20.0" />
+                                             </font>
+                                             <effect>
+                                                <DropShadow />
+                                             </effect>
+                                          </ToggleButton>
+                                       </children>
+                                       <effect>
+                                          <DropShadow>
+                                             <color>
+                                                <Color opacity="0.4217391312122345" />
+                                             </color>
+                                          </DropShadow>
+                                       </effect>
+                                    </GridPane>
+                                 </children>
+                              </AnchorPane>
+                        </content>
+                           <font>
+                              <Font name="Consolas Bold" size="12.0" />
+                           </font>
+                      </TitledPane>
+                      <TitledPane animated="false" text="Others" textFill="WHITE">
+                        <content>
+                          <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" style="-fx-background-color: #5bb3e3;">
+                                 <children>
+                                    <GridPane prefWidth="198.0">
+                                      <columnConstraints>
+                                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                      </columnConstraints>
+                                      <rowConstraints>
+                                          <RowConstraints minHeight="10.0" prefHeight="55.0" vgrow="SOMETIMES" />
+                                          <RowConstraints minHeight="10.0" prefHeight="55.0" vgrow="SOMETIMES" />
+                                        <RowConstraints minHeight="10.0" prefHeight="55.0" vgrow="SOMETIMES" />
+                                      </rowConstraints>
+                                       <children>
+                                           <Button mnemonicParsing="false" onAction="#saveGraphFX" prefHeight="47.0" prefWidth="196.0" style="-fx-background-radius: 5;" text="Save Graph" textAlignment="CENTER">
+                                               <font>
+                                                   <Font name="Consolas Bold" size="20.0" />
+                                               </font>
+                                               <effect>
+                                                   <DropShadow />
+                                               </effect>
+                                            </Button>
+                                          <Button mnemonicParsing="false" onAction="#loadGraphFX" prefHeight="47.0" prefWidth="196.0" style="-fx-background-radius: 5;" text="Load Graph" textAlignment="CENTER" GridPane.rowIndex="1">
+                                             <font>
+                                                <Font name="Consolas Bold" size="20.0" />
+                                             </font>
+                                             <effect>
+                                                <DropShadow />
+                                             </effect>
+                                          </Button>
+                                          <Button mnemonicParsing="false" onAction="#clearGraphFX" prefHeight="47.0" prefWidth="196.0" style="-fx-background-radius: 5;" text="Clear" textAlignment="CENTER" GridPane.rowIndex="2">
+                                             <font>
+                                                <Font name="Consolas Bold" size="20.0" />
+                                             </font>
+                                             <effect>
+                                                <DropShadow />
+                                             </effect>
+                                          </Button>
+                                       </children>
+                                       <effect>
+                                          <DropShadow>
+                                             <color>
+                                                <Color opacity="0.4217391312122345" />
+                                             </color>
+                                          </DropShadow>
+                                       </effect>
+                                    </GridPane>
+                                 </children>
+                              </AnchorPane>
+                        </content>
+                           <font>
+                              <Font name="Consolas Bold" size="12.0" />
+                           </font>
+                      </TitledPane>
+                    </panes>
+                  </Accordion>
+               </children>
+            </GridPane>
+            <AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="700.0" GridPane.columnIndex="1">
+               <children>
+                  <Group fx:id="canvasGroup" layoutX="15.0" layoutY="15.0" onMouseClicked="#canvasHandler" onMouseDragged="#canvasHandler" onMousePressed="#canvasHandler" onMouseReleased="#canvasHandler">
+                     <children>
+                        <Pane fx:id="viewer" onMouseClicked="#canvasHandler" onMouseDragged="#canvasHandler" onMousePressed="#canvasHandler" onMouseReleased="#canvasHandler" prefHeight="571.0" prefWidth="670.0">
+                           <cursor>
+                              <Cursor fx:constant="CROSSHAIR" />
+                           </cursor>
+                        </Pane>
+                     </children>
+                  </Group>
+               </children>
+            </AnchorPane>
+         </children>
+      </GridPane>
+   </children>
+</AnchorPane>

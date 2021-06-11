@@ -1,5 +1,7 @@
 package org.sociopath.models;
 
+import org.sociopath.dao.GraphDao;
+
 import java.util.*;
 
 /**
@@ -51,6 +53,7 @@ public class Sociograph {
             while(currentEdge != null){
                 if(currentEdge.adjVertex.studentInfo.getName().equals(adjName))
                     return true;
+
                 currentEdge = currentEdge.nextEdge;
             }
         }
@@ -71,36 +74,6 @@ public class Sociograph {
     }
 
     /**
-     * Get the total number of exiting edge for the vertex named "name"
-     * @param name student's name
-     * @return total number of exiting edge for the vertex with Student object named "name"
-     * <br> -1 if vertex named "name" is not exist
-     */
-    public int getOutdeg(String name) {
-        int index = indexOf(name);
-
-        if(index == -1)
-            return -1;
-        else
-            return vertices.get(index).outdeg;
-    }
-
-    /**
-     * Get the total number of entering edge for the vertex named "name"
-     * @param name student's name
-     * @return total number of entering edge for the vertex with Student object named "name"
-     * <br> -1 if vertex named "name" is not exist
-     */
-    public int getIndeg(String name) {
-        int index = indexOf(name);
-
-        if(index == -1)
-            return -1;
-        else
-            return vertices.get(index).indeg;
-    }
-
-    /**
      * Create a Student object with "name" and add a new vertex using the newly created Student object. The new vertex is
      * being add at the end of the linked list of the graph.
      * @param name student's name
@@ -116,6 +89,84 @@ public class Sociograph {
         return false;
     }
 
+    public boolean addVertexFromDB(Student student){
+        if(!hasVertex(student.getName())) {
+            Vertex newVertex = new Vertex(student);
+            this.vertices.add(newVertex);
+            size++;
+            return true;
+        }
+
+        return false;
+    }
+
+    public boolean changeVertexName(String oldName, String newName) {
+        Student student = getStudent(oldName);
+        if (!hasVertex(newName)) {
+            student.setName(newName);
+            return true;
+        }
+        return false;
+    }
+
+    public boolean deleteVertex(String name) {
+        if (hasVertex(name)) {
+            int vertexIndex = indexOf(name);
+            next:
+                for (Vertex v : vertices) {
+                    if (v.studentInfo.getName().equals(name)) {
+                        continue;
+                    }
+
+                    Edge currentEdge = v.firstEdge;
+                    while (currentEdge != null) {
+                        if (currentEdge.adjVertex.studentInfo.getName().equals(name)) {
+                            removeEdge(v.studentInfo.getName(), name);
+                            continue next;
+                        }
+                        currentEdge = currentEdge.nextEdge;
+                    }
+                }
+            this.vertices.remove(vertexIndex);
+            size--;
+            return true;
+        }
+        return false;
+    }
+
+    public boolean removeEdge(String srcName, String adjName) {
+        if (hasDirectedEdge(srcName, adjName)) {
+            Vertex srcVertex = vertices.get(indexOf(srcName));
+            Edge currentEdge = srcVertex.firstEdge;
+            Edge prevEdge = srcVertex.firstEdge;
+            Relationship rel;
+
+            while (currentEdge != null) {
+                if (currentEdge.adjVertex.studentInfo.getName().equals(adjName)) {
+                    Student personToRemove = currentEdge.adjVertex.studentInfo;
+                    rel = checkRelationship(srcName, adjName);
+                    if (srcVertex.firstEdge.adjVertex.studentInfo.getName().equals(adjName)) {
+                        srcVertex.firstEdge = currentEdge.nextEdge;
+                    } else {
+                        prevEdge.nextEdge = currentEdge.nextEdge;
+                    }
+                    // remove adjStudent from HashMap
+                    // remove rep point of adjStudent
+                    srcVertex.studentInfo.deleteRelationship(personToRemove, rel);
+                    return true;
+                }
+                prevEdge = currentEdge;
+                currentEdge = currentEdge.nextEdge;
+            }
+        }
+        return false;
+    }
+
+    public void clear() {
+        this.vertices.clear();
+        this.size = 0;
+    }
+
     /**
      * Add the undirected edges from srcName and adjName but with different weight. Can also be rewritten as
      * <br> - addDirectedEdge(srcName, adjName, srcRep)
@@ -128,7 +179,8 @@ public class Sociograph {
      * @param rel relationship to set to both of the edges
      * @return true if both the edges is successfully added, otherwise false
      */
-    public boolean addUndirectedEdge(String srcName, String adjName, double srcRep, double adjRep, Relationship rel) {
+    public boolean addUndirectedEdge(String srcName, String adjName, double srcRep, double adjRep, Relationship rel) {      // possible rel : FRIEND, ENEMY, THE_OTHER_HALF, NONE
+
         if (size == 0) {
             return false;
         } else if (srcName.equals(adjName)) {
@@ -138,24 +190,23 @@ public class Sociograph {
             return false;
         }
 
+        if (rel == Relationship.ADMIRED_BY) {
+            System.out.println("Admirer can't be undirected relationship!");
+            throw new IllegalArgumentException("Admirer can't be undirected relationship!");
+        }
+
         Vertex srcVertex = vertices.get(indexOf(srcName));
         Vertex adjVertex = vertices.get(indexOf(adjName));
         Edge newSrcEdge = new Edge(adjVertex, srcRep, rel, srcVertex.firstEdge);
         srcVertex.firstEdge = newSrcEdge;
-        srcVertex.indeg++;
-        srcVertex.outdeg++;
         srcVertex.studentInfo.setRepPoints(adjName, srcRep);
 
         Edge newAdjEdge = new Edge(srcVertex, adjRep, rel, adjVertex.firstEdge);
         adjVertex.firstEdge = newAdjEdge;
-        adjVertex.indeg++;
-        adjVertex.outdeg++;
         adjVertex.studentInfo.setRepPoints(srcName, adjRep);
 
-        if (rel == Relationship.FRIEND) {
-            srcVertex.studentInfo.addFriend(adjVertex.studentInfo);
-            adjVertex.studentInfo.addFriend(srcVertex.studentInfo);
-        }
+        srcVertex.studentInfo.setRelationship(adjVertex.studentInfo, null, rel);
+        adjVertex.studentInfo.setRelationship(srcVertex.studentInfo, null, rel);
 
         return true;
     }
@@ -168,19 +219,23 @@ public class Sociograph {
      * @param srcRep rep point of vertex srcName relative to vertex adjName / weight of edge from vertex srcName to vertex adjName
      * @return true if the edge is successfully added, otherwise false
      */
-    public boolean addDirectedEdge(String srcName, String adjName, double srcRep) {
+    public boolean addDirectedEdge(String srcName, String adjName, double srcRep, Relationship rel) {     // possible rel : NONE or ADMIRED_BY
         if(srcName.equals(adjName))
             return false;
+
+        if (rel != Relationship.NONE && rel != Relationship.ADMIRED_BY) {
+            System.out.println("Only NONE & ADMIRED_BY is allowed in directed edge");
+            throw new IllegalArgumentException("Only NONE & ADMIRED_BY is allowed in directed edge");
+        }
 
         if(hasVertex(srcName) && hasVertex(adjName)){
             Vertex srcVertex = vertices.get(indexOf(srcName));
             Vertex adjVertex = vertices.get(indexOf(adjName));
 
-            Edge newSrcEdge = new Edge(adjVertex, srcRep, Relationship.NONE, srcVertex.firstEdge);
+            Edge newSrcEdge = new Edge(adjVertex, srcRep, rel, srcVertex.firstEdge);
             srcVertex.firstEdge = newSrcEdge;
             srcVertex.studentInfo.setRepPoints(adjName, srcRep);
-            srcVertex.indeg++;
-            srcVertex.outdeg++;
+            srcVertex.studentInfo.setRelationship(adjVertex.studentInfo, null, rel);
 
             return true;
         }
@@ -189,14 +244,15 @@ public class Sociograph {
     }
 
     /**
-     * Check the relationship between vertex srcName and vertex adjName. Return the relationship if there exist one.
+     * Check the relationship from a vertex srcName to a vertex adjName.(Directed) Return the relationship if there exist one.
      * Otherwise, return null
      * @param srcName student's name as source vertex
      * @param adjName student's name as adjacent vertex
-     * @return relationship type in enum
+     * @return relationship type in enum (Either FRIEND, ENEMY, THE_OTHER_HALF, ADMIRED_BY, or NONE), null if no relationship
      */
     public Relationship checkRelationship(String srcName, String adjName) {
-        if(hasUndirectedEdge(srcName, adjName)){
+        System.out.println(srcName + " " + adjName + " has directed edge ? " + hasDirectedEdge(srcName, adjName));
+        if(hasDirectedEdge(srcName, adjName)){
             Vertex srcVertex = vertices.get(indexOf(srcName));
             Edge srcEdge = srcVertex.firstEdge;
 
@@ -207,22 +263,78 @@ public class Sociograph {
             }
         }
         return null;
+        // TODO : MIGHT have problem (if return null will throw exception in Student.setRelationship())
+    }
+
+    public boolean isAdmiredBy(String srcName, String adjName) {
+        if (!hasUndirectedEdge(srcName, adjName)) {
+            Vertex srcVertex = vertices.get(indexOf(srcName));
+            Edge srcEdge = srcVertex.firstEdge;
+
+            while(srcEdge != null){
+                if(srcEdge.adjVertex.studentInfo.getName().equals(adjName))
+                    return srcEdge.relationship == Relationship.ADMIRED_BY;
+                srcEdge = srcEdge.nextEdge;
+            }
+        }
+        return false;
     }
 
     /**
-     * Set the relationship to the two vertices srcName and adjName. A relationship can only be set
+     * Set a new relationship from the source Student to the adjacent Student
+     * The relationship can be only directed only (CRUSH or NONE)
+     *
+     * @param srcName the name of the Student as the source of the relationship
+     * @param adjName the name of the Student as the destination of the relationship
+     * @param relationship the relationship that is directed (CRUSH or NONE)
+     * @return the relationship is successful or not
+     */
+    public boolean setDirectedRelationshipOnEdge(String srcName, String adjName, Relationship relationship){
+        if (!hasUndirectedEdge(srcName, adjName)) {
+            if (relationship == Relationship.ADMIRED_BY || relationship == Relationship.NONE) {
+
+                int srcIndex = indexOf(srcName);
+                int adjIndex = indexOf(adjName);
+                Vertex srcVertex = vertices.get(srcIndex);
+                Vertex adjVertex = vertices.get(adjIndex);
+                Edge currentEdge = srcVertex.firstEdge;
+                Student srcStudent = srcVertex.studentInfo;
+                Student adjStudent = adjVertex.studentInfo;
+
+                while (currentEdge != null) {
+                    if (currentEdge.adjVertex.studentInfo.getName().equals(adjName)) {
+                        Relationship oriRelationship = currentEdge.relationship;
+                        currentEdge.relationship = relationship;
+
+                        srcStudent.setRelationship(adjStudent, oriRelationship, relationship);
+
+                        return true;
+                    }
+
+                    currentEdge = currentEdge.nextEdge;
+                }
+            }
+        }
+
+        return false;
+    }
+
+
+    /**
+     * Set the undirected relationship to the two vertices srcName and adjName. A relationship can only be set
      * when there are both edges exist between them (meaning rep points are present relative to each other).
      * @param srcName student's name as source vertex
      * @param adjName student's name as adjacent vertex
      * @param relationship relationship to set to both of the edges
      * @return true if the relationship is successfully set, otherwise false
      */
-    public boolean setRelationship(String srcName, String adjName, Relationship relationship) {
+    public boolean setUndirectedRelationshipOnEdge(String srcName, String adjName, Relationship relationship) {
         if (hasUndirectedEdge(srcName, adjName)) {
             Vertex srcVertex = vertices.get(indexOf(srcName));
             Vertex adjVertex = vertices.get(indexOf(adjName));
             Edge srcEdge = srcVertex.firstEdge;
             Edge adjEdge = adjVertex.firstEdge;
+            Relationship prevRel = checkRelationship(srcName, adjName);
 
             while (srcEdge != null) {
                 if (srcEdge.adjVertex.studentInfo.getName().equals(adjName)) {
@@ -240,13 +352,9 @@ public class Sociograph {
                 adjEdge = adjEdge.nextEdge;
             }
 
-            if (relationship == Relationship.FRIEND) {
-                srcVertex.studentInfo.addFriend(adjVertex.studentInfo);
-                adjVertex.studentInfo.addFriend(srcVertex.studentInfo);
-            } else {
-                srcVertex.studentInfo.unfriend(adjVertex.studentInfo);
-                adjVertex.studentInfo.unfriend(srcVertex.studentInfo);
-            }
+            srcVertex.studentInfo.setRelationship(adjVertex.studentInfo, prevRel, relationship);
+            adjVertex.studentInfo.setRelationship(srcVertex.studentInfo, prevRel, relationship);
+
             return true;
         } else {
             System.out.println("Relationship can't be set. They must both know each other to have a relationship (having rep point relative to each other)");
@@ -292,6 +400,7 @@ public class Sociograph {
                 if (srcEdge.adjVertex.studentInfo.getName().equals(adjName)) {
                     srcEdge.repRelativeToAdj = newRep;
                     srcVertex.studentInfo.setRepPoints(adjName, newRep);
+
                     return;
                 }
                 srcEdge = srcEdge.nextEdge;
@@ -410,6 +519,50 @@ public class Sociograph {
         isVisited.put(current, false);
     }
 
+    public List<List<String>> bfs(String source, String dest){
+        // To store all the path
+        Queue<List<String>> queue = new LinkedList<>();
+        List<List<String>> allPath = new ArrayList<>();
+
+        // Current path
+        List<String> path = new ArrayList<>();
+        path.add(source);
+        queue.offer(path);
+
+        while(!queue.isEmpty()){
+            path = queue.remove();
+            String s = path.get(path.size() - 1);
+
+            if(s.equals(dest)){
+                allPath.add(path);
+            }
+
+            List<Student> neighbours = neighbours(s);
+            for(Student student : neighbours){
+                String name = student.getName();
+
+                if(isNotVisited(name, path)){
+                    List<String> newPath = new ArrayList<>(path);
+                    newPath.add(name);
+                    queue.offer(newPath);
+                }
+            }
+        }
+
+        return allPath;
+
+    }
+
+    private static boolean isNotVisited(String s, List<String> path){
+        for(String str : path){
+            if(str.equals(s))
+                return false;
+        }
+
+        return true;
+    }
+
+
     private int indexOf(String name) {
         int index = -1;
 
@@ -427,16 +580,12 @@ public class Sociograph {
     /**
      * Static class for vertex of the graph
      */
-    static class Vertex {
+    public static class Vertex {
         private Student studentInfo;
-        private int indeg;
-        private int outdeg;
         private Edge firstEdge;
 
         public Vertex(Student studentInfo) {
             this.studentInfo = studentInfo;
-            this.indeg = 0;
-            this.outdeg = 0;
             this.firstEdge = null;
         }
     }
@@ -444,7 +593,7 @@ public class Sociograph {
     /**
      * Static class for edge of the graph
      */
-    static class Edge {
+    public static class Edge {
         private Vertex adjVertex;
         private Edge nextEdge;
 

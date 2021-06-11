@@ -7,17 +7,33 @@ import org.sociopath.models.Student;
 
 import java.time.LocalTime;
 import java.util.*;
+import java.util.stream.IntStream;
 
 public class SocialActivities {
 
     private static final Random rd = new Random();
     private static Scanner sc = new Scanner(System.in);
 
-    public static void event1(String teacher, String student, Sociograph graph){
-        boolean areFriends = graph.checkRelationship(teacher, student) == Relationship.FRIEND;
-        if(!areFriends) {
-            System.out.println("Now " + teacher + " will teach " + student);
-            System.out.println("Please wait for a while.....");
+
+    public static void event1(Sociograph graph){
+        // check whether there are relationship between the teacher and the student
+        // it can only run if they are friends
+        System.out.println("Who are you? (This will be the student)");
+        String student = sc.nextLine();
+
+        System.out.println("Who are you going to ask the lab questions?");
+        String teacher = sc.nextLine();
+
+        if(graph.hasVertex(student) && graph.hasVertex(teacher)) {
+
+            System.out.println();
+            System.out.println("######################");
+            System.out.println("Event 1 - Teaching lab questions");
+            System.out.println("######################");
+            boolean areFriends = graph.checkRelationship(teacher, student) == Relationship.FRIEND;
+            if (!areFriends) {
+                System.out.println("Now " + teacher + " will teach " + student);
+                System.out.println("Please wait for a while.....");
 
             /*try {
                 Thread.sleep(4000);
@@ -25,17 +41,35 @@ public class SocialActivities {
                 e.printStackTrace();
             }*/
 
-            double repSrc = rd.nextDouble() < 0.5 ? 2 : 10;
-            double repDest = rd.nextInt(10) + 1;
-            graph.addUndirectedEdge(teacher, student, repSrc, repDest, Relationship.FRIEND) ;
-            System.out.println("The result of the teaching is " + (repSrc == 10 ? "successful" : "not successful"));
-            System.out.println("So the rep point the new friend give you is : " + repSrc);
-            System.out.println("So the rep point you give the new friend is : " + repDest);
-            System.out.println("####################");
-            System.out.println(graph);
-            System.out.println();
-        } else {
-            System.out.println("They are friends before. You cannot teach a person lab question if he is your friend.");
+                double repSrc = rd.nextDouble() < 0.5 ? 2 : 10;
+                double repDest = rd.nextInt(10) + 1;
+                graph.addUndirectedEdge(teacher, student, repSrc, repDest, Relationship.FRIEND);
+                boolean checkSuccess = repSrc == 10;
+                System.out.println("The result of the teaching is " + (checkSuccess ? "successful" : "not successful"));
+                System.out.println("So the rep point the new friend give you is : " + repSrc);
+                System.out.println("So the rep point you give the new friend is : " + repDest);
+
+                if (!checkSuccess) {
+                    System.out.println("Uh oh! You had taught bad! Will your new friend become your enemy?");
+                    boolean isEnemyRandom = !(rd.nextDouble() < 0.3);
+
+                    if (isEnemyRandom) {
+                        System.out.println("Yes! Your friend has become your enemy. Awwwww that hurts... (Your rep points will become negative \uD83D\uDE1E )");
+                        graph.setUndirectedRelationshipOnEdge(teacher, student, Relationship.ENEMY);
+                        double srcRep = graph.getSrcRepRelativeToAdj(teacher, student);
+                        double destRep = graph.getSrcRepRelativeToAdj(student, teacher);
+                        graph.setSrcRepRelativeToAdj(teacher, student, -srcRep);
+                        graph.setSrcRepRelativeToAdj(student, teacher, -destRep);
+                    } else
+                        System.out.println("Fortunately, you're great enough and he/she is still your friend! YAY!");
+
+                }
+                System.out.println("####################");
+                System.out.println(graph);
+                System.out.println();
+            } else {
+                System.out.println("They are friends before. You cannot teach a person lab question if he is your friend.");
+            }
         }
     }
 
@@ -141,7 +175,7 @@ public class SocialActivities {
                 double newRep = sociograph.getSrcRepRelativeToAdj(hostName, actualMate.getName()) + 1;
                 sociograph.setSrcRepRelativeToAdj(hostName, actualMate.getName(), newRep);
             } else {
-                sociograph.addDirectedEdge(hostName, actualMate.getName(), 1);
+                sociograph.addDirectedEdge(hostName, actualMate.getName(), 1, Relationship.NONE);
             }
             totalRepObtained++;
         }
@@ -162,6 +196,51 @@ public class SocialActivities {
 
         System.out.println(sb);
 
+    }
+
+    public static void event4(){
+        Scanner sc = new Scanner(System.in);
+        Stack<Integer> stack1 = new Stack<>();
+        Stack<Integer> stack2 = new Stack<>();
+        int a,b;
+        int round=0;
+        System.out.print("Enter the number of book: ");
+        int n = sc.nextInt();
+        // input height of n books
+        System.out.print("Enter the height of the books: ");
+        for(int i=0; i<n; i++){
+            stack1.push(sc.nextInt());
+        }
+
+        while(true){
+            int stack1size = stack1.size();
+
+            while(!stack1.isEmpty()) {
+                a = stack1.pop();
+                b = 0;
+
+                if (!stack1.isEmpty()) {
+                    b = stack1.peek();
+                }
+
+                if(a<b || stack1.isEmpty()){
+                    stack2.push(a);
+                }
+            }
+
+            if(stack1size == stack2.size()){
+                break;
+            }
+
+            // Push Back height of books into stack1
+            while(!stack2.isEmpty()){
+                stack1.push(stack2.pop());
+            }
+            System.out.println("Round " + (round + 1)  + ": " + stack1);
+            // increment round
+            round++;
+        }
+        System.out.println("Rounds needed to make the height in non-increasing order: " + round);
     }
 
     public static void event5(Sociograph sociograph, String you, String crush) {
@@ -242,10 +321,235 @@ public class SocialActivities {
 
     }
 
+    public static void doAssignments(Sociograph sociograph){
+        List<List<String>> groups = distributeTeam(sociograph);
+        System.out.println("All the groups are : ");
+        System.out.println(groups);
+
+        if(groups != null) {
+            System.out.println("===============");
+            makeRelation(groups, sociograph);
+            System.out.println("The assignment has been finished.");
+
+            System.out.println("===============");
+            System.out.println(sociograph);
+        }
+    }
+
+
+    public static void sixDegreeOfKenThompson(Sociograph sociograph){
+        System.out.print("Which node to start first ? ");
+        String srcName = sc.nextLine();
+
+        System.out.println("Which node to end? ");
+        System.out.println("Or do you want to add Ken Thompson to the graph? (Type 'Ken Thompson' and it will add it!)");
+        String destName = sc.nextLine();
+
+        if(destName.equals("Ken Thompson")){
+            List<Student> allVertices = sociograph.getAllStudents();
+            int randomNum = rd.nextInt(allVertices.size());
+            sociograph.addVertex(destName);
+
+            Student student = allVertices.get(randomNum);
+            sociograph.addUndirectedEdge(student.getName(), destName, rd.nextDouble() * 10 , rd.nextDouble() * 10, Relationship.FRIEND );
+        }
+
+        List<List<String>> allPaths = sociograph.bfs(srcName, destName);
+        System.out.println("All the paths are : ");
+        System.out.println(allPaths);
+        List<String> shortestPath = shortestPath(allPaths);
+
+        System.out.println("The shortest path is : ");
+        System.out.println(shortestPath);
+
+        System.out.println("\nAnd the relationships are : ");
+        printOutAllRelation(shortestPath, sociograph);
+    }
+
+    private static void makeRelation(List<List<String>> groups, Sociograph sociograph){
+        int groupNum = 0;
+        for(List<String> group : groups){
+
+            System.out.println("Group " + (groupNum+1) + " : ");
+            boolean triggerPercentage = rd.nextDouble() < 0.6;
+
+            if (triggerPercentage) {
+                for(int i = 0; i< group.size(); i++) {
+                    for (int j = i + 1; j < group.size(); j++) {
+
+                        String srcName = group.get(i);
+                        String destName = group.get(j);
+                        Student destStudent = sociograph.getStudent(destName);
+
+                        double percentage = destStudent.getDive();
+                        Relationship friendOrEnemy = percentage < 50 ? Relationship.FRIEND : Relationship.ENEMY;
+                        System.out.println(srcName + " is a(n) " + friendOrEnemy + " " + destName);
+
+                        double srcRep = (double) Math.round(rd.nextDouble() * 100) / 10;
+                        double destRep = (double) Math.round(rd.nextDouble() * 100) / 10;
+
+                        if (friendOrEnemy == Relationship.ENEMY && !sociograph.hasUndirectedEdge(srcName, destName)) {
+                            sociograph.removeEdge(srcName, destName);
+                            sociograph.removeEdge(destName, srcName);
+                            sociograph.addUndirectedEdge(srcName, destName, -srcRep, -destRep, friendOrEnemy);
+
+                        } else if (friendOrEnemy == Relationship.FRIEND && !sociograph.hasUndirectedEdge(srcName, destName)) {
+                            sociograph.removeEdge(srcName, destName);
+                            sociograph.removeEdge(destName, srcName);
+                            sociograph.addUndirectedEdge(srcName, destName, srcRep, destRep, friendOrEnemy);
+                            double theOtherHalf = rd.nextDouble();
+
+                            if (theOtherHalf < 0.1) {
+                                sociograph.setUndirectedRelationshipOnEdge(srcName, destName, Relationship.THE_OTHER_HALF);    // TODO: I had change this to THE_OTHER_HALF because there is no one edge is ADMIRED_BY, and another edge is FRIEND
+                                System.out.println("***********");
+                                System.out.println(srcName + " and " + destName + " has a relationship! ");
+                                System.out.println("***********");
+                            }
+                        } else {
+                            updateRepPoints(sociograph, srcName, destName, friendOrEnemy, srcRep, destRep);
+                            updateRelationship(sociograph, srcName, destName);
+                        }
+
+                    }
+                }
+            }
+
+            else
+                System.out.println("No relationship is being generated.");
+
+            System.out.println("===============");
+            groupNum++;
+        }
+    }
+
+    /**
+     * Update the graph with the relationship given
+     *
+     * - If the relationship passed in is a FRIEND, then add the rep point to the weight of the undirected edge
+     * - If the relationship passed in is an ENEMY, then minus the rep point to the weight of the undirected edge
+     */
+    private static void updateRepPoints(Sociograph sociograph, String srcName, String destName, Relationship friendOrEnemy, double srcRep, double destRep){
+        double oriSrcRep = sociograph.getSrcRepRelativeToAdj(srcName, destName);
+        double oriDestRep = sociograph.getSrcRepRelativeToAdj(destName, srcName);
+
+        if (friendOrEnemy == Relationship.FRIEND) {
+            srcRep = (double) Math.round((oriSrcRep + srcRep) * 100) / 100;
+            destRep = (double) Math.round((oriDestRep + destRep) * 100) / 100;
+
+            sociograph.setSrcRepRelativeToAdj(srcName, destName, srcRep);
+            sociograph.setSrcRepRelativeToAdj(destName, srcName, destRep);
+
+        } else {
+            srcRep = (double) Math.round((oriSrcRep - srcRep) * 100) / 100;
+            destRep = (double) Math.round((oriDestRep - destRep) * 100) / 100;
+
+            sociograph.setSrcRepRelativeToAdj(srcName, destName, srcRep);
+            sociograph.setSrcRepRelativeToAdj(destName, srcName, destRep);
+        }
+    }
+
+    private static void updateRelationship(Sociograph sociograph, String srcName, String destName) {
+        double srcRepAfter = sociograph.getSrcRepRelativeToAdj(srcName, destName);
+        double destRepAfter = sociograph.getSrcRepRelativeToAdj(destName, srcName);
+
+        double result = (srcRepAfter + destRepAfter) / 2;
+        if(result > 0)
+            sociograph.setUndirectedRelationshipOnEdge(srcName, destName, Relationship.FRIEND);
+
+        else
+            sociograph.setUndirectedRelationshipOnEdge(srcName, destName, Relationship.ENEMY);
+    }
+
+    private static List<List<String>> distributeTeam(Sociograph sociograph) {
+        List<Student> allStudents = sociograph.getAllStudents();
+        List<List<String>> groups = new ArrayList<>();
+
+        int numOfGroups = allStudents.size() / 3;
+
+        if(numOfGroups<=1){
+            System.out.println("The number of groups is too small. You should have at least 2 or more groups!");
+            return null;
+        }
+
+        boolean[] isAdded = new boolean[allStudents.size()];
+        for(boolean b : isAdded)
+            b = false;
+
+        int count = 0;
+        int numStudentAdded = 0;
+        while(count<numOfGroups){
+            int i = 0;
+            List<String> group = new ArrayList<>();
+
+            while(i<3) {
+                int randIndex = rd.nextInt(allStudents.size());
+
+                if(isAdded[randIndex]){
+                    do{
+                        randIndex = rd.nextInt(allStudents.size());
+                    } while(isAdded[randIndex]);
+
+                }
+
+                isAdded[randIndex] = true;
+                String name = allStudents.get(randIndex).getName();
+                group.add(name);
+                numStudentAdded++;
+                i++;
+            }
+
+            groups.add(group);
+            count++;
+        }
+
+        if(numStudentAdded!=allStudents.size() ){
+            int index = 0;
+            for(int k = 0; numStudentAdded< allStudents.size() && index < groups.size() ; k++){
+                if(!isAdded[k]){
+                    List<String> group = groups.get(index);
+                    String name = allStudents.get(k).getName();
+                    group.add(name);
+                    index++;
+                    numStudentAdded++;
+                }
+            }
+        }
+
+        return groups;
+    }
+
+    private static List<String> shortestPath(List<List<String>> paths){
+
+        int minIndex = IntStream.range(0, paths.size())
+                .boxed()
+                .min(Comparator.comparingInt(i -> paths.get(i).size()))
+                .orElse(0);
+
+        if(paths.size() == 0)
+            return null;
+
+        return paths.get(minIndex);
+    }
+
+    private static void printOutAllRelation(List<String> shortestPath, Sociograph sociograph){
+        if(shortestPath == null) {
+            System.out.println("No shortest path");
+            return;
+        }
+
+        IntStream.range(0, shortestPath.size() - 1)
+                .boxed()
+                .forEach(index -> {
+                    String srcName = shortestPath.get(index);
+                    String destName = shortestPath.get(index+1);
+                    Relationship rel = sociograph.checkRelationship(srcName, destName);
+                    System.out.println(srcName + " is " + rel + " to " + destName);
+                });
+    }
+
     private static void chitchat(Sociograph sociograph, String hostName, String newFriendName, HashSet<Student> visitedRecord) {
         List<Student> friendsOfNewFriend = sociograph.neighbours(newFriendName);
         friendsOfNewFriend.removeAll(visitedRecord);
-        Student host = sociograph.getStudent(hostName);
         if (friendsOfNewFriend.isEmpty()) {
             return;
         } else {
@@ -253,19 +557,20 @@ public class SocialActivities {
                 if (visitedRecord.contains(friend)) {
                     continue;
                 }
-                double repRelativeToHost = 0;
+                double hostRepRelativeToFriend = 0;
                 if (Math.random() < 0.5) {  // if talk bad
-                    repRelativeToHost -= Math.abs(sociograph.getSrcRepRelativeToAdj(hostName, newFriendName));
+                    hostRepRelativeToFriend -= Math.abs(sociograph.getSrcRepRelativeToAdj(hostName, newFriendName));
                 } else {    // if talk good
-                    repRelativeToHost += (sociograph.getSrcRepRelativeToAdj(hostName, newFriendName) / 2.0);
+                    hostRepRelativeToFriend += (sociograph.getSrcRepRelativeToAdj(hostName, newFriendName) / 2.0);
                 }
 
                 if (sociograph.hasDirectedEdge(hostName, friend.getName())) {
-                    repRelativeToHost += sociograph.getSrcRepRelativeToAdj(hostName, friend.getName());
-                    sociograph.setSrcRepRelativeToAdj(hostName, friend.getName(), repRelativeToHost);
+                    hostRepRelativeToFriend += sociograph.getSrcRepRelativeToAdj(hostName, friend.getName());
+                    sociograph.setSrcRepRelativeToAdj(hostName, friend.getName(), hostRepRelativeToFriend);
                 } else {
-                    sociograph.addDirectedEdge(hostName, friend.getName(), repRelativeToHost);
+                    sociograph.addDirectedEdge(hostName, friend.getName(), hostRepRelativeToFriend, Relationship.NONE);
                 }
+                // Update graph (update student's properties, add edge)
                 visitedRecord.add(friend);
                 System.out.println("Propagated: " + friend.getName());
                 System.out.println(sociograph);
