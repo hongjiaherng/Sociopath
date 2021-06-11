@@ -6,6 +6,7 @@ import javafx.animation.Interpolator;
 import javafx.animation.ScaleTransition;
 import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -377,23 +378,39 @@ public class GraphSimulationController implements Initializable {
         }
     }
 
-    public void deleteEdgeFX(EdgeFX edge) {
-        String arrow = "";
-        if (edge.isDirected) {
-            arrow = " -> ";
+    public void deleteEdgeFX(EdgeFX edge, boolean isMenu) {
+        if (isMenu) {
+            String arrow = "";
+            if (edge.isDirected) {
+                arrow = " -> ";
+            } else {
+                arrow = " <-> ";
+            }
+
+            String contextStr = "Are you sure you want to delete this edge (" + edge.srcVertex.nameText.getText() + arrow + edge.endVertex.nameText.getText() + ") ?";
+            Alert confirmDialog = new Alert(Alert.AlertType.CONFIRMATION, contextStr, ButtonType.YES, ButtonType.NO);
+            setDefaultDialogConfig(confirmDialog);
+            confirmDialog.setHeaderText("Are you sure ?");
+
+            Optional<ButtonType> result = confirmDialog.showAndWait();
+
+            if (result.isPresent() && result.get() == ButtonType.YES) {
+
+                if (!edge.isDirected) {
+                    System.out.println(sociograph.removeEdge(edge.endVertex.nameText.getText(), edge.srcVertex.nameText.getText()));
+                }
+                System.out.println(sociograph.removeEdge(edge.srcVertex.nameText.getText(), edge.endVertex.nameText.getText()));
+                System.out.println(allCircles.get(allCircles.indexOf(edge.endVertex)).connectedEdges.remove(edge));
+                System.out.println(allCircles.get(allCircles.indexOf(edge.srcVertex)).connectedEdges.remove(edge));
+                System.out.println(canvasGroup.getChildren().remove(edge));
+                System.out.println(sociograph.getStudent(edge.endVertex.nameText.getText()));
+                System.out.println(sociograph.getStudent(edge.srcVertex.nameText.getText()));
+                System.out.println(sociograph);
+
+            } else {
+                return;
+            }
         } else {
-            arrow = " <-> ";
-        }
-
-        String contextStr = "Are you sure you want to delete this edge (" + edge.srcVertex.nameText.getText() + arrow + edge.endVertex.nameText.getText() +") ?";
-        Alert confirmDialog = new Alert(Alert.AlertType.CONFIRMATION, contextStr, ButtonType.YES, ButtonType.NO);
-        setDefaultDialogConfig(confirmDialog);
-        confirmDialog.setHeaderText("Are you sure ?");
-
-        Optional<ButtonType> result = confirmDialog.showAndWait();
-
-        if (result.isPresent() && result.get() == ButtonType.YES) {
-
             if (!edge.isDirected) {
                 System.out.println(sociograph.removeEdge(edge.endVertex.nameText.getText(), edge.srcVertex.nameText.getText()));
             }
@@ -404,9 +421,6 @@ public class GraphSimulationController implements Initializable {
             System.out.println(sociograph.getStudent(edge.endVertex.nameText.getText()));
             System.out.println(sociograph.getStudent(edge.srcVertex.nameText.getText()));
             System.out.println(sociograph);
-
-        } else {
-            return;
         }
     }
 
@@ -639,7 +653,10 @@ public class GraphSimulationController implements Initializable {
                         boolean isTryingToFormLove = false;     // A flag to tell which condition is entered
 
                         // If dest is admired by src, ask if dest also admire src, if yes, they form THE_OTHER_HALF relationship, else, they become enemy.
-                        if (sociograph.isAdmiredBy(destVertexName, srcVertexName)) {
+                        // Make sure both of them don't have a girlfriend / boyfriend when enter this
+                        if (sociograph.isAdmiredBy(destVertexName, srcVertexName) &&
+                                sociograph.getStudent(destVertexName).getTheOtherHalf() == null &&
+                                sociograph.getStudent(srcVertexName).getTheOtherHalf() == null) {
 
                             isTryingToFormLove = true;
 
@@ -752,6 +769,7 @@ public class GraphSimulationController implements Initializable {
                         gridPane.add(new Label("Does " + destVertexName + " like " + srcVertexName + " ?"), 0, 1);
                         gridPane.add(relCB, 1, 1);
 
+
                         dialogPane.setContent(gridPane);
 
                         Button okButton = (Button) dialogPane.lookupButton(ButtonType.OK);
@@ -775,6 +793,7 @@ public class GraphSimulationController implements Initializable {
                         if (result.isPresent()) {
                             repStr = repTF.getText();
                             rel = relCB.getValue().equals("No") ? Relationship.NONE : Relationship.ADMIRED_BY;
+
                         }
 
                         if (repStr != null && rel != null) {
@@ -807,7 +826,12 @@ public class GraphSimulationController implements Initializable {
                         destRepTF.setPromptText(destVertexName + "'s rep pts");
                         destRepTF.setPrefWidth(150);
 
-                        ComboBox<Relationship> relationCB = new ComboBox<>(FXCollections.observableArrayList(Relationship.NONE, Relationship.FRIEND, Relationship.ENEMY, Relationship.THE_OTHER_HALF));
+                        ComboBox<Relationship> relationCB = new ComboBox<>();
+                        ObservableList<Relationship> relationships = FXCollections.observableArrayList(Relationship.NONE, Relationship.FRIEND, Relationship.ENEMY, Relationship.THE_OTHER_HALF);
+                        if (sociograph.getStudent(srcVertexName).getTheOtherHalf() != null || sociograph.getStudent(destVertexName).getTheOtherHalf() != null) {
+                            relationships.remove(Relationship.THE_OTHER_HALF);
+                        }
+                        relationCB.setItems(relationships);
                         relationCB.setValue(Relationship.NONE);
                         relationCB.setPrefWidth(150);
 
@@ -894,7 +918,7 @@ public class GraphSimulationController implements Initializable {
     }
 
     public void event2Handler(ActionEvent event) {
-        Event2Controller.event2Prompt(this, sociograph, selectedVertex);
+        Event2Controller.event2Prompt(sociograph, selectedVertex);
     }
 
     public void event3Handler(ActionEvent event) {
@@ -1390,13 +1414,60 @@ public class GraphSimulationController implements Initializable {
         return null;
     }
 
-    public EdgeFX createNewEdgeFX(VertexFX srcVertex, VertexFX endVertex, String srcRep, String endRep, Relationship rel) {
+    public EdgeFX getEdgeFX(String srcName, String destName) {  // Might return directed or undirected edgeFX
+        for (VertexFX vertexFX : allCircles) {
+            List<EdgeFX> listOfEdgeFX = vertexFX.connectedEdges;
+            for (EdgeFX edgeFX : listOfEdgeFX) {
+                if ((edgeFX.srcVertex.nameText.getText().equals(srcName) && edgeFX.endVertex.nameText.getText().equals(destName)) ||
+                        edgeFX.srcVertex.nameText.getText().equals(destName) && edgeFX.endVertex.nameText.getText().equals(srcName)) {
+                    return edgeFX;
+                }
+            }
+        }
+        return null;
+    }
+
+    public EdgeFX createNewUndirectedEdgeFX(VertexFX srcVertex, VertexFX endVertex, String srcRep, String endRep, Relationship rel) {
         EdgeFX newUndirectedEdge = new EdgeFX(srcVertex, endVertex, srcRep, endRep, rel);
-        FadeTransition ft = new FadeTransition(Duration.millis(1000), newUndirectedEdge);
-        ft.setFromValue(0.1);
-        ft.setToValue(10);
-        ft.play();
-        newUndirectedEdge.showEdge();
+//        FadeTransition ft = new FadeTransition(Duration.millis(1000), newUndirectedEdge);
+//        ft.setFromValue(0.1);
+//        ft.setToValue(10);
+//        ft.play();
+//        newUndirectedEdge.showEdge();
         return newUndirectedEdge;
     }
+
+    public EdgeFX createNewDirectedEdgeFX(VertexFX srcVertex, VertexFX endVertex, String srcRep, Relationship rel) {
+        EdgeFX newDirectedEdge = new EdgeFX(srcVertex, endVertex, srcRep, rel);
+//        FadeTransition ft = new FadeTransition(Duration.millis(1000), newDirectedEdge);
+//        ft.setFromValue(0.1);
+//        ft.setToValue(10);
+//        ft.play();
+//        newDirectedEdge.showEdge();
+        return newDirectedEdge;
+    }
+
+    public void changeSrcRepRelativeToAdjFX(String srcName, String adjName, double newSrcRep) {
+        EdgeFX edgeToChange = getEdgeFX(srcName, adjName);
+
+        if (edgeToChange != null) {
+
+            // If the edge is directed, have to make sure if the src and adj is specified correctly
+            if (edgeToChange.isDirected) {
+                if (edgeToChange.srcVertex.nameText.getText().equals(srcName) && edgeToChange.endVertex.nameText.getText().equals(adjName)) {
+                    edgeToChange.changeSrcRepText(newSrcRep + "");
+                    return;
+                }
+            } else {    // If the edge is undirected, have to make sure which rep is going to be changed
+                if (edgeToChange.srcVertex.nameText.getText().equals(srcName) && edgeToChange.endVertex.nameText.getText().equals(adjName)) {
+                    edgeToChange.changeSrcRepText(newSrcRep + "");
+                } else {
+                    edgeToChange.changeEndRepText(newSrcRep + "");
+                }
+                return;
+            }
+        }
+        throw new IllegalArgumentException("This edge is not exist (" + srcName + " -> " + adjName + ") or (" + srcName + " <-> " + adjName + ")");
+    }
+
 }

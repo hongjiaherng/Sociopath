@@ -49,7 +49,7 @@ public class RightClickMenu {
             MainPageController.canvasRef.changeRepOrRelationTypeFX(sourceEdge);
         });
         delete.setOnAction(e -> {
-            MainPageController.canvasRef.deleteEdgeFX(sourceEdge);
+            MainPageController.canvasRef.deleteEdgeFX(sourceEdge, true);
         });
     }
 
