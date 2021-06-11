@@ -1,5 +1,6 @@
 package org.sociopath.controllers;
 
+import javafx.animation.FadeTransition;
 import javafx.animation.FillTransition;
 import javafx.animation.Interpolator;
 import javafx.animation.ScaleTransition;
@@ -27,6 +28,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.*;
 import javafx.scene.shape.Polygon;
 import javafx.scene.text.Text;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Duration;
@@ -39,7 +41,6 @@ import org.sociopath.models.Student;
 import org.sociopath.utils.DBConnect;
 
 import java.awt.*;
-import java.io.IOException;
 import java.net.URL;
 import java.time.LocalTime;
 import java.util.*;
@@ -124,6 +125,7 @@ public class GraphSimulationController implements Initializable {
 
     public void saveGraphFX(ActionEvent actionEvent) {
         DBConnect.startCon();
+
 //        try {
 //            GraphDao.deleteGraph();
 //        } catch(ConnectionException e){
@@ -398,7 +400,7 @@ public class GraphSimulationController implements Initializable {
         DialogPane dialogPane = dialog.getDialogPane();
 
         if (edge.isDirected) {  // Directed edge pane
-            dialog.getDialogPane().setPrefHeight(200);
+            dialogPane.setPrefHeight(200);
             dialog.setTitle("Modify directed edge's properties");
 
             TextField prevRepTF = new TextField(edge.srcRepText.getText());
@@ -858,6 +860,25 @@ public class GraphSimulationController implements Initializable {
             destVertexFX.dragVertex((int) event.getX(), (int) event.getY());
         }
     };
+
+    public void event1Handler(ActionEvent event) {
+    }
+
+    public void event2Handler(ActionEvent event) {
+        Event2Controller.event2Prompt(this, sociograph, selectedVertex);
+    }
+
+    public void event3Handler(ActionEvent event) {
+    }
+
+    public void event4Handler(ActionEvent event) {
+    }
+
+    public void event5Handler(ActionEvent event) {
+    }
+
+    public void event6Handler(ActionEvent event) {
+    }
 
     public class VertexFX extends Circle {
         Point coordinate;
@@ -1321,11 +1342,31 @@ public class GraphSimulationController implements Initializable {
         }
     }
 
-    private void setDefaultDialogConfig(Dialog dialog) {
+    public void setDefaultDialogConfig(Dialog dialog) {
         dialog.setGraphic(null);
         dialog.initStyle(StageStyle.UTILITY);
+        dialog.initModality(Modality.APPLICATION_MODAL);
         DialogPane dialogPane = dialog.getDialogPane();
         dialogPane.getStyleClass().add("dialog");
         dialogPane.getStylesheets().add(getClass().getResource("../style/style.css").toExternalForm());
+    }
+
+    public VertexFX getVertexFX(String name) {
+        for (VertexFX vertexFX : allCircles) {
+            if (vertexFX.nameText.getText().equals(name)) {
+                return vertexFX;
+            }
+        }
+        return null;
+    }
+
+    public EdgeFX createNewEdgeFX(VertexFX srcVertex, VertexFX endVertex, String srcRep, String endRep, Relationship rel) {
+        EdgeFX newUndirectedEdge = new EdgeFX(srcVertex, endVertex, srcRep, endRep, rel);
+        FadeTransition ft = new FadeTransition(Duration.millis(1000), newUndirectedEdge);
+        ft.setFromValue(0.1);
+        ft.setToValue(10);
+        ft.play();
+        newUndirectedEdge.showEdge();
+        return newUndirectedEdge;
     }
 }

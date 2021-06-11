@@ -1,9 +1,7 @@
 package org.sociopath.models;
 
-import org.sociopath.dao.GraphDao;
 import org.sociopath.events.Event6;
 import org.sociopath.events.SocialActivities;
-import org.sociopath.utils.DBConnect;
 
 public class TestGraph {
     public static void main(String[] args) {
@@ -12,11 +10,11 @@ public class TestGraph {
 //        DBConnect.startCon();
         initialization(sociograph);
 //        event1Test(sociograph);
-//        event2Test(sociograph);
+        event2Test(sociograph);
 //        event3Test(sociograph);
 //        event4Test(sociograph);
 //        event5Test(sociograph);
-        event6Test(sociograph);
+//        event6Test(sociograph);
 //        GraphDao.saveGraph(sociograph);
 //        DBConnect.closeCon();
     }
@@ -74,13 +72,13 @@ public class TestGraph {
     public static void event2Test(Sociograph sociograph) {
         // Event 2 Tests
         // Test simple case, G make new friend with H (H connects to a path, one direction propagate)
-//        sociograph.addDirectedEdge("G", "H", 10);
-//        System.out.println("Original Graph");
-//        System.out.println(sociograph);
-//        System.out.println();
-//        System.out.println("Mutated Graph 1");
-//        SocialActivities.event2(sociograph, "G", "H");
-//        System.out.println(sociograph + "\n");
+        sociograph.addDirectedEdge("G", "H", 10, Relationship.NONE);
+        System.out.println("Original Graph");
+        System.out.println(sociograph);
+        System.out.println();
+        System.out.println("Mutated Graph 1");
+        SocialActivities.event2(sociograph, "G", "H");
+        System.out.println(sociograph + "\n");
 
         // Test simple case, G make new friend with D (D connects to H and J, two direction propagate)
 //        sociograph.addDirectedEdge("G", "D", 10);

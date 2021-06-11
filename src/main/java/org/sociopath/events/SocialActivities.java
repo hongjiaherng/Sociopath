@@ -564,13 +564,13 @@ public class SocialActivities {
                     hostRepRelativeToFriend += (sociograph.getSrcRepRelativeToAdj(hostName, newFriendName) / 2.0);
                 }
 
+                // Update graph (update student's properties, add edge)
                 if (sociograph.hasDirectedEdge(hostName, friend.getName())) {
                     hostRepRelativeToFriend += sociograph.getSrcRepRelativeToAdj(hostName, friend.getName());
-                    sociograph.setSrcRepRelativeToAdj(hostName, friend.getName(), hostRepRelativeToFriend);
+                    sociograph.setSrcRepRelativeToAdj(hostName, friend.getName(), hostRepRelativeToFriend);     // Change rep
                 } else {
-                    sociograph.addDirectedEdge(hostName, friend.getName(), hostRepRelativeToFriend, Relationship.NONE);
+                    sociograph.addDirectedEdge(hostName, friend.getName(), hostRepRelativeToFriend, Relationship.NONE);     // Add new directed edge
                 }
-                // Update graph (update student's properties, add edge)
                 visitedRecord.add(friend);
                 System.out.println("Propagated: " + friend.getName());
                 System.out.println(sociograph);
