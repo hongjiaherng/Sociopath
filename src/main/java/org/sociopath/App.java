@@ -5,6 +5,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import org.sociopath.utils.DBConnect;
 
 import java.io.IOException;
 import java.util.Stack;

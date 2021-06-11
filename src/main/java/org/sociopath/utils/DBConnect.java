@@ -21,9 +21,7 @@ public class DBConnect {
     }
 
     public static Session getSession() {
-        Session session = sessionFactory.openSession();
-        session.purgeDatabase();
-        return session;
+        return sessionFactory.openSession();
     }
 
     public static void closeCon(){

@@ -417,13 +417,12 @@ public class SocialActivities {
                             sociograph.removeEdge(srcName, destName);
                             sociograph.removeEdge(destName, srcName);
                             sociograph.addUndirectedEdge(srcName, destName, srcRep, destRep, friendOrEnemy);
-                            double crushPercentage = rd.nextDouble();
+                            double theOtherHalf = rd.nextDouble();
 
-                            if (crushPercentage < 0.1) {
-                                sociograph.setDirectedRelationshipOnEdge(srcName, destName, Relationship.ADMIRED_BY);    // TODO: Change to ADMIRED_BY
-                                sociograph.setSrcRepRelativeToAdj(srcName, destName, 10.0);
+                            if (theOtherHalf < 0.1) {
+                                sociograph.setUndirectedRelationshipOnEdge(srcName, destName, Relationship.THE_OTHER_HALF);    // TODO: I had change this to THE_OTHER_HALF because there is no one edge is ADMIRED_BY, and another edge is FRIEND
                                 System.out.println("***********");
-                                System.out.println(srcName + " has a crush on " + destName);
+                                System.out.println(srcName + " and " + destName + " has a relationship! ");
                                 System.out.println("***********");
                             }
                         } else {
