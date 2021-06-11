@@ -25,11 +25,11 @@ public class GraphDao {
      * @param graph A Sociograph object that is going to be saved
      */
     // TODO : I checked this, if anything goes wrong you all can tell me (HZ)
-    public static void saveGraph(Sociograph graph){
+    public static void saveGraph(Sociograph graph) throws AuthenticationException, ConnectionException{
         List<Student> vertices = graph.getAllStudents();
-        for(Student student : vertices){
+        for(Student student : vertices)
             session.save(student);
-        }
+
     }
 
     /**

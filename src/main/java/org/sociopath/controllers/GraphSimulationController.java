@@ -160,6 +160,11 @@ public class GraphSimulationController implements Initializable {
                 setDefaultDialogConfig(alertDialog);
                 alertDialog.setContentText("Error connecting to the database!");
                 alertDialog.show();
+            } catch(AuthenticationException e){
+                Alert alertDialog = new Alert(Alert.AlertType.WARNING);
+                setDefaultDialogConfig(alertDialog);
+                alertDialog.setContentText("Your username or the password of the database is wrong! Please try it again!");
+                alertDialog.show();
             }
         }
 
@@ -386,6 +391,7 @@ public class GraphSimulationController implements Initializable {
         Optional<ButtonType> result = confirmDialog.showAndWait();
 
         if (result.isPresent() && result.get() == ButtonType.YES) {
+
             if (!edge.isDirected) {
                 System.out.println(sociograph.removeEdge(edge.endVertex.nameText.getText(), edge.srcVertex.nameText.getText()));
             }
@@ -393,6 +399,9 @@ public class GraphSimulationController implements Initializable {
             System.out.println(allCircles.get(allCircles.indexOf(edge.endVertex)).connectedEdges.remove(edge));
             System.out.println(allCircles.get(allCircles.indexOf(edge.srcVertex)).connectedEdges.remove(edge));
             System.out.println(canvasGroup.getChildren().remove(edge));
+            System.out.println(sociograph.getStudent(edge.endVertex.nameText.getText()));
+            System.out.println(sociograph.getStudent(edge.srcVertex.nameText.getText()));
+            System.out.println(sociograph);
 
         } else {
             return;
@@ -556,6 +565,9 @@ public class GraphSimulationController implements Initializable {
     // TODO : add a state to the clear button, for the database to make sure that whether it is needed to clear the database
     public void clearGraphFX(ActionEvent event) {
         // Remove all vertices from sociograph
+        if(!allCircles.isEmpty())
+            isSaved = false;
+
         this.sociograph.clear();
 
         List<Node> allNodesOnCanvas = new ArrayList<>();
@@ -580,8 +592,7 @@ public class GraphSimulationController implements Initializable {
         addRelationBtn.setSelected(false);
 
         allNodesOnCanvas.clear();
-        isSaved = false;
-        System.out.println("Clear : " + isSaved);
+
     }
 
     EventHandler<MouseEvent> mouseHandler = event -> {

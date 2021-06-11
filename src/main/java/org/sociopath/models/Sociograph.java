@@ -53,6 +53,7 @@ public class Sociograph {
             while(currentEdge != null){
                 if(currentEdge.adjVertex.studentInfo.getName().equals(adjName))
                     return true;
+
                 currentEdge = currentEdge.nextEdge;
             }
         }
@@ -138,10 +139,12 @@ public class Sociograph {
             Vertex srcVertex = vertices.get(indexOf(srcName));
             Edge currentEdge = srcVertex.firstEdge;
             Edge prevEdge = srcVertex.firstEdge;
+            Relationship rel;
 
             while (currentEdge != null) {
                 if (currentEdge.adjVertex.studentInfo.getName().equals(adjName)) {
                     Student personToRemove = currentEdge.adjVertex.studentInfo;
+                    rel = checkRelationship(srcName, adjName);
                     if (srcVertex.firstEdge.adjVertex.studentInfo.getName().equals(adjName)) {
                         srcVertex.firstEdge = currentEdge.nextEdge;
                     } else {
@@ -149,7 +152,7 @@ public class Sociograph {
                     }
                     // remove adjStudent from HashMap
                     // remove rep point of adjStudent
-                    srcVertex.studentInfo.deleteRelationship(personToRemove, checkRelationship(srcName, adjName));
+                    srcVertex.studentInfo.deleteRelationship(personToRemove, rel);
                     return true;
                 }
                 prevEdge = currentEdge;
@@ -248,6 +251,7 @@ public class Sociograph {
      * @return relationship type in enum (Either FRIEND, ENEMY, THE_OTHER_HALF, ADMIRED_BY, or NONE), null if no relationship
      */
     public Relationship checkRelationship(String srcName, String adjName) {
+        System.out.println(srcName + " " + adjName + " has directed edge ? " + hasDirectedEdge(srcName, adjName));
         if(hasDirectedEdge(srcName, adjName)){
             Vertex srcVertex = vertices.get(indexOf(srcName));
             Edge srcEdge = srcVertex.firstEdge;
@@ -258,7 +262,7 @@ public class Sociograph {
                 srcEdge = srcEdge.nextEdge;
             }
         }
-        return Relationship.NONE;
+        return null;
         // TODO : MIGHT have problem (if return null will throw exception in Student.setRelationship())
     }
 
