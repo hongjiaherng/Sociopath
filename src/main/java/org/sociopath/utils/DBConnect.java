@@ -13,7 +13,7 @@ public class DBConnect {
     public static void startCon() {
         Configuration configuration = new Configuration.Builder()
                 .uri("bolt://localhost")
-                .credentials("neo4j", "1234")
+                .credentials("neo4j", "QWERTyuiop12#")       // TODO: Put your password here
                 .build();
         LogManager.getLogManager().reset();
 
