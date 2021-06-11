@@ -32,13 +32,16 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Duration;
-import org.neo4j.ogm.exception.ConnectionException;
+
 import org.sociopath.App;
 import org.sociopath.dao.GraphDao;
 import org.sociopath.models.Relationship;
 import org.sociopath.models.Sociograph;
 import org.sociopath.models.Student;
 import org.sociopath.utils.DBConnect;
+
+import org.neo4j.driver.exceptions.AuthenticationException;
+import org.neo4j.ogm.exception.ConnectionException;
 
 import java.awt.*;
 import java.net.URL;
@@ -56,9 +59,10 @@ public class GraphSimulationController implements Initializable {
     public ToggleGroup toggleGroup;
     public Pane viewer;
 
-    private Sociograph sociograph = new Sociograph();
+    private Sociograph sociograph = new Sociograph();                    
     private List<VertexFX> allCircles = new ArrayList<>();
     private VertexFX selectedVertex = null;
+    private static boolean isSaved = false;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -126,14 +130,16 @@ public class GraphSimulationController implements Initializable {
     public void saveGraphFX(ActionEvent actionEvent) {
         DBConnect.startCon();
 
-//        try {
-//            GraphDao.deleteGraph();
-//        } catch(ConnectionException e){
-//            Alert alertDialog = new Alert(Alert.AlertType.WARNING);
-//            setDefaultDialogConfig(alertDialog);
-//            alertDialog.setContentText("Error connecting to the database!");
-//            alertDialog.show();
-//        }
+        if(!isSaved) {
+            try {
+                GraphDao.deleteGraph();
+            } catch (ConnectionException e) {
+                Alert alertDialog = new Alert(Alert.AlertType.WARNING);
+                setDefaultDialogConfig(alertDialog);
+                alertDialog.setContentText("Error connecting to the database!");
+                alertDialog.show();
+            }
+        }
 
         if(sociograph.getAllStudents().isEmpty()) {
             Alert alertDialog = new Alert(Alert.AlertType.WARNING);
@@ -149,15 +155,22 @@ public class GraphSimulationController implements Initializable {
                 setDefaultDialogConfig(alertDialog);
                 alertDialog.setContentText("Save Successfully!");
                 alertDialog.show();
+                isSaved = true;
 
             } catch(ConnectionException e){
                 Alert alertDialog = new Alert(Alert.AlertType.WARNING);
                 setDefaultDialogConfig(alertDialog);
                 alertDialog.setContentText("Error connecting to the database!");
                 alertDialog.show();
+            } catch(AuthenticationException e){
+                Alert alertDialog = new Alert(Alert.AlertType.WARNING);
+                setDefaultDialogConfig(alertDialog);
+                alertDialog.setContentText("Your username or the password of the database is wrong! Please try it again!");
+                alertDialog.show();
             }
         }
 
+        System.out.println(isSaved);
         DBConnect.closeCon();
     }
 
@@ -173,7 +186,8 @@ public class GraphSimulationController implements Initializable {
 
         else{
             try{
-                if(GraphDao.db_getGraph().getAllStudents().isEmpty()){
+                List<Student> allStudents = GraphDao.db_getGraph().getAllStudents();
+                if(allStudents.isEmpty()){
                     Alert alertDialog = new Alert(Alert.AlertType.WARNING);
                     setDefaultDialogConfig(alertDialog);
                     alertDialog.setContentText("There is no graph in the database!");
@@ -193,6 +207,12 @@ public class GraphSimulationController implements Initializable {
                 Alert alertDialog = new Alert(Alert.AlertType.WARNING);
                 setDefaultDialogConfig(alertDialog);
                 alertDialog.setContentText("Error connecting to the database!");
+                alertDialog.show();
+
+            } catch (AuthenticationException e){
+                Alert alertDialog = new Alert(Alert.AlertType.WARNING);
+                setDefaultDialogConfig(alertDialog);
+                alertDialog.setContentText("Your username or password might have been type in incorrectly. Please try it again!");
                 alertDialog.show();
             }
         }
@@ -373,6 +393,7 @@ public class GraphSimulationController implements Initializable {
         Optional<ButtonType> result = confirmDialog.showAndWait();
 
         if (result.isPresent() && result.get() == ButtonType.YES) {
+
             if (!edge.isDirected) {
                 System.out.println(sociograph.removeEdge(edge.endVertex.nameText.getText(), edge.srcVertex.nameText.getText()));
             }
@@ -380,6 +401,9 @@ public class GraphSimulationController implements Initializable {
             System.out.println(allCircles.get(allCircles.indexOf(edge.endVertex)).connectedEdges.remove(edge));
             System.out.println(allCircles.get(allCircles.indexOf(edge.srcVertex)).connectedEdges.remove(edge));
             System.out.println(canvasGroup.getChildren().remove(edge));
+            System.out.println(sociograph.getStudent(edge.endVertex.nameText.getText()));
+            System.out.println(sociograph.getStudent(edge.srcVertex.nameText.getText()));
+            System.out.println(sociograph);
 
         } else {
             return;
@@ -540,8 +564,12 @@ public class GraphSimulationController implements Initializable {
         }
     }
 
+    // TODO : add a state to the clear button, for the database to make sure that whether it is needed to clear the database
     public void clearGraphFX(ActionEvent event) {
         // Remove all vertices from sociograph
+        if(!allCircles.isEmpty())
+            isSaved = false;
+
         this.sociograph.clear();
 
         List<Node> allNodesOnCanvas = new ArrayList<>();
@@ -566,6 +594,7 @@ public class GraphSimulationController implements Initializable {
         addRelationBtn.setSelected(false);
 
         allNodesOnCanvas.clear();
+
     }
 
     EventHandler<MouseEvent> mouseHandler = event -> {
@@ -1250,9 +1279,10 @@ public class GraphSimulationController implements Initializable {
         return labelNameList;
     }
 
+    // TODO : Can I ask you all to help me check whether the vertex and the edges whether they will go out of the blank canvas?
     private void drawAllVertexAndEdge(Sociograph newSociograph, HashMap<String, Boolean> isCreated){
-        int xSize = 510 / 20;
-        int ySize = 570 / 20;
+        int xSize = 510 / 30;
+        int ySize = 570 / 30;
 
         Point[][] coordinates = new Point[xSize][ySize];
         boolean[][] hasNode = new boolean[xSize][ySize];
@@ -1262,9 +1292,9 @@ public class GraphSimulationController implements Initializable {
             int startX = 50;
             for(int j = 0; j<coordinates[i].length; j++){
                 coordinates[i][j] =  new Point(startX, startY);
-                startX += 20;
+                startX += 30;
             }
-            startY += 20;
+            startY += 30;
         }
 
         for(Student student : newSociograph.getAllStudents()) {
@@ -1275,12 +1305,14 @@ public class GraphSimulationController implements Initializable {
             Set<Student> friends = student.getFriends();
             Set<Student> enemies = student.getEnemies();
             Set<Student> nones = student.getNones();
-            Set<Student> admirers = student.getAdmirers();  // TODO : Add THE_OTHER_HALF
+            Set<Student> admirers = student.getAdmirers();
+            Set<Student> theOtherHalf = new HashSet<>();
+            theOtherHalf.add(student.getTheOtherHalf());
             drawRelationship(srcVertex, srcReps, srcName, isCreated, friends, Relationship.FRIEND, coordinates, hasNode);
             drawRelationship(srcVertex, srcReps, srcName, isCreated, enemies, Relationship.ENEMY, coordinates, hasNode);
             drawRelationship(srcVertex, srcReps, srcName, isCreated, nones, Relationship.NONE, coordinates, hasNode);
             drawRelationship(srcVertex, srcReps, srcName, isCreated, admirers, Relationship.ADMIRED_BY, coordinates, hasNode);
-
+            drawRelationship(srcVertex, srcReps, srcName, isCreated, theOtherHalf, Relationship.THE_OTHER_HALF,coordinates, hasNode);
 
         }
     }
@@ -1315,28 +1347,26 @@ public class GraphSimulationController implements Initializable {
 
     private void drawRelationship(VertexFX srcVertex,Map<String, Double> srcReps,String srcName,HashMap<String, Boolean> isCreated,Set<Student> haveRelationStudents, Relationship relationship, Point[][] coordinates, boolean[][] hasNode){
         for (Student dest : haveRelationStudents) {
-            VertexFX destVertex = getVertex(dest, isCreated, hasNode, coordinates);
-            String destName = destVertex.nameText.getText();
+            if (dest != null) {
+                VertexFX destVertex = getVertex(dest, isCreated, hasNode, coordinates);
+                String destName = destVertex.nameText.getText();
 
-            HashMap<String, Double> destReps = dest.getRepPoints();
-            String srcRep = String.valueOf(srcReps.get(destName));
-            String destRep = String.valueOf(destReps.get(srcName));
+                HashMap<String, Double> destReps = dest.getRepPoints();
+                String srcRep = String.valueOf(srcReps.get(destName));
+                String destRep = String.valueOf(destReps.get(srcName));
 
-            boolean checkUndirectedRelationship = relationship == Relationship.ENEMY || relationship == Relationship.FRIEND || relationship == Relationship.THE_OTHER_HALF;
-            if(!sociograph.hasUndirectedEdge(srcName, destName) && checkUndirectedRelationship) {
-                EdgeFX edgeFX = new EdgeFX(srcVertex, destVertex, srcRep, destRep, relationship);
-                edgeFX.showEdge();
-            }
-
-            else if(!sociograph.hasDirectedEdge(srcName, destName) && !checkUndirectedRelationship){
-                if(relationship == Relationship.ADMIRED_BY) {
-                    EdgeFX edgeFX = new EdgeFX(srcVertex, destVertex, srcRep, Relationship.ADMIRED_BY);
+                boolean checkUndirectedRelationship = relationship == Relationship.ENEMY || relationship == Relationship.FRIEND || relationship == Relationship.THE_OTHER_HALF;
+                if (!sociograph.hasUndirectedEdge(srcName, destName) && checkUndirectedRelationship) {
+                    EdgeFX edgeFX = new EdgeFX(srcVertex, destVertex, srcRep, destRep, relationship);
                     edgeFX.showEdge();
-                }
-
-                else if(relationship == Relationship.NONE){
-                    EdgeFX edgeFX = new EdgeFX(srcVertex, destVertex, srcRep, Relationship.NONE);
-                    edgeFX.showEdge();
+                } else if (!sociograph.hasDirectedEdge(srcName, destName) && !checkUndirectedRelationship) {
+                    if (relationship == Relationship.ADMIRED_BY) {
+                        EdgeFX edgeFX = new EdgeFX(srcVertex, destVertex, srcRep, Relationship.ADMIRED_BY);
+                        edgeFX.showEdge();
+                    } else if (relationship == Relationship.NONE) {
+                        EdgeFX edgeFX = new EdgeFX(srcVertex, destVertex, srcRep, Relationship.NONE);
+                        edgeFX.showEdge();
+                    }
                 }
             }
         }

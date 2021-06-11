@@ -1,5 +1,6 @@
 package org.sociopath.dao;
 
+import org.neo4j.driver.exceptions.AuthenticationException;
 import org.neo4j.ogm.cypher.ComparisonOperator;
 import org.neo4j.ogm.cypher.Filter;
 import org.neo4j.ogm.exception.ConnectionException;
@@ -8,6 +9,7 @@ import org.sociopath.models.Relationship;
 import org.sociopath.models.Sociograph;
 import org.sociopath.models.Student;
 import org.sociopath.utils.DBConnect;
+
 
 import java.util.*;
 
@@ -22,12 +24,12 @@ public class GraphDao {
      * Save the graph into the database
      * @param graph A Sociograph object that is going to be saved
      */
-    // TODO : press second time save will remove all the graph
-    public static void saveGraph(Sociograph graph){
+    // TODO : I checked this, if anything goes wrong you all can tell me (HZ)
+    public static void saveGraph(Sociograph graph) throws AuthenticationException, ConnectionException{
         List<Student> vertices = graph.getAllStudents();
-        for(Student student : vertices){
+        for(Student student : vertices)
             session.save(student);
-        }
+
     }
 
     /**
@@ -41,7 +43,7 @@ public class GraphDao {
      * Get all the nodes from the database
      * @return A list of Student object
      */
-    public static ArrayList<Student> getAllVertices() throws ConnectionException {
+    public static ArrayList<Student> getAllVertices() throws ConnectionException, AuthenticationException {
         ArrayList<Student> students ;
 
         Collection<Student> collection = session.loadAll(Student.class);
@@ -77,7 +79,7 @@ public class GraphDao {
      *
      * @return a Socioraph object that contains all the relationship
      */
-    public static Sociograph db_getGraph() throws ConnectionException{
+    public static Sociograph db_getGraph() throws ConnectionException, AuthenticationException {
         allStudents = GraphDao.getAllVertices();
         String[] names = new String[allStudents.size()];
         ArrayList<HashMap<String, Double>> allRepPoints = new ArrayList<>();
@@ -95,9 +97,9 @@ public class GraphDao {
             db_MakeRelationToSociograph(student, names,  Relationship.FRIEND, repPoints, sociograph);
             db_MakeRelationToSociograph(student, names,  Relationship.ENEMY, repPoints, sociograph);
             db_MakeRelationToSociograph(student, names,  Relationship.NONE, repPoints, sociograph);
-            // TODO: Check here because the previouos CRUSH is not being used anymore
-            db_MakeRelationToSociograph(student, names,  Relationship.ADMIRED_BY, repPoints, sociograph);   // TODO: I added this, not sure if works
-            db_MakeRelationToSociograph(student, names,  Relationship.THE_OTHER_HALF, repPoints, sociograph);   // TODO: I added this, not sure if works
+            // TODO: Checked this, if have any problem juz let me know (HZ)
+            db_MakeRelationToSociograph(student, names,  Relationship.ADMIRED_BY, repPoints, sociograph);
+            db_MakeRelationToSociograph(student, names,  Relationship.THE_OTHER_HALF, repPoints, sociograph);
 
         }
 
@@ -140,12 +142,11 @@ public class GraphDao {
             if (!sociograph.hasUndirectedEdge(student.getName(), fr.getName()) && relationshipCheck)
                 sociograph.addUndirectedEdge(student.getName(), fr.getName(), repPoints.get(fr.getName()), rep.get(student.getName()), rel);
 
-            else if (rel == Relationship.NONE && !sociograph.hasDirectedEdge(student.getName(), fr.getName()))
-                sociograph.addDirectedEdge(student.getName(), fr.getName(), repPoints.get(fr.getName()), Relationship.NONE);
+            else if ( (rel == Relationship.NONE || rel == Relationship.ADMIRED_BY) && !sociograph.hasDirectedEdge(student.getName(), fr.getName()))
+                sociograph.addDirectedEdge(student.getName(), fr.getName(), repPoints.get(fr.getName()), rel);
 
-            else if (rel == Relationship.ADMIRED_BY && !sociograph.hasDirectedEdge(student.getName(), fr.getName()))
-                sociograph.addDirectedEdge(student.getName(), fr.getName(), repPoints.get(fr.getName()), Relationship.ADMIRED_BY);
-            // TODO: Check here because i changed the previous CRUSH to ADMIRED_BY, and need to consider about THE_OTHER_HALF
+            // TODO: I checked here, and it is working fine, if have any problem can tell me (HZ)
+
         }
     }
 }

@@ -50,6 +50,7 @@ public class MainPageController implements Initializable {
 
     public void loadSampleHandler(ActionEvent actionEvent) throws IOException {
         startSimulation();
+        canvasRef.loadGraphFX(actionEvent);
     }
 
     public void startFromScratchHandler(ActionEvent actionEvent) throws IOException {

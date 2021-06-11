@@ -14,7 +14,7 @@ public class DBConnect {
 
         Configuration configuration = new Configuration.Builder()
                 .uri("bolt://localhost")
-                .credentials("neo4j", "QWERTyuiop12#")       // TODO: Put your password here
+                .credentials("neo4j", "1234")       // TODO: Put your password here
                 .build();
         LogManager.getLogManager().reset();
 
@@ -22,9 +22,7 @@ public class DBConnect {
     }
 
     public static Session getSession() {
-        Session session = sessionFactory.openSession();
-        session.purgeDatabase();
-        return session;
+        return sessionFactory.openSession();
     }
 
     public static void closeCon(){

@@ -46,9 +46,9 @@ public class Student {
     @Relationship(type = "ADMIRED_BY")
     private Set<Student> admirers = new HashSet<>();     // This crush means who ever secretly like this student should be included in this list
 
-    // TODO: the other half, see if it can be a single variable to make a relationship
+    // TODO: Yes it can be a single variable no problem
     @Relationship(type = "THE_OTHER_HALF")
-    private Student theOtherHalf ;      // can only contain one
+    private Student theOtherHalf = null;      // can only contain one
 
     private transient int avgLunchPeriod;
     private transient LocalTime avgLunchStart;
@@ -59,7 +59,6 @@ public class Student {
     public Student(String name) {
         this.name = name;
         this.dive = Math.round((rand.nextDouble() * 99 + 1) * 100.0) / 100.0;
-        this.nones = new HashSet<>();
         for (int i = 0; i < lunchStart.length; i++) {
             this.lunchStart[i] = LocalTime.of(11, 0).plusMinutes(rand.nextInt(181));
         }
