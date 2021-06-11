@@ -172,7 +172,7 @@ public class GraphSimulationController implements Initializable {
             }
         }
 
-        System.out.println(isSaved);
+        System.out.println("Save method : " + isSaved);
         DBConnect.closeCon();
     }
 
@@ -570,7 +570,7 @@ public class GraphSimulationController implements Initializable {
     // TODO : add a state to the clear button, for the database to make sure that whether it is needed to clear the database
     public void clearGraphFX(ActionEvent event) {
         // Remove all vertices from sociograph
-        if(!allCircles.isEmpty())
+
             isSaved = false;
 
         this.sociograph.clear();
@@ -911,6 +911,11 @@ public class GraphSimulationController implements Initializable {
     };
 
     public void event1Handler(ActionEvent event) {
+        if (isEventRunning) {
+            return;
+        }
+        markEventRunning();
+        Event1Controller.event1prompt(sociograph, selectedVertex);
     }
 
     public void event2Handler(ActionEvent event) {
@@ -1467,7 +1472,6 @@ public class GraphSimulationController implements Initializable {
         newUndirectedEdge.showEdge();
         return newUndirectedEdge;
     }
-
 
     // TODO: I removed the Transition effect here, so that it works better with SequentialTransition
     public EdgeFX createNewDirectedEdgeFX(VertexFX srcVertex, VertexFX endVertex, String srcRep, Relationship rel) {
