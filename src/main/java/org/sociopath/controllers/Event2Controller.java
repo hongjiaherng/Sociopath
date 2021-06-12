@@ -1,22 +1,34 @@
 package org.sociopath.controllers;
 
-import javafx.animation.FadeTransition;
+import javafx.animation.*;
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
+import javafx.scene.paint.Color;
+import javafx.util.Duration;
 import org.sociopath.models.Relationship;
 import org.sociopath.models.Sociograph;
 import org.sociopath.models.Student;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
 public class Event2Controller {
-    public static void event2Prompt(GraphSimulationController controller, Sociograph sociograph, GraphSimulationController.VertexFX selectedVertex) {
+
+    private static GraphSimulationController canvasRef = MainPageController.canvasRef;
+    private static SequentialTransition st = new SequentialTransition();
+
+    public static void event2Prompt(Sociograph sociograph, GraphSimulationController.VertexFX selectedVertex) {
         Alert alert = new Alert(Alert.AlertType.WARNING);
-        controller.setDefaultDialogConfig(alert);
+        canvasRef.setDefaultDialogConfig(alert);
+        alert.setOnHidden(e -> {    // Important! to make sure the state is changed
+            System.out.println("Ended4");
+            canvasRef.markEventEnded();
+        });
+
         if (selectedVertex == null) {
             alert.setContentText("Please select a student!");
             alert.show();
@@ -32,18 +44,13 @@ public class Event2Controller {
                     "friend. Otherwise, if it’s a bad message, this person will share the same negative rep points " +
                     "that your new friend owns about you. Later, your new friend’s friends might tell their friends, so it " +
                     "will multiply and propagate your rep.";
+            String headerTxt = "Description";
+            String title = "Event 2 - Chit Chat";
 
-            Alert description = new Alert(Alert.AlertType.INFORMATION, descriptionTxt, ButtonType.NEXT);
-            controller.setDefaultDialogConfig(description);
-            description.getDialogPane().setPrefWidth(400);
-            description.getDialogPane().setPrefHeight(350);
-            description.setTitle("Event 2 - Chit Chat");
-            description.setHeaderText("Description");
-
-            Optional<ButtonType> result = description.showAndWait();
-            if (result.isPresent() && result.get() == ButtonType.NEXT) {
+            Optional<ButtonType> result = canvasRef.showDescriptionDialog(title, headerTxt, descriptionTxt);
+            if (result.isPresent() && result.get() == ButtonType.OK) {
                 TextInputDialog enterNewFriendDL = new TextInputDialog();
-                controller.setDefaultDialogConfig(enterNewFriendDL);
+                canvasRef.setDefaultDialogConfig(enterNewFriendDL);
                 enterNewFriendDL.setTitle("Event 2 - Chit Chat");
                 enterNewFriendDL.setHeaderText("Enter new friend details");
 
@@ -104,62 +111,124 @@ public class Event2Controller {
                     srcRep = srcRepTF.getText().trim();
                     destRep = destRepTF.getText().trim();
                 } else {
+                    System.out.println("Ended2");
+                    canvasRef.markEventEnded();
                     return;
                 }
 
                 GraphSimulationController.VertexFX hostFX = selectedVertex;
-                GraphSimulationController.VertexFX newFriendFX = controller.getVertexFX(newFriendName);
-                controller.createNewEdgeFX(hostFX, newFriendFX, srcRep, destRep, Relationship.FRIEND);
+                GraphSimulationController.VertexFX newFriendFX = canvasRef.getVertexFX(newFriendName);
 
-                // TODO: Apply transition effect here
+                // If there's any relationship previously between host and newFriend, delete them and create new Friendship directly
+                GraphSimulationController.EdgeFX existingEdgeFX = canvasRef.getEdgeFX(hostName, newFriendName);
+                if (existingEdgeFX != null) {
+                    canvasRef.deleteEdgeFXWithoutPrompt(existingEdgeFX);
+                }
 
-                event2Execution(controller, sociograph, hostName, newFriendName);
+                // Clear all transition to avoid any leftover transition from the past event execution
+                st.getChildren().clear();
+
+                FillTransition ft = new FillTransition(Duration.millis(500), hostFX, Color.BLACK, Color.YELLOW);
+                st.getChildren().add(ft);
+
+                GraphSimulationController.EdgeFX newUndirectedEdge = canvasRef.createNewUndirectedEdgeFX(hostFX, newFriendFX, srcRep, destRep, Relationship.FRIEND);
+
+                FadeTransition ft1 = new FadeTransition(Duration.millis(500), newUndirectedEdge);
+                ft1.setFromValue(0);
+                ft1.setToValue(10);
+                st.getChildren().add(ft1);
+
+                // Light up new friend
+                FillTransition ft2 = new FillTransition(Duration.millis(500), newFriendFX, Color.BLACK, Color.YELLOW);
+                st.getChildren().add(ft2);
+
+                event2Execution(sociograph, hostName, newFriendName);
+            } else {
+                System.out.println("Ended1");
+                canvasRef.markEventEnded();
             }
         }
+
     }
 
-    private static void event2Execution(GraphSimulationController controller, Sociograph sociograph, String hostName, String newFriendName) {
+    private static void event2Execution(Sociograph sociograph, String hostName, String newFriendName) {
         HashSet<Student> visitedRecord = new HashSet<>();
         visitedRecord.add(sociograph.getStudent(newFriendName));
         visitedRecord.add(sociograph.getStudent(hostName));
 
+        // Start propagating
         event2Recur(sociograph, hostName, newFriendName, visitedRecord);
 
-        visitedRecord.remove(sociograph.getStudent(newFriendName));
-        visitedRecord.remove(sociograph.getStudent(hostName));
+        // End propagating
+        st.setOnFinished(event -> {
+            PauseTransition pt = new PauseTransition(Duration.millis(4000));
+            pt.play();
 
-        Alert summary = new Alert(Alert.AlertType.INFORMATION);
-        controller.setDefaultDialogConfig(summary);
-        summary.setHeaderText("Event ended");
-        summary.getDialogPane().setPrefHeight(300);
-        summary.getDialogPane().setPrefWidth(400);
+            visitedRecord.remove(sociograph.getStudent(newFriendName));
+            visitedRecord.remove(sociograph.getStudent(hostName));
 
-        if (visitedRecord.size() != 0) {
-            StringBuilder newlyKnownPplSB = new StringBuilder();
-            visitedRecord.forEach(student -> newlyKnownPplSB.append(", "));
-            String newlyKnownPpl = newlyKnownPplSB.substring(0, newlyKnownPplSB.length() - 2);
-            summary.setContentText("Your new friend " + newFriendName + "'s friends and others knew about you now! They are " + newlyKnownPpl + ".");
-        } else {
-            summary.setContentText("No any student hear about you from your new friend");
-        }
-        summary.show();
+            Alert summary = new Alert(Alert.AlertType.INFORMATION);
+            canvasRef.setDefaultDialogConfig(summary);
+            summary.setHeaderText("Event ended");
+            summary.getDialogPane().setPrefHeight(300);
+            summary.getDialogPane().setPrefWidth(400);
+
+            if (visitedRecord.size() != 0) {
+                StringBuilder newlyKnownPplSB = new StringBuilder();
+                visitedRecord.forEach(student -> newlyKnownPplSB.append(student.getName()).append(", "));
+                String newlyKnownPpl = newlyKnownPplSB.substring(0, newlyKnownPplSB.length() - 2);
+                summary.setContentText("Your new friend " + newFriendName + "'s friends and others knew about you now! They are " + newlyKnownPpl + ".");
+            } else {
+                summary.setContentText("No any student hear about you from your new friend");
+            }
+            System.out.println("Ended");
+            canvasRef.markEventEnded();
+            summary.show();
+
+            // Changing all the light up vertex back to original color
+            for (Student visited : visitedRecord) {
+                FillTransition ft = new FillTransition(Duration.millis(500), canvasRef.getVertexFX(visited.getName()), Color.YELLOW, Color.BLACK);
+                ft.play();
+            }
+            FillTransition ftHost = new FillTransition(Duration.millis(500), canvasRef.getVertexFX(hostName), Color.YELLOW, Color.BLACK);
+            ftHost.play();
+            FillTransition ftFriend = new FillTransition(Duration.millis(500), canvasRef.getVertexFX(newFriendName), Color.YELLOW, Color.BLACK);
+            ftFriend.play();
+
+        });
+        st.onFinishedProperty();    // Mark the end
+        st.play();
+
     }
 
     private static void event2Recur(Sociograph sociograph, String hostName, String newFriendName, HashSet<Student> visitedRecord) {
-        List<Student> friendsOfNewFriend = sociograph.neighbours(newFriendName);
-        friendsOfNewFriend.forEach(student -> System.out.print(student + " "));
-        System.out.println();
+
+        // Get the friend & couple of Student named 'newFriendName'
+        Student thisStudent = sociograph.getStudent(newFriendName);
+        List<Student> friendsOfNewFriend = new ArrayList<>(thisStudent.getFriends());
+        if (thisStudent.getTheOtherHalf() != null) {
+            friendsOfNewFriend.add(thisStudent.getTheOtherHalf());
+        }
+
+        // Removed the previous visited vertex from the list of friendsOfNewFriend
         friendsOfNewFriend.removeAll(visitedRecord);
+
+        // If there's no more friend of Student named 'newFriendName', the propagation of speech is ended
         if (friendsOfNewFriend.isEmpty()) {
             return;
-        } else {
+        } else {        // If there are still friends, propagate the speech to each them
             for (Student friend : friendsOfNewFriend) {
+
+                // At the process of propagating (recursion), the friend in the friendsOfNewFriend list might already known the thing from other, in this case, skip this person
                 if (visitedRecord.contains(friend)) {
                     continue;
                 }
 
-                // TODO: Transition effect here to friend
+                // Light up newly propagated friend
+                FillTransition ft = new FillTransition(Duration.millis(500), canvasRef.getVertexFX(friend.getName()), Color.BLACK, Color.YELLOW);
+                st.getChildren().add(ft);
 
+                // Calculate the rep of the friend on host
                 double hostRepRelativeToFriend = 0;
                 if (Math.random() < 0.5) {  // if talk bad
                     hostRepRelativeToFriend -= Math.abs(sociograph.getSrcRepRelativeToAdj(hostName, newFriendName));
@@ -168,22 +237,41 @@ public class Event2Controller {
                 }
 
                 // Update graph (update student's properties, add edge)
+                // If there's already an edge, just increment the rep point
+                GraphSimulationController.EdgeFX newOrExistingEdge;
+
                 if (sociograph.hasDirectedEdge(hostName, friend.getName())) {
                     hostRepRelativeToFriend += sociograph.getSrcRepRelativeToAdj(hostName, friend.getName());
-                    sociograph.setSrcRepRelativeToAdj(hostName, friend.getName(), hostRepRelativeToFriend);     // Change rep
 
-                    // TODO: Change rep here
-                } else {
-                    sociograph.addDirectedEdge(hostName, friend.getName(), hostRepRelativeToFriend, Relationship.NONE);     // Add new directed edge
+                    sociograph.setSrcRepRelativeToAdj(hostName, friend.getName(), hostRepRelativeToFriend);     // Change rep in sociograph
+                    canvasRef.changeSrcRepRelativeToAdjFX(hostName, friend.getName(), hostRepRelativeToFriend);     // Change rep for displaying in EdgeFX
 
-                    // TODO: Add new edge here
+                    newOrExistingEdge = canvasRef.getEdgeFX(hostName, friend.getName());
+
+                    // A little fade effect for existing edge
+                    FadeTransition ft1 = new FadeTransition(Duration.millis(500), newOrExistingEdge);
+                    ft1.setFromValue(5);
+                    ft1.setToValue(10);
+                    st.getChildren().add(ft1);
+
+                } else {    // If there's no edge at first, create a new directed edge
+                    newOrExistingEdge = canvasRef.createNewDirectedEdgeFX(canvasRef.getVertexFX(hostName), canvasRef.getVertexFX(friend.getName()), hostRepRelativeToFriend + "", Relationship.NONE);
+
+                    // Fading in effect for new edge
+                    FadeTransition ft1 = new FadeTransition(Duration.millis(500), newOrExistingEdge);
+                    ft1.setFromValue(0);
+                    ft1.setToValue(10);
+                    st.getChildren().add(ft1);
                 }
 
+                // Mark this friend as visited
                 visitedRecord.add(friend);
-                System.out.println("Propagated: " + friend.getName());
-//                System.out.println(sociograph);
-                System.out.println();
 
+                // Wait for a while before proceeding to next student
+                PauseTransition pt = new PauseTransition(Duration.millis(3000));
+                st.getChildren().add(pt);
+
+                // Propagate the speech to the other friend of current 'friend'
                 event2Recur(sociograph, hostName, friend.getName(), visitedRecord);
             }
         }

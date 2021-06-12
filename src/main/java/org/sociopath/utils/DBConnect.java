@@ -14,7 +14,7 @@ public class DBConnect {
 
         Configuration configuration = new Configuration.Builder()
                 .uri("bolt://localhost")
-                .credentials("neo4j", "1234")       // TODO: Put your password here
+                .credentials("neo4j", "QWERTyuiop12#")       // TODO: Put your password here
                 .build();
         LogManager.getLogManager().reset();
 

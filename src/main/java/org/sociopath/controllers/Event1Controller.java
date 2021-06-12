@@ -15,10 +15,13 @@ import java.util.Random;
 
 public class Event1Controller {
 
+    // TODO: I changed this, which I think is a better way
+    private static GraphSimulationController canvasRef = MainPageController.canvasRef;
+
     // TODO : Try to see whether can improve the animation
-    public static void event1prompt(GraphSimulationController controller, Sociograph sociograph, GraphSimulationController.VertexFX selectedVertex) {
+    public static void event1prompt(Sociograph sociograph, GraphSimulationController.VertexFX selectedVertex) {
         Alert alert = new Alert(Alert.AlertType.WARNING);
-        controller.setDefaultDialogConfig(alert);
+        canvasRef.setDefaultDialogConfig(alert);
 
         // check whether a vertex is selected
         if(selectedVertex == null){
@@ -43,18 +46,13 @@ public class Event1Controller {
                     "will still be friends with him, but your rep points relative to that person will be 2 instead (Note that \n" +
                     "you were strangers before this, now you guys are friends and your rep point relative to that person \n" +
                     "is 2)";
+            String title = "Event 1 - Teaching a stranger a lab question";
+            String headerText = "Description";
 
-            Alert description = new Alert(Alert.AlertType.INFORMATION, descriptionText, ButtonType.NEXT);
-            controller.setDefaultDialogConfig(description);
-            description.getDialogPane().setPrefWidth(450);
-            description.getDialogPane().setPrefHeight(400);
-            description.setTitle("Event 1 - Teaching a stranger a lab question");
-            description.setHeaderText("Description");
-
-            Optional<ButtonType> result = description.showAndWait();
-            if(result.isPresent() && result.get() == ButtonType.NEXT){
+            Optional<ButtonType> result = canvasRef.showDescriptionDialog(title, headerText, descriptionText);
+            if(result.isPresent() && result.get() == ButtonType.OK){
                 TextInputDialog enterStudentDL = new TextInputDialog();
-                controller.setDefaultDialogConfig(enterStudentDL);
+                canvasRef.setDefaultDialogConfig(enterStudentDL);
                 enterStudentDL.setTitle("Event 1 - Teaching a stranger a lab question");
 
                 GridPane gridPane = new GridPane();
@@ -102,15 +100,15 @@ public class Event1Controller {
                 }
 
                 GraphSimulationController.VertexFX teacherVertex = selectedVertex;
-                GraphSimulationController.VertexFX studentVertex = controller.getVertexFX(studentName);
+                GraphSimulationController.VertexFX studentVertex = canvasRef.getVertexFX(studentName);
 
-                event1Execution(controller, sociograph, teacherVertex, studentVertex);
+                event1Execution(sociograph, teacherVertex, studentVertex);
             }
         }
 
     }
 
-    private static void event1Execution(GraphSimulationController controller, Sociograph sociograph, GraphSimulationController.VertexFX teacherVertex, GraphSimulationController.VertexFX studentVertex) {
+    private static void event1Execution(Sociograph sociograph, GraphSimulationController.VertexFX teacherVertex, GraphSimulationController.VertexFX studentVertex) {
         Random rd = new Random();
 
         String student = studentVertex.nameText.getText();
@@ -118,7 +116,7 @@ public class Event1Controller {
 
         double repSrc = rd.nextDouble() < 0.5 ? 2 : 10;
         double repDest = rd.nextInt(10) + 1;
-        GraphSimulationController.EdgeFX friendEdgeFX = controller.createNewEdgeFX(teacherVertex, studentVertex, String.valueOf(repSrc), String.valueOf(repDest), Relationship.FRIEND);
+        GraphSimulationController.EdgeFX friendEdgeFX = canvasRef.createNewUndirectedEdgeFX(teacherVertex, studentVertex, String.valueOf(repSrc), String.valueOf(repDest), Relationship.FRIEND);
         FillTransition teacherFT = new FillTransition();
         teacherFT.setDuration(Duration.millis(500));
         teacherFT.setFromValue(Color.GREY);
@@ -136,7 +134,7 @@ public class Event1Controller {
         boolean checkSuccess = repSrc == 10;
 
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        controller.setDefaultDialogConfig(alert);
+        canvasRef.setDefaultDialogConfig(alert);
         if (!checkSuccess) {
 
             boolean isEnemyRandom = !(rd.nextDouble() < 0.3);
@@ -147,8 +145,8 @@ public class Event1Controller {
 
                 double srcRep = sociograph.getSrcRepRelativeToAdj(teacher, student);
                 double destRep = sociograph.getSrcRepRelativeToAdj(student, teacher);
-                controller.deleteEdgeFXWithoutPrompt(friendEdgeFX);
-                controller.createNewEdgeFX(teacherVertex, studentVertex, String.valueOf(-srcRep), String.valueOf(-destRep), Relationship.ENEMY);
+                canvasRef.deleteEdgeFXWithoutPrompt(friendEdgeFX);
+                canvasRef.createNewUndirectedEdgeFX(teacherVertex, studentVertex, String.valueOf(-srcRep), String.valueOf(-destRep), Relationship.ENEMY);
 
             } else {
                 alert.setContentText("Fortunately, you're great enough and he/she is still your friend! YAY!");
