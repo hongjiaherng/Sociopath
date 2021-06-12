@@ -107,8 +107,8 @@ public class SocialActivities {
                 continue;
             }
             mate.estimateLunchEnd();
-            if (mate.getAvgLunchStart().isBefore(host.getEstimatedLunchEnd()) &&
-                    mate.getEstimatedLunchEnd().isAfter(host.getAvgLunchStart()) &&
+            if (mate.getAvgLunchStart().isBefore(host.getLunchEnd()) &&
+                    mate.getLunchEnd().isAfter(host.getAvgLunchStart()) &&
                     mate.getDive() <= 50) {    // Turn diving rate filter off first
                 potentialLunchMates.add(mate);
             }
@@ -127,9 +127,9 @@ public class SocialActivities {
             } else if (mate1.getAvgLunchStart().isAfter(mate2.getAvgLunchStart())) {
                 return 1;
             } else {
-                if (mate1.getEstimatedLunchEnd().isBefore(mate2.getEstimatedLunchEnd())) {
+                if (mate1.getLunchEnd().isBefore(mate2.getLunchEnd())) {
                     return -1;
-                } else if (mate1.getEstimatedLunchEnd().isAfter(mate2.getEstimatedLunchEnd())) {
+                } else if (mate1.getLunchEnd().isAfter(mate2.getLunchEnd())) {
                     return 1;
                 } else {
                     return 0;
@@ -141,13 +141,13 @@ public class SocialActivities {
         System.out.println("Lunch time for all potential lunch mates");
         System.out.println("==================================");
         System.out.println("name\tavg_lunch_start\tavg_lunch_period\test_lunch_end\tdiving rate (<=50)");
-        System.out.println(hostName + "\t\t" + host.getAvgLunchStart() + "\t\t\t" + host.getAvgLunchPeriod() + "\t\t\t\t\t" + host.getEstimatedLunchEnd() + "\t\t\t" + host.getDive());
-        potentialLunchMates.forEach(mate -> System.out.println(mate.getName() + "\t\t" + mate.getAvgLunchStart() + "\t\t\t" + mate.getAvgLunchPeriod() + "\t\t\t\t\t" + mate.getEstimatedLunchEnd() + "\t\t\t" + mate.getDive()));
+        System.out.println(hostName + "\t\t" + host.getAvgLunchStart() + "\t\t\t" + host.getAvgLunchPeriod() + "\t\t\t\t\t" + host.getLunchEnd() + "\t\t\t" + host.getDive());
+        potentialLunchMates.forEach(mate -> System.out.println(mate.getName() + "\t\t" + mate.getAvgLunchStart() + "\t\t\t" + mate.getAvgLunchPeriod() + "\t\t\t\t\t" + mate.getLunchEnd() + "\t\t\t" + mate.getDive()));
 
         // Add all the satisfied mate to the timeslot by considering the number of ppl currently in the slot
         for (Student mate : potentialLunchMates) {
             for (int i = computeNthMinute(host.getAvgLunchStart(), mate.getAvgLunchStart());
-                 i < computeNthMinute(host.getAvgLunchStart(), mate.getEstimatedLunchEnd());
+                 i < computeNthMinute(host.getAvgLunchStart(), mate.getLunchEnd());
                  i++) {
                 if (i < timeslot.length && timeslot[i].size() < 3) {
                     timeslot[i].add(mate.getName());

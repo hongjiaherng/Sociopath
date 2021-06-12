@@ -6,7 +6,6 @@ import javafx.animation.ScaleTransition;
 import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -934,9 +933,9 @@ public class GraphSimulationController implements Initializable {
         if (isEventRunning) {
             return;
         }
+
+        markEventRunning();
         Event3Controller.event3Prompt(sociograph, selectedVertex);
-//        markEventRunning();
-//        Event2Controller.event2Prompt(sociograph, selectedVertex);
 
         // Event ended must be called inside the event method when it ends
     }
@@ -1251,7 +1250,7 @@ public class GraphSimulationController implements Initializable {
         double dive = student.getDive();
         LocalTime[] lunchStartArr = student.getLunchStart();
         int[] lunchPeriodArr = student.getLunchPeriod();
-        LocalTime estimatedLunchEnd = student.getEstimatedLunchEnd();
+        LocalTime estimatedLunchEnd = student.getLunchEnd();
         Map<String, Double> repPointsMap = student.getRepPoints();
         Set<Student> friendsSet = student.getFriends();
         Set<Student> enemiesSet = student.getEnemies();
