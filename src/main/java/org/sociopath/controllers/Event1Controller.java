@@ -167,6 +167,5 @@ public class Event1Controller {
         System.out.println(sociograph);
         System.out.println();
 
-        canvasRef.markEventEnded();     // TODO: I added this
     }
 }
