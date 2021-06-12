@@ -44,16 +44,11 @@ public class Event2Controller {
                     "friend. Otherwise, if it’s a bad message, this person will share the same negative rep points " +
                     "that your new friend owns about you. Later, your new friend’s friends might tell their friends, so it " +
                     "will multiply and propagate your rep.";
+            String headerTxt = "Description";
+            String title = "Event 2 - Chit Chat";
 
-            Alert description = new Alert(Alert.AlertType.INFORMATION, descriptionTxt, ButtonType.NEXT);
-            canvasRef.setDefaultDialogConfig(description);
-            description.getDialogPane().setPrefWidth(400);
-            description.getDialogPane().setPrefHeight(350);
-            description.setTitle("Event 2 - Chit Chat");
-            description.setHeaderText("Description");
-
-            Optional<ButtonType> result = description.showAndWait();
-            if (result.isPresent() && result.get() == ButtonType.NEXT) {
+            Optional<ButtonType> result = canvasRef.showDescriptionDialog(title, headerTxt, descriptionTxt);
+            if (result.isPresent() && result.get() == ButtonType.OK) {
                 TextInputDialog enterNewFriendDL = new TextInputDialog();
                 canvasRef.setDefaultDialogConfig(enterNewFriendDL);
                 enterNewFriendDL.setTitle("Event 2 - Chit Chat");

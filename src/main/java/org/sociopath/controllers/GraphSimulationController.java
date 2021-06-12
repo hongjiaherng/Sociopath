@@ -19,6 +19,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.effect.BlendMode;
 import javafx.scene.input.MouseButton;
@@ -934,7 +935,7 @@ public class GraphSimulationController implements Initializable {
         if (isEventRunning) {
             return;
         }
-
+        Event3Controller.event3Prompt(sociograph, selectedVertex);
 //        markEventRunning();
 //        Event2Controller.event2Prompt(sociograph, selectedVertex);
 
@@ -1525,4 +1526,20 @@ public class GraphSimulationController implements Initializable {
         System.out.println(sociograph.getStudent(edge.srcVertex.nameText.getText()));
         System.out.println(sociograph);
     }
+
+    public Optional<ButtonType> showDescriptionDialog(String title, String headerText, String descriptionText) {
+        Alert description = new Alert(Alert.AlertType.INFORMATION);
+        description.setTitle(title);
+        description.setHeaderText(headerText);
+        TextArea area = new TextArea(descriptionText);
+        area.setWrapText(true);
+        area.setEditable(false);
+        description.getDialogPane().setPrefWidth(400);
+        description.getDialogPane().setPrefHeight(350);
+        description.getDialogPane().setContent(area);
+        description.setResizable(true);
+        setDefaultDialogConfig(description);
+        return description.showAndWait();
+    }
+
 }

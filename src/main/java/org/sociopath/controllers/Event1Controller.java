@@ -47,16 +47,11 @@ public class Event1Controller {
                     "will still be friends with him, but your rep points relative to that person will be 2 instead (Note that \n" +
                     "you were strangers before this, now you guys are friends and your rep point relative to that person \n" +
                     "is 2)";
+            String title = "Event 1 - Teaching a stranger a lab question";
+            String headerText = "Description";
 
-            Alert description = new Alert(Alert.AlertType.INFORMATION, descriptionText, ButtonType.NEXT);
-            canvasRef.setDefaultDialogConfig(description);
-            description.getDialogPane().setPrefWidth(450);
-            description.getDialogPane().setPrefHeight(400);
-            description.setTitle("Event 1 - Teaching a stranger a lab question");
-            description.setHeaderText("Description");
-
-            Optional<ButtonType> result = description.showAndWait();
-            if(result.isPresent() && result.get() == ButtonType.NEXT){
+            Optional<ButtonType> result = canvasRef.showDescriptionDialog(title, headerText, descriptionText);
+            if(result.isPresent() && result.get() == ButtonType.OK){
                 TextInputDialog enterStudentDL = new TextInputDialog();
                 canvasRef.setDefaultDialogConfig(enterStudentDL);
                 enterStudentDL.setTitle("Event 1 - Teaching a stranger a lab question");
