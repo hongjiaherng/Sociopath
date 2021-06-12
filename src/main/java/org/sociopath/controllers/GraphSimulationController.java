@@ -934,9 +934,9 @@ public class GraphSimulationController implements Initializable {
         if (isEventRunning) {
             return;
         }
+
+        markEventRunning();
         Event3Controller.event3Prompt(sociograph, selectedVertex);
-//        markEventRunning();
-//        Event2Controller.event2Prompt(sociograph, selectedVertex);
 
         // Event ended must be called inside the event method when it ends
     }

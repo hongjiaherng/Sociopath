@@ -73,8 +73,8 @@ public class Event3Controller {
                 host = sociograph.getStudent(hostVertexFX.nameText.getText());
                 event2Execution(sociograph);
             }
-            canvasRef.markEventEnded();
-            System.out.println("Ended");
+//            canvasRef.markEventEnded();
+//            System.out.println("Ended");
         }
     }
 
@@ -109,6 +109,7 @@ public class Event3Controller {
 
                     summary.setContentText(sb.toString());
                     summary.show();
+                    canvasRef.markEventEnded();
 
                     for (Student lunchMate : actualLunchMates) {
                         FillTransition ft = new FillTransition(Duration.millis(500), canvasRef.getVertexFX(lunchMate.getName()), Color.YELLOW, Color.BLACK);
@@ -130,8 +131,8 @@ public class Event3Controller {
             }
 
         }
-        canvasRef.markEventEnded();
-        System.out.println("Ended");
+//        canvasRef.markEventEnded();
+//        System.out.println("Ended");
     }
 
     private static boolean estimateLunchEnd(Sociograph sociograph) {
