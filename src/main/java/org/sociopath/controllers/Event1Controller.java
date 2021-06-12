@@ -32,7 +32,6 @@ public class Event1Controller {
             alert.show();
         }
 
-
         else{
             String teacher = selectedVertex.nameText.getText();
 

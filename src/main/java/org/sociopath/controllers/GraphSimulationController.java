@@ -170,7 +170,6 @@ public class GraphSimulationController implements Initializable {
             }
         }
 
-        System.out.println("Save method : " + isSaved);
         DBConnect.closeCon();
     }
 
