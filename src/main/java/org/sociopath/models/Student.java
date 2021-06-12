@@ -129,7 +129,7 @@ public class Student {
         return avgLunchStart;
     }
 
-    public LocalTime getEstimatedLunchEnd() {
+    public LocalTime getLunchEnd() {
         return lunchEnd;
     }
 

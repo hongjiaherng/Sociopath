@@ -1,16 +1,24 @@
 package org.sociopath.controllers;
 
-import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.TextArea;
+import javafx.animation.FadeTransition;
+import javafx.animation.FillTransition;
+import javafx.animation.PauseTransition;
+import javafx.animation.SequentialTransition;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.geometry.Pos;
+import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.util.Duration;
+import org.neo4j.cypher.internal.frontend.v2_3.ast.functions.Str;
 import org.sociopath.models.Relationship;
 import org.sociopath.models.Sociograph;
 import org.sociopath.models.Student;
 
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class Event3Controller {
     /**
@@ -21,6 +29,7 @@ public class Event3Controller {
      * 5. Ask if really wanna have lunch with them
      */
     private static GraphSimulationController canvasRef = MainPageController.canvasRef;
+    private static SequentialTransition st = new SequentialTransition();
 
     // List to keep all the students that has intersection with host's lunch time
     private static List<Student> potentialLunchMates = new ArrayList<>();      // didn't consider the number of ppl that can have lunch with in parallel way (3 persons)
@@ -60,25 +69,72 @@ public class Event3Controller {
                 actualLunchMates.clear();
                 timeslot = null;
                 totalRepObtained = 0;
+                st.getChildren().clear();
                 host = sociograph.getStudent(hostVertexFX.nameText.getText());
                 event2Execution(sociograph);
             }
             canvasRef.markEventEnded();
+            System.out.println("Ended");
         }
     }
 
     private static void event2Execution(Sociograph sociograph) {
 
-        estimateLunchEnd(sociograph);
-        if (potentialLunchMates.size() > 0) {
-            arrangeLunchSchedule(sociograph);
-            startLunch(sociograph);
+        if (estimateLunchEnd(sociograph)) {
+            if (arrangeLunchSchedule(sociograph)) {
+                startLunch(sociograph);
+
+                st.setOnFinished(event -> {
+                    PauseTransition pt = new PauseTransition(Duration.millis(4000));
+                    pt.play();
+
+                    Alert summary = new Alert(Alert.AlertType.INFORMATION);
+                    canvasRef.setDefaultDialogConfig(summary);
+                    summary.setHeaderText("Event ended");
+                    summary.getDialogPane().setPrefHeight(300);
+                    summary.getDialogPane().setPrefWidth(400);
+
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("Your obtained total ").append(totalRepObtained).append(" reputation points after having lunch with ");
+                    for (int i = 0; i < actualLunchMates.size(); i++) {
+                        if (actualLunchMates.size() == 2) {
+                            sb.append(actualLunchMates.get(0).getName()).append(" and ").append(actualLunchMates.get(1).getName());
+                            break;
+                        } else if (i == actualLunchMates.size() - 1) {
+                            sb.append("and ").append(actualLunchMates.get(i).getName());
+                        } else {
+                            sb.append(actualLunchMates.get(i).getName()).append(", ");
+                        }
+                    }
+
+                    summary.setContentText(sb.toString());
+                    summary.show();
+
+                    for (Student lunchMate : actualLunchMates) {
+                        FillTransition ft = new FillTransition(Duration.millis(500), canvasRef.getVertexFX(lunchMate.getName()), Color.YELLOW, Color.BLACK);
+                        ft.play();
+                    }
+                    FillTransition ft = new FillTransition(Duration.millis(500), canvasRef.getVertexFX(host.getName()), Color.YELLOW, Color.BLACK);
+                    ft.play();
+                });
+                st.onFinishedProperty();
+                st.play();
+            }
         } else {
-            // Dialog to tell no potential lunch mate
+            if (potentialLunchMates.size() == 0) {
+                // TODO: Dialog to tell no potential lunch mate
+                Alert noLunchMateAlert = new Alert(Alert.AlertType.ERROR);
+                canvasRef.setDefaultDialogConfig(noLunchMateAlert);
+                noLunchMateAlert.setContentText("You don't have people to have lunch with due to time constraint and their high diving rate");
+                noLunchMateAlert.show();
+            }
+
         }
+        canvasRef.markEventEnded();
+        System.out.println("Ended");
     }
 
-    private static void estimateLunchEnd(Sociograph sociograph) {
+    private static boolean estimateLunchEnd(Sociograph sociograph) {
         host.estimateLunchEnd();
 
         // Timeslot to keep who are having lunch with host at a certain minute (row array - minute; col arraylist - Student)
@@ -95,8 +151,8 @@ public class Event3Controller {
                 continue;
             }
             mate.estimateLunchEnd();
-            if (mate.getAvgLunchStart().isBefore(host.getEstimatedLunchEnd()) &&
-                    mate.getEstimatedLunchEnd().isAfter(host.getAvgLunchStart()) &&
+            if (mate.getAvgLunchStart().isBefore(host.getLunchEnd()) &&
+                    mate.getLunchEnd().isAfter(host.getAvgLunchStart()) &&
                     mate.getDive() <= 50) {    // Turn diving rate filter off first
                 potentialLunchMates.add(mate);
             }
@@ -104,8 +160,7 @@ public class Event3Controller {
 
         // The method stops if there's no ppl to have lunch with
         if (potentialLunchMates.size() == 0) {
-            System.out.println("You don't have people to have lunch with due to time constraint and their high diving rate");
-            return;
+            return false;
         }
 
         // Sort the student with avgLunchStart, if avgLunchStart is same, use estimatedLunchEnd instead (ascending)
@@ -115,9 +170,9 @@ public class Event3Controller {
             } else if (mate1.getAvgLunchStart().isAfter(mate2.getAvgLunchStart())) {
                 return 1;
             } else {
-                if (mate1.getEstimatedLunchEnd().isBefore(mate2.getEstimatedLunchEnd())) {
+                if (mate1.getLunchEnd().isBefore(mate2.getLunchEnd())) {
                     return -1;
-                } else if (mate1.getEstimatedLunchEnd().isAfter(mate2.getEstimatedLunchEnd())) {
+                } else if (mate1.getLunchEnd().isAfter(mate2.getLunchEnd())) {
                     return 1;
                 } else {
                     return 0;
@@ -125,19 +180,72 @@ public class Event3Controller {
             }
         });
 
-        // Display all lunch time for everyone
-        System.out.println("Lunch time for all potential lunch mates");
-        System.out.println("==================================");
-        System.out.println("name\tavg_lunch_start\tavg_lunch_period\test_lunch_end\tdiving rate (<=50)");
-        System.out.println(host.getName() + "\t\t" + host.getAvgLunchStart() + "\t\t\t" + host.getAvgLunchPeriod() + "\t\t\t\t\t" + host.getEstimatedLunchEnd() + "\t\t\t" + host.getDive());
-        potentialLunchMates.forEach(mate -> System.out.println(mate.getName() + "\t\t" + mate.getAvgLunchStart() + "\t\t\t" + mate.getAvgLunchPeriod() + "\t\t\t\t\t" + mate.getEstimatedLunchEnd() + "\t\t\t" + mate.getDive()));
+        Alert estLunchDialog = new Alert(Alert.AlertType.INFORMATION);
+        estLunchDialog.setTitle("Event 3 - Your road to glory (Parallel farming)");
+        estLunchDialog.setHeaderText("Lunch time for all potential lunch mates");
+        canvasRef.setDefaultDialogConfig(estLunchDialog);
+        DialogPane dialogPane = estLunchDialog.getDialogPane();
+        dialogPane.setPrefWidth(700);
+        dialogPane.setPrefHeight(400);
+
+        GridPane gridPane = new GridPane();
+        gridPane.setHgap(10);
+        gridPane.setVgap(10);
+
+        TableView<Student> tableView = new TableView<>();
+
+        TableColumn<Student, String> nameColumn = new TableColumn<>("Name");
+        nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
+
+        TableColumn<Student, LocalTime> avgLunchStartColumn = new TableColumn<>("Avg Lunch Start");
+        avgLunchStartColumn.setCellValueFactory(new PropertyValueFactory<>("avgLunchStart"));
+
+        TableColumn<Student, Integer> avgLunchPeriodColumn = new TableColumn<>("Avg Lunch Period");
+        avgLunchPeriodColumn.setCellValueFactory(new PropertyValueFactory<>("avgLunchPeriod"));
+
+        TableColumn<Student, LocalTime> estLunchEndColumn = new TableColumn<>("Estimated Lunch End");
+        estLunchEndColumn.setCellValueFactory(new PropertyValueFactory<>("lunchEnd"));
+
+        TableColumn<Student, Double> diveRateColumn = new TableColumn<>("Diving Rate (<=50)");
+        diveRateColumn.setCellValueFactory(new PropertyValueFactory<>("dive"));
+
+        nameColumn.prefWidthProperty().bind(tableView.widthProperty().divide(10));
+        avgLunchStartColumn.prefWidthProperty().bind(tableView.widthProperty().divide(5));
+        avgLunchPeriodColumn.prefWidthProperty().bind(tableView.widthProperty().divide(5));
+        estLunchEndColumn.prefWidthProperty().bind(tableView.widthProperty().divide(4.286));
+        diveRateColumn.prefWidthProperty().bind(tableView.widthProperty().divide(3.75));
+
+        tableView.getColumns().addAll(nameColumn, avgLunchStartColumn, avgLunchPeriodColumn, estLunchEndColumn, diveRateColumn);
+        tableView.getColumns().forEach(col -> col.setSortable(false));
+        ObservableList<Student> tableData = FXCollections.observableArrayList();
+        tableData.add(host);
+        tableData.addAll(potentialLunchMates);
+        tableView.setItems(tableData);
+
+        Label note = new Label("Note: First row of record is belongs to selected student");
+        note.setStyle("-fx-font-weight: bold");
+
+        gridPane.add(tableView, 0, 0);
+        gridPane.add(note, 0, 1);
+
+        gridPane.getChildren().forEach(child -> {
+            GridPane.setHgrow(child, Priority.ALWAYS);
+            GridPane.setVgrow(child, Priority.ALWAYS);
+        });
+
+        dialogPane.setContent(gridPane);
+
+        Optional<ButtonType> result =  estLunchDialog.showAndWait();
+
+        return result.isPresent() && result.get() == ButtonType.OK;
+
     }
 
-    private static void arrangeLunchSchedule(Sociograph sociograph) {
+    private static boolean arrangeLunchSchedule(Sociograph sociograph) {
         // Add all the satisfied mate to the timeslot by considering the number of ppl currently in the slot
         for (Student mate : potentialLunchMates) {
             for (int i = computeNthMinute(host.getAvgLunchStart(), mate.getAvgLunchStart());
-                 i < computeNthMinute(host.getAvgLunchStart(), mate.getEstimatedLunchEnd());
+                 i < computeNthMinute(host.getAvgLunchStart(), mate.getLunchEnd());
                  i++) {
                 if (i < timeslot.length && timeslot[i].size() < 3) {
                     timeslot[i].add(mate.getName());
@@ -148,44 +256,127 @@ public class Event3Controller {
             }
         }
 
-        // Display schedule in terms of minutes
-        System.out.println("\n" + "Schedule of " + host.getName() + " in terms of minutes");
-        System.out.println("==================================");
+        Map<LocalTime, List<String>> scheduleContainer = new LinkedHashMap<>();
         LocalTime time = host.getAvgLunchStart();
-        for (int i = 0; i < host.getAvgLunchPeriod(); i++) {
-            System.out.println(time + " : " + timeslot[i]);
+        for (int i = 0; i < timeslot.length; i++) {
+            // Check if timeslot[i] contains same thing as previous
+            // If same, do nothing
+            // If different, track down new time and new people
+            if (!isContainSamePplAsPrevious(timeslot, i)) {
+                scheduleContainer.put(time, timeslot[i]);
+            }
             time = time.plusMinutes(1);
         }
-        System.out.println();
+
+        // TODO: Display the schedule in table form
+        Alert lunchScheduleDialog = new Alert(Alert.AlertType.CONFIRMATION);
+        canvasRef.setDefaultDialogConfig(lunchScheduleDialog);
+        lunchScheduleDialog.setHeaderText("Lunch schedule of " + host.getName() + "\nDo you want to have lunch with all of them?");
+        lunchScheduleDialog.getDialogPane().setPrefHeight(300);
+        lunchScheduleDialog.getDialogPane().setPrefWidth(350);
+
+        ScrollPane scrollPane = new ScrollPane();
+        scrollPane.setPannable(true);
+        scrollPane.setStyle("-fx-fit-to-width: true");
+
+        GridPane gridPane = new GridPane();
+        gridPane.setHgap(10);
+        gridPane.setVgap(10);
+
+        List<LocalTime> listOfTime = new ArrayList<>(scheduleContainer.keySet());
+        List<Label> timeLabels = new ArrayList<>();
+        List<TextField> peopleLabels = new ArrayList<>();
+        for (int i = 0; i < listOfTime.size(); i++) {
+            if (i != listOfTime.size() - 1) {
+                if (listOfTime.get(i).equals(listOfTime.get(i + 1).minusMinutes(1))) {
+                    timeLabels.add(new Label(listOfTime.get(i) + ""));
+                } else {
+                    timeLabels.add(new Label(listOfTime.get(i) + " to " + listOfTime.get(i + 1).minusMinutes(1)));
+                }
+            } else {
+                if (listOfTime.get(i).equals(host.getLunchEnd().minusMinutes(1))) {
+                    timeLabels.add(new Label(listOfTime.get(i) + ""));
+                } else {
+                    timeLabels.add(new Label(listOfTime.get(i) + " to " + host.getLunchEnd().minusMinutes(1)));
+                }
+            }
+            String contentTF = scheduleContainer.get(listOfTime.get(i)).toString().substring(1, scheduleContainer.get(listOfTime.get(i)).toString().length() - 1);
+            if (contentTF.equals("")) {
+                contentTF = "Empty";
+            }
+            TextField textField = new TextField(contentTF);
+            textField.setEditable(false);
+            peopleLabels.add(textField);
+        }
+
+        Label label1 = new Label("Time");
+        Label label2 = new Label("People to have lunch with");
+        label1.setStyle("-fx-font-weight: bold; -fx-font-size: 14");
+        label2.setStyle("-fx-font-weight: bold; -fx-font-size: 14");
+        gridPane.add(label1, 0, 0);
+        gridPane.add(label2, 1, 0);
+        for (int i = 0; i < timeLabels.size(); i++) {
+            gridPane.add(timeLabels.get(i), 0, i + 1);
+            gridPane.add(peopleLabels.get(i), 1, i + 1);
+        }
+
+        gridPane.getChildren().forEach(child -> GridPane.setHgrow(child, Priority.ALWAYS));
+
+        gridPane.setAlignment(Pos.CENTER);
+        scrollPane.setContent(gridPane);
+        lunchScheduleDialog.getDialogPane().setContent(scrollPane);
+
+        Optional<ButtonType> result = lunchScheduleDialog.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     private static void startLunch(Sociograph sociograph) {
         // Add edge (rep point) to the host after having lunch with those ppl
+        FillTransition ftHost = new FillTransition(Duration.millis(500), canvasRef.getVertexFX(host.getName()), Color.BLACK, Color.YELLOW);
+        st.getChildren().add(ftHost);
+
+        PauseTransition pt1 = new PauseTransition(Duration.millis(1000));
+        st.getChildren().add(pt1);
+
         for (Student actualMate : actualLunchMates) {
+            GraphSimulationController.EdgeFX newOrExistingEdge;
             if (sociograph.hasDirectedEdge(host.getName(), actualMate.getName())) {
                 double newRep = sociograph.getSrcRepRelativeToAdj(host.getName(), actualMate.getName()) + 1;
                 sociograph.setSrcRepRelativeToAdj(host.getName(), actualMate.getName(), newRep);
+                canvasRef.changeSrcRepRelativeToAdjFX(host.getName(), actualMate.getName(), newRep);
+
+                newOrExistingEdge = canvasRef.getEdgeFX(host.getName(), actualMate.getName());
+
+                // A little fade effect for existing edge
+                FadeTransition ft = new FadeTransition(Duration.millis(500), newOrExistingEdge);
+                ft.setFromValue(5);
+                ft.setToValue(10);
+                st.getChildren().add(ft);
             } else {
-                sociograph.addDirectedEdge(host.getName(), actualMate.getName(), 1, Relationship.NONE);
+                newOrExistingEdge = canvasRef.createNewDirectedEdgeFX(canvasRef.getVertexFX(host.getName()), canvasRef.getVertexFX(actualMate.getName()), 1 + "", Relationship.NONE);
+
+                // Fading in effect for new edge
+                FadeTransition ft = new FadeTransition(Duration.millis(500), newOrExistingEdge);
+                ft.setFromValue(0);
+                ft.setToValue(10);
+                st.getChildren().add(ft);
             }
+            pt1 = new PauseTransition(Duration.millis(1000));
+            st.getChildren().add(pt1);
+
+            FillTransition fillTransition = new FillTransition(Duration.millis(500), canvasRef.getVertexFX(actualMate.getName()), Color.BLACK, Color.YELLOW);
+            st.getChildren().add(fillTransition);
+
+            PauseTransition pt2 = new PauseTransition(Duration.millis(1000));
+            st.getChildren().add(pt2);
+
             totalRepObtained++;
         }
 
-        // Print out result
-        StringBuilder sb = new StringBuilder();
-        sb.append("Your obtained total ").append(totalRepObtained).append(" reputation points after having lunch with ");
-        for (int i = 0; i < actualLunchMates.size(); i++) {
-            if (actualLunchMates.size() == 2) {
-                sb.append(actualLunchMates.get(0).getName()).append(" and ").append(actualLunchMates.get(1).getName());
-                break;
-            } else if (i == actualLunchMates.size() - 1) {
-                sb.append("and ").append(actualLunchMates.get(i).getName());
-            } else {
-                sb.append(actualLunchMates.get(i).getName()).append(", ");
-            }
-        }
-
-        System.out.println(sb);
     }
 
     private static int computeNthMinute(LocalTime hostTime, LocalTime mateTime) {
@@ -197,6 +388,16 @@ public class Event3Controller {
         int hour = resultDuration.getHour() * 60;
         int nthMinute = minute + hour;
         return nthMinute;
+    }
+
+    private static boolean isContainSamePplAsPrevious(ArrayList<String>[] timeslot, int currentIndex) {
+        if (currentIndex == 0) {
+            return false;
+        }
+        if (timeslot[currentIndex].containsAll(timeslot[currentIndex - 1]) && timeslot[currentIndex].size() == timeslot[currentIndex - 1].size()) {
+            return true;
+        }
+        return false;
     }
 
 }
