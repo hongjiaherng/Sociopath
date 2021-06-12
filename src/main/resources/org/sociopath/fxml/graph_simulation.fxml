@@ -147,7 +147,7 @@
                                                             <DropShadow />
                                                          </effect>
                                                       </Button>
-                                                      <Button mnemonicParsing="false" prefHeight="47.0" prefWidth="179.0" style="-fx-background-radius: 5;" text="not yet" textAlignment="CENTER" GridPane.halignment="CENTER" GridPane.rowIndex="6" GridPane.valignment="CENTER">
+                                                      <Button mnemonicParsing="false" onAction="#sixDegreeHandler" prefHeight="47.0" prefWidth="179.0" style="-fx-background-radius: 5;" text="Six Degree" textAlignment="CENTER" GridPane.halignment="CENTER" GridPane.rowIndex="6" GridPane.valignment="CENTER">
                                                          <font>
                                                             <Font name="Consolas Bold" size="20.0" />
                                                          </font>

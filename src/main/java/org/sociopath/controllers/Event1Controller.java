@@ -1,6 +1,9 @@
 package org.sociopath.controllers;
 
+import javafx.animation.FadeTransition;
 import javafx.animation.FillTransition;
+import javafx.animation.PauseTransition;
+import javafx.animation.SequentialTransition;
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
@@ -17,8 +20,10 @@ public class Event1Controller {
 
     // TODO: I changed this, which I think is a better way
     private static GraphSimulationController canvasRef = MainPageController.canvasRef;
+    private static SequentialTransition st = new SequentialTransition();
 
     // TODO : Try to see whether can improve the animation
+    // TODO : need to add the FadeTransition
     public static void event1prompt(Sociograph sociograph, GraphSimulationController.VertexFX selectedVertex) {
         Alert alert = new Alert(Alert.AlertType.WARNING);
         canvasRef.setDefaultDialogConfig(alert);
@@ -102,64 +107,98 @@ public class Event1Controller {
                 GraphSimulationController.VertexFX teacherVertex = selectedVertex;
                 GraphSimulationController.VertexFX studentVertex = canvasRef.getVertexFX(studentName);
 
-                event1Execution(sociograph, teacherVertex, studentVertex);
+                String student = studentVertex.nameText.getText();
+                event1Execution(sociograph,teacher, student);
             }
         }
 
     }
 
-    private static void event1Execution(Sociograph sociograph, GraphSimulationController.VertexFX teacherVertex, GraphSimulationController.VertexFX studentVertex) {
+    private static void event1Execution(Sociograph sociograph,String teacher, String student) {
         Random rd = new Random();
-
-        String student = studentVertex.nameText.getText();
-        String teacher = teacherVertex.nameText.getText();
+        st.getChildren().clear();
 
         double repSrc = rd.nextDouble() < 0.5 ? 2 : 10;
         double repDest = rd.nextInt(10) + 1;
-        GraphSimulationController.EdgeFX friendEdgeFX = canvasRef.createNewUndirectedEdgeFX(teacherVertex, studentVertex, String.valueOf(repSrc), String.valueOf(repDest), Relationship.FRIEND);
+        GraphSimulationController.EdgeFX friendEdgeFX = canvasRef.createNewUndirectedEdgeFX(canvasRef.getVertexFX(teacher), canvasRef.getVertexFX(student), String.valueOf(repSrc), String.valueOf(repDest), Relationship.FRIEND);
+        FadeTransition friendFT = new FadeTransition(Duration.millis(1000),friendEdgeFX);
+        friendFT.setFromValue(0);
+        friendFT.setToValue(100);
+
         FillTransition teacherFT = new FillTransition();
-        teacherFT.setDuration(Duration.millis(500));
+        teacherFT.setDuration(Duration.millis(1000));
         teacherFT.setFromValue(Color.GREY);
         teacherFT.setToValue(Color.RED);
-        teacherFT.setShape(teacherVertex);
-        teacherFT.play();
+        teacherFT.setShape(canvasRef.getVertexFX(teacher));
 
         FillTransition studentFT = new FillTransition();
-        studentFT.setDuration(Duration.millis(500));
+        studentFT.setDuration(Duration.millis(1000));
         studentFT.setFromValue(Color.GREY);
         studentFT.setToValue(Color.RED);
-        studentFT.setShape(studentVertex);
-        studentFT.play();
+        studentFT.setShape(canvasRef.getVertexFX(student));
+
+        st.getChildren().add(teacherFT);
+        st.getChildren().add(studentFT);
+        st.getChildren().add(friendFT);
 
         boolean checkSuccess = repSrc == 10;
 
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         canvasRef.setDefaultDialogConfig(alert);
+        StringBuilder sb = new StringBuilder();
+
         if (!checkSuccess) {
 
             boolean isEnemyRandom = !(rd.nextDouble() < 0.3);
 
             if (isEnemyRandom) {
-                alert.setContentText("UH OH! Your friend has become your enemy! \uD83D\uDE1E (Both of the rep points will now become negative!)");
-                alert.show();
+                sb.append("UH OH! Your friend has become your enemy! \uD83D\uDE1E (Both of the rep points will now become negative!) \n");
 
-                double srcRep = sociograph.getSrcRepRelativeToAdj(teacher, student);
-                double destRep = sociograph.getSrcRepRelativeToAdj(student, teacher);
                 canvasRef.deleteEdgeFXWithoutPrompt(friendEdgeFX);
-                canvasRef.createNewUndirectedEdgeFX(teacherVertex, studentVertex, String.valueOf(-srcRep), String.valueOf(-destRep), Relationship.ENEMY);
+                GraphSimulationController.EdgeFX enemyEdgeFX = canvasRef.createNewUndirectedEdgeFX(canvasRef.getVertexFX(teacher), canvasRef.getVertexFX(student),
+                        String.valueOf(-repSrc), String.valueOf(-repDest), Relationship.ENEMY);
+
+                FadeTransition friendFTUpdate = new FadeTransition(Duration.millis(1000), friendEdgeFX);
+                friendFTUpdate.setFromValue(100);
+                friendFTUpdate.setToValue(0);
+
+                FadeTransition enemyft = new FadeTransition(Duration.millis(1000),enemyEdgeFX);
+                enemyft.setFromValue(0);
+                enemyft.setToValue(100);
+
+                st.getChildren().add(friendFTUpdate);
+                st.getChildren().add(enemyft);
 
             } else {
-                alert.setContentText("Fortunately, you're great enough and he/she is still your friend! YAY!");
-                alert.show();
+                sb.append("Fortunately, ").append(teacher).append(" is great enough and ").append(student).append(" is still your friend! YAY! \n");
             }
         }
 
         else{
-            alert.setContentText("You two are now friends because you had taught good!");
-            alert.show();
+            sb.append(teacher).append(" and ").append(student).append(" are now friends because ").append(teacher).append(" had taught good!");
         }
+
         System.out.println(sociograph);
         System.out.println();
+
+        st.setOnFinished(event -> {
+            PauseTransition pt = new PauseTransition(Duration.millis(6000));
+            pt.play();
+
+            alert.setContentText(sb.toString());
+            alert.getDialogPane().setPrefWidth(250);
+            alert.getDialogPane().setPrefHeight(200);
+            alert.show();
+
+            FillTransition ftTeacher = new FillTransition(Duration.millis(500), canvasRef.getVertexFX(teacher), Color.RED, Color.BLACK);
+            ftTeacher.play();
+
+            FillTransition ftStudent = new FillTransition(Duration.millis(500), canvasRef.getVertexFX(student), Color.RED, Color.BLACK);
+            ftStudent.play();
+        });
+
+        st.onFinishedProperty();
+        st.play();
 
     }
 }

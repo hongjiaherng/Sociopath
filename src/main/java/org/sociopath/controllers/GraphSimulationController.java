@@ -974,6 +974,10 @@ public class GraphSimulationController implements Initializable {
         // Event ended must be called inside the event method when it ends
     }
 
+    public void sixDegreeHandler(ActionEvent event){
+        SixDegreeController.sixDegreePrompt(sociograph,selectedVertex);
+    }
+
     public class VertexFX extends Circle {
         Point coordinate;
         Text nameText;
@@ -1539,6 +1543,12 @@ public class GraphSimulationController implements Initializable {
         description.setResizable(true);
         setDefaultDialogConfig(description);
         return description.showAndWait();
+    }
+
+    public VertexFX createVertexFX(double x, double y, double radius, String name){
+        VertexFX newVertex = new VertexFX(x, y, radius, name);
+        newVertex.showVertex();
+        return newVertex;
     }
 
 }
