@@ -24,6 +24,11 @@ public class Event2Controller {
     public static void event2Prompt(Sociograph sociograph, GraphSimulationController.VertexFX selectedVertex) {
         Alert alert = new Alert(Alert.AlertType.WARNING);
         canvasRef.setDefaultDialogConfig(alert);
+        alert.setOnHidden(e -> {    // Important! to make sure the state is changed
+            System.out.println("Ended4");
+            canvasRef.markEventEnded();
+        });
+
         if (selectedVertex == null) {
             alert.setContentText("Please select a student!");
             alert.show();
@@ -111,6 +116,8 @@ public class Event2Controller {
                     srcRep = srcRepTF.getText().trim();
                     destRep = destRepTF.getText().trim();
                 } else {
+                    System.out.println("Ended2");
+                    canvasRef.markEventEnded();
                     return;
                 }
 
@@ -141,8 +148,12 @@ public class Event2Controller {
                 st.getChildren().add(ft2);
 
                 event2Execution(sociograph, hostName, newFriendName);
+            } else {
+                System.out.println("Ended1");
+                canvasRef.markEventEnded();
             }
         }
+
     }
 
     private static void event2Execution(Sociograph sociograph, String hostName, String newFriendName) {
@@ -175,6 +186,8 @@ public class Event2Controller {
             } else {
                 summary.setContentText("No any student hear about you from your new friend");
             }
+            System.out.println("Ended");
+            canvasRef.markEventEnded();
             summary.show();
 
             // Changing all the light up vertex back to original color
@@ -187,7 +200,6 @@ public class Event2Controller {
             FillTransition ftFriend = new FillTransition(Duration.millis(500), canvasRef.getVertexFX(newFriendName), Color.YELLOW, Color.BLACK);
             ftFriend.play();
 
-            canvasRef.markEventEnded();
         });
         st.onFinishedProperty();    // Mark the end
         st.play();
