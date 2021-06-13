@@ -126,7 +126,7 @@ public class Event4Controller {
         enterBookHeight.setResizable(true);
         enterBookHeight.setTitle(title);
         enterBookHeight.setHeaderText("Enter the height of books");
-        enterBookHeight.getDialogPane().setMaxHeight(400);
+        enterBookHeight.getDialogPane().setPrefHeight(300);
 
         ScrollPane scrollPane = new ScrollPane();
         scrollPane.setPannable(true);
@@ -172,7 +172,12 @@ public class Event4Controller {
                 try {
                     heights[i] = Integer.parseInt(textFields.get(i).getText().trim());
                 } catch (NumberFormatException e) {
-                    System.out.println("Format error. Please enter only integer");
+                    Alert alert = new Alert(Alert.AlertType.ERROR);
+                    canvasRef.setDefaultDialogConfig(alert);
+                    alert.setContentText("All inputs must be in Integer!");
+                    alert.showAndWait();
+                    heights = null;
+                    break;
                 }
             }
             return heights;

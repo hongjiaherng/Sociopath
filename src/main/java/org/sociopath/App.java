@@ -5,7 +5,6 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import org.sociopath.utils.DBConnect;
 
 import java.io.IOException;
 import java.util.Stack;
@@ -30,6 +29,11 @@ public class App extends Application {
         primaryStage.setTitle("Sociopath");
         primaryStage.setScene(scene);
         primaryStage.show();
+    }
+
+    @Override
+    public void stop() throws Exception {
+        System.exit(0);
     }
 
     public static void main(String[] args) {

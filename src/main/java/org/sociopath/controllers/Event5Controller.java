@@ -47,7 +47,6 @@ public class Event5Controller {
     public static void event5Prompt(Sociograph sociograph, GraphSimulationController.VertexFX youVertexFX) {
         Alert alert = new Alert(Alert.AlertType.WARNING);
         canvasRef.setDefaultDialogConfig(alert);
-        alert.setOnHidden(e -> canvasRef.markEventEnded());
 
         if (youVertexFX == null) {
             alert.setContentText("Please select a student!");
@@ -178,9 +177,11 @@ public class Event5Controller {
                     }
 
                     if (reachCrush) {
-                        FillTransition lastT = new FillTransition(Duration.millis(1000), canvasRef.getVertexFX(crush.getName()), Color.rgb(174, 0, 255), Color.GREEN);
+                        FillTransition lastT = new FillTransition(Duration.millis(1000), canvasRef.getVertexFX(crush.getName()), Color.rgb(174, 0, 255), Color.YELLOW);
+                        lastT.setCycleCount(5);
                         st.getChildren().add(lastT);
                         st.getChildren().add(pause(1000));
+
                     }
 
                     st.setOnFinished(event -> {
@@ -505,7 +506,7 @@ public class Event5Controller {
     }
 
     private static FillTransition spreadedTransition(String name) {
-        FillTransition ft = new FillTransition(Duration.millis(500), canvasRef.getVertexFX(name), Color.BLACK, Color.GREEN);
+        FillTransition ft = new FillTransition(Duration.millis(500), canvasRef.getVertexFX(name), Color.BLACK, Color.YELLOW);
         return ft;
     }
 

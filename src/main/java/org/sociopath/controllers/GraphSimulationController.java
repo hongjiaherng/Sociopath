@@ -60,8 +60,6 @@ public class GraphSimulationController implements Initializable {
     public ToggleGroup toggleGroup;
     public Pane viewer;
 
-    public boolean isEventRunning = false;
-
     private Sociograph sociograph = new Sociograph();                    
     public List<VertexFX> allCircles = new ArrayList<>();
     private VertexFX selectedVertex = null;
@@ -594,12 +592,6 @@ public class GraphSimulationController implements Initializable {
 
     EventHandler<MouseEvent> mouseHandler = event -> {
 
-        // If any event is running, don't execute click event on vertex
-        if (isEventRunning) {
-            System.out.println("event is running, you can't do this");
-            return;
-        }
-
         VertexFX destVertexFX = (VertexFX) event.getSource();
         if (event.getEventType() == MouseEvent.MOUSE_CLICKED && event.getButton() == MouseButton.PRIMARY) {
             if (!destVertexFX.isSelected) {
@@ -902,68 +894,27 @@ public class GraphSimulationController implements Initializable {
     };
 
     public void event1Handler(ActionEvent event) {
-        if (isEventRunning) {
-            return;
-        }
-//        markEventRunning();
         Event1Controller.event1prompt(sociograph, selectedVertex);
-        // Event ended must be called inside the event method when it ends
     }
 
     public void event2Handler(ActionEvent event) {
-        if (isEventRunning) {
-            return;
-        }
-
-        markEventRunning();
         Event2Controller.event2Prompt(sociograph, selectedVertex);
-
-        // Event ended must be called inside the event method when it ends
     }
 
     public void event3Handler(ActionEvent event) {
-        if (isEventRunning) {
-            return;
-        }
-
-        markEventRunning();
         Event3Controller.event3Prompt(sociograph, selectedVertex);
-
-        // Event ended must be called inside the event method when it ends
     }
 
     public void event4Handler(ActionEvent event) {
-        if (isEventRunning) {
-            return;
-        }
-
         Event4Controller.event4Prompt(sociograph, selectedVertex);
-//        markEventRunning();
-//        Event2Controller.event2Prompt(sociograph, selectedVertex);
-
-        // Event ended must be called inside the event method when it ends
     }
 
     public void event5Handler(ActionEvent event) {
-        if (isEventRunning) {
-            return;
-        }
         Event5Controller.event5Prompt(sociograph, selectedVertex);
-//        markEventRunning();
-//        Event2Controller.event2Prompt(sociograph, selectedVertex);
-
-        // Event ended must be called inside the event method when it ends
     }
 
     public void event6Handler(ActionEvent event) {
-        if (isEventRunning) {
-            return;
-        }
-
-//        markEventRunning();
-//        Event2Controller.event2Prompt(sociograph, selectedVertex);
-
-        // Event ended must be called inside the event method when it ends
+        Event6Controller.event6Prompt();
     }
 
     public void sixDegreeHandler(ActionEvent event){
@@ -1497,14 +1448,6 @@ public class GraphSimulationController implements Initializable {
             }
         }
         throw new IllegalArgumentException("This edge is not exist (" + srcName + " -> " + adjName + ") or (" + srcName + " <-> " + adjName + ")");
-    }
-
-    public void markEventRunning() {
-        this.isEventRunning = true;
-    }
-
-    public void markEventEnded() {
-        this.isEventRunning = false;
     }
 
     public void deleteEdgeFXWithoutPrompt(EdgeFX edge){

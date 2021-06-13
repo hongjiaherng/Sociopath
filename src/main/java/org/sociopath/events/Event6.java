@@ -1,7 +1,5 @@
 package org.sociopath.events;
 
-import org.sociopath.models.Sociograph;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

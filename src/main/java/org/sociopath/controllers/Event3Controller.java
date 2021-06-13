@@ -12,7 +12,6 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
-import org.neo4j.cypher.internal.frontend.v2_3.ast.functions.Str;
 import org.sociopath.models.Relationship;
 import org.sociopath.models.Sociograph;
 import org.sociopath.models.Student;
@@ -41,9 +40,6 @@ public class Event3Controller {
     public static void event3Prompt(Sociograph sociograph, GraphSimulationController.VertexFX hostVertexFX) {
         Alert alert = new Alert(Alert.AlertType.WARNING);
         canvasRef.setDefaultDialogConfig(alert);
-        alert.setOnHidden(e -> {    // Important! to make sure the state is changed
-            canvasRef.markEventEnded();
-        });
 
         if (hostVertexFX == null) {
             alert.setContentText("Please select a student!");
@@ -109,7 +105,6 @@ public class Event3Controller {
 
                     summary.setContentText(sb.toString());
                     summary.show();
-                    canvasRef.markEventEnded();
 
                     for (Student lunchMate : actualLunchMates) {
                         FillTransition ft = new FillTransition(Duration.millis(500), canvasRef.getVertexFX(lunchMate.getName()), Color.YELLOW, Color.BLACK);

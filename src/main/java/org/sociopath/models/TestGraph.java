@@ -12,7 +12,7 @@ public class TestGraph {
 //        event1Test(sociograph);
 //        event2Test(sociograph);
 //        event3Test(sociograph);
-        event4Test(sociograph);
+//        event4Test(sociograph);
 //        event5Test(sociograph);
 //        event6Test(sociograph);
 //        GraphDao.saveGraph(sociograph);
@@ -113,7 +113,6 @@ public class TestGraph {
         System.out.println("\n" + sociograph);
     }
 
-    // TODO: Jia Hong part
     public static void event4Test(Sociograph sociograph) {
         System.out.println("Event 4 - Arranging Books");
         SocialActivities.event4();
@@ -126,7 +125,6 @@ public class TestGraph {
         SocialActivities.event5(sociograph, "F", "C");
     }
 
-    // TODO: Jia Hong part
     public static void event6Test(Sociograph sociograph) {
         System.out.println("Event 6 - Friendship");
 //        System.out.println(sociograph + "\n");

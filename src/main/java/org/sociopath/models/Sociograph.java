@@ -1,7 +1,5 @@
 package org.sociopath.models;
 
-import org.sociopath.dao.GraphDao;
-
 import java.util.*;
 
 /**
