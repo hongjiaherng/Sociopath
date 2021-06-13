@@ -63,7 +63,7 @@ public class GraphSimulationController implements Initializable {
     public boolean isEventRunning = false;
 
     private Sociograph sociograph = new Sociograph();                    
-    private List<VertexFX> allCircles = new ArrayList<>();
+    public List<VertexFX> allCircles = new ArrayList<>();
     private VertexFX selectedVertex = null;
     private static boolean isSaved = false;
 
@@ -956,7 +956,7 @@ public class GraphSimulationController implements Initializable {
         if (isEventRunning) {
             return;
         }
-
+        Event5Controller.event5Prompt(sociograph, selectedVertex);
 //        markEventRunning();
 //        Event2Controller.event2Prompt(sociograph, selectedVertex);
 

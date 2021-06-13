@@ -320,6 +320,67 @@ public class SocialActivities {
 
     }
 
+    private static boolean spreadRumor(List<List<String>> allPaths, String crush, List<List<String>> pplKnewSecret) {
+//        System.out.println("Inside before removing " + allPaths);
+        for (int i = 0; i < allPaths.size(); i++) {
+            if (allPaths.get(i).contains("stop")) {
+                continue;
+            }
+            String newlySpread = allPaths.get(i).remove(0);
+            pplKnewSecret.get(i).add(newlySpread);
+            if (newlySpread.equals(crush)) {
+                System.out.println(pplKnewSecret.get(i).get(pplKnewSecret.get(i).size() - 2) + " told your crush, " + crush + " ...");
+                return true;
+            }
+            System.out.println(pplKnewSecret.get(i).get(pplKnewSecret.get(i).size() - 2) + " told " + newlySpread + " your secret!");
+        }
+//        System.out.println("Inside after removing " + allPaths);
+        return false;
+    }
+
+    private static boolean convince(List<List<String>> allPaths, String pplToConvince, List<List<String>> pplKnewSecret, String crush) {
+        HashSet<String> pplKnewSecretSet = new HashSet<>();
+        pplKnewSecret.forEach(list -> pplKnewSecretSet.addAll(list));
+        if (allPaths.stream().noneMatch(path -> path.contains(pplToConvince))) {
+            System.out.println("You convince the wrong person!");
+        } else if (pplToConvince.equals(crush)) {
+            System.out.println("You can't convince your crush directly!");
+        } else if (pplKnewSecretSet.contains(pplToConvince)) {
+            System.out.println("You can't convince the person who already know your secret!");
+        } else {
+            boolean someoneConvinced = false;
+            for (List<String> path : allPaths) {
+                if (path.contains("stop")) continue;
+
+                if (path.contains(pplToConvince)) {
+                    someoneConvinced = true;
+                    path.add("stop");
+                    StringBuilder chain = new StringBuilder("[");
+                    path.forEach(v -> {
+                        if (v.equals("stop"))
+                            chain.append("]");
+                        else if (v.equals(crush))
+                            chain.append(v);
+                        else
+                            chain.append(v).append(", ");
+                    });
+                    System.out.println("This chain " + chain + " stopped");
+                }
+            }
+
+            if (someoneConvinced) {
+                System.out.print("You convinced the right person, " + pplToConvince + "! ");
+                if (allPaths.stream().allMatch(v -> v.contains("stop"))) {
+                    System.out.println();
+                } else {
+                    System.out.println("But there's still someone to convince.");
+                }
+            }
+        }
+        return allPaths.stream().allMatch(path -> path.contains("stop"));
+    }
+
+
     public static void doAssignments(Sociograph sociograph){
         List<List<String>> groups = distributeTeam(sociograph);
         System.out.println("All the groups are : ");
@@ -590,64 +651,5 @@ public class SocialActivities {
         return nthMinute;
     }
 
-    private static boolean spreadRumor(List<List<String>> allPaths, String crush, List<List<String>> pplKnewSecret) {
-//        System.out.println("Inside before removing " + allPaths);
-        for (int i = 0; i < allPaths.size(); i++) {
-            if (allPaths.get(i).contains("stop")) {
-                continue;
-            }
-            String newlySpread = allPaths.get(i).remove(0);
-            pplKnewSecret.get(i).add(newlySpread);
-            if (newlySpread.equals(crush)) {
-                System.out.println(pplKnewSecret.get(i).get(pplKnewSecret.get(i).size() - 2) + " told your crush, " + crush + " ...");
-                return true;
-            }
-            System.out.println(pplKnewSecret.get(i).get(pplKnewSecret.get(i).size() - 2) + " told " + newlySpread + " your secret!");
-        }
-//        System.out.println("Inside after removing " + allPaths);
-        return false;
-    }
-
-    private static boolean convince(List<List<String>> allPaths, String pplToConvince, List<List<String>> pplKnewSecret, String crush) {
-        HashSet<String> pplKnewSecretSet = new HashSet<>();
-        pplKnewSecret.forEach(list -> pplKnewSecretSet.addAll(list));
-        if (allPaths.stream().noneMatch(path -> path.contains(pplToConvince))) {
-            System.out.println("You convince the wrong person!");
-        } else if (pplToConvince.equals(crush)) {
-            System.out.println("You can't convince your crush directly!");
-        } else if (pplKnewSecretSet.contains(pplToConvince)) {
-            System.out.println("You can't convince the person who already know your secret!");
-        } else {
-            boolean someoneConvinced = false;
-            for (List<String> path : allPaths) {
-                if (path.contains("stop")) continue;
-
-                if (path.contains(pplToConvince)) {
-                    someoneConvinced = true;
-                    path.add("stop");
-                    StringBuilder chain = new StringBuilder("[");
-                    path.forEach(v -> {
-                        if (v.equals("stop"))
-                            chain.append("]");
-                        else if (v.equals(crush))
-                            chain.append(v);
-                        else
-                            chain.append(v).append(", ");
-                    });
-                    System.out.println("This chain " + chain + " stopped");
-                }
-            }
-
-            if (someoneConvinced) {
-                System.out.print("You convinced the right person, " + pplToConvince + "! ");
-                if (allPaths.stream().allMatch(v -> v.contains("stop"))) {
-                    System.out.println();
-                } else {
-                    System.out.println("But there's still someone to convince.");
-                }
-            }
-        }
-        return allPaths.stream().allMatch(path -> path.contains("stop"));
-    }
 
 }

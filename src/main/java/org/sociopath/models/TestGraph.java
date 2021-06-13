@@ -11,9 +11,9 @@ public class TestGraph {
         initialization(sociograph);
 //        event1Test(sociograph);
 //        event2Test(sociograph);
-        event3Test(sociograph);
+//        event3Test(sociograph);
 //        event4Test(sociograph);
-//        event5Test(sociograph);
+        event5Test(sociograph);
 //        event6Test(sociograph);
 //        GraphDao.saveGraph(sociograph);
 //        DBConnect.closeCon();

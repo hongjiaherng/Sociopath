@@ -251,7 +251,7 @@ public class Sociograph {
      * @return relationship type in enum (Either FRIEND, ENEMY, THE_OTHER_HALF, ADMIRED_BY, or NONE), null if no relationship
      */
     public Relationship checkRelationship(String srcName, String adjName) {
-        System.out.println(srcName + " " + adjName + " has directed edge ? " + hasDirectedEdge(srcName, adjName));
+//        System.out.println(srcName + " " + adjName + " has directed edge ? " + hasDirectedEdge(srcName, adjName));
         if(hasDirectedEdge(srcName, adjName)){
             Vertex srcVertex = vertices.get(indexOf(srcName));
             Edge srcEdge = srcVertex.firstEdge;
@@ -508,7 +508,9 @@ public class Sociograph {
 
         for (Student neighborObj : neighbours(current)) {
             String neighbor = neighborObj.getName();
-            if (!isVisited.get(neighbor) && checkRelationship(neighbor, current) == Relationship.FRIEND) {
+            if (!isVisited.get(neighbor) &&
+                    (checkRelationship(neighbor, current) == Relationship.FRIEND ||
+                            checkRelationship(neighbor, current) == Relationship.THE_OTHER_HALF)) {
                 localPathList.add(neighbor);
 
                 dfTraversalRecur(neighbor, destination, isVisited, localPathList, listOfPathList);
