@@ -251,7 +251,6 @@ public class Sociograph {
      * @return relationship type in enum (Either FRIEND, ENEMY, THE_OTHER_HALF, ADMIRED_BY, or NONE), null if no relationship
      */
     public Relationship checkRelationship(String srcName, String adjName) {
-//        System.out.println(srcName + " " + adjName + " has directed edge ? " + hasDirectedEdge(srcName, adjName));
         if(hasDirectedEdge(srcName, adjName)){
             Vertex srcVertex = vertices.get(indexOf(srcName));
             Edge srcEdge = srcVertex.firstEdge;
@@ -263,7 +262,6 @@ public class Sociograph {
             }
         }
         return null;
-        // TODO : MIGHT have problem (if return null will throw exception in Student.setRelationship())
     }
 
     public boolean isAdmiredBy(String srcName, String adjName) {

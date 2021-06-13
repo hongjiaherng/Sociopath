@@ -7,6 +7,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * A class that helps Neo4j to convert non-native type that is supported in Java
+ * This class will help to convert the HashMap that is available in the Student class to a String
+ * when saving and passing to the database
+ *
+ * This class will help to change back to HashMap when getting from the database too
+ */
 public class HashMapConverter implements AttributeConverter<HashMap<String, Double>, List<String>> {
 
     @Override
