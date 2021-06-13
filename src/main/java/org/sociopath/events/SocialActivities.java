@@ -399,7 +399,7 @@ public class SocialActivities {
                             double theOtherHalf = rd.nextDouble();
 
                             if (theOtherHalf < 0.1) {
-                                sociograph.setUndirectedRelationshipOnEdge(srcName, destName, Relationship.THE_OTHER_HALF);    // TODO: I had change this to THE_OTHER_HALF because there is no one edge is ADMIRED_BY, and another edge is FRIEND
+                                sociograph.setUndirectedRelationshipOnEdge(srcName, destName, Relationship.THE_OTHER_HALF);
                                 System.out.println("***********");
                                 System.out.println(srcName + " and " + destName + " has a relationship! ");
                                 System.out.println("***********");

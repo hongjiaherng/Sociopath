@@ -10,6 +10,16 @@ import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
+/**
+ * This class is the studentInfo in the Vertex of the Sociograph
+ * In order to use POJO(Plain Old Java Object) in Neo4j, the Neo4j-OGM is being imported into this project
+ *
+ * @NodeEntity means that it will treat this class as a node, and when we get from the database, it will change to a Student object
+ * @Id this will be identified as the id in the Neo4j database, Neo4j uses this to differentiate between different nodes
+ * @Property means that it will treat the variable as an Property of the node (you can specify a name for the property also)
+ * @Relationship means that it will form the relationship in the database with the relationship name you specify (you can use a List, a Set or an Object that is @NodeEntity)
+ *
+ */
 @NodeEntity
 public class Student {
 
@@ -42,11 +52,9 @@ public class Student {
     @Relationship(type = "NONE")
     private Set<Student> nones = new HashSet<>();
 
-    // TODO: Newly added admired by
     @Relationship(type = "ADMIRED_BY")
     private Set<Student> admirers = new HashSet<>();     // This crush means who ever secretly like this student should be included in this list
 
-    // TODO: Yes it can be a single variable no problem
     @Relationship(type = "THE_OTHER_HALF")
     private Student theOtherHalf = null;      // can only contain one
 

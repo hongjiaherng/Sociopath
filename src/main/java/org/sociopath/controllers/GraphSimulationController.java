@@ -41,7 +41,7 @@ import org.sociopath.models.Sociograph;
 import org.sociopath.models.Student;
 import org.sociopath.utils.DBConnect;
 
-import org.neo4j.driver.exceptions.AuthenticationException;
+import org.neo4j.driver.exceptions.ClientException;
 import org.neo4j.ogm.exception.ConnectionException;
 
 import java.awt.*;
@@ -133,45 +133,39 @@ public class GraphSimulationController implements Initializable {
     public void saveGraphFX(ActionEvent actionEvent) {
         DBConnect.startCon();
 
-        if(!isSaved) {
-            try {
-                GraphDao.deleteGraph();
-            } catch (ConnectionException e) {
-                Alert alertDialog = new Alert(Alert.AlertType.WARNING);
-                setDefaultDialogConfig(alertDialog);
-                alertDialog.setContentText("Error connecting to the database!");
-                alertDialog.show();
-            }
-        }
-
+        // the graph is empty, will not save
         if(sociograph.getAllStudents().isEmpty()) {
             Alert alertDialog = new Alert(Alert.AlertType.WARNING);
             setDefaultDialogConfig(alertDialog);
             alertDialog.setContentText("No vertex and edge can be saved!");
             alertDialog.show();
+            return;
         }
 
-        else{
-            try {
-                GraphDao.saveGraph(sociograph);
-                Alert alertDialog = new Alert(Alert.AlertType.WARNING);
-                setDefaultDialogConfig(alertDialog);
-                alertDialog.setContentText("Save Successfully!");
-                alertDialog.show();
-                isSaved = true;
-
-            } catch(ConnectionException e){
-                Alert alertDialog = new Alert(Alert.AlertType.WARNING);
-                setDefaultDialogConfig(alertDialog);
-                alertDialog.setContentText("Error connecting to the database!");
-                alertDialog.show();
-            } catch(AuthenticationException e){
-                Alert alertDialog = new Alert(Alert.AlertType.WARNING);
-                setDefaultDialogConfig(alertDialog);
-                alertDialog.setContentText("Your username or the password of the database is wrong! Please try it again!");
-                alertDialog.show();
+        try {
+            if (!isSaved) {
+                GraphDao.deleteGraph();
             }
+
+            GraphDao.saveGraph(sociograph);
+            Alert alertDialog = new Alert(Alert.AlertType.WARNING);
+            setDefaultDialogConfig(alertDialog);
+            alertDialog.setContentText("Save Successfully!");
+            alertDialog.show();
+            isSaved = true;
+
+        } catch(ClientException e){
+            Alert alertDialog = new Alert(Alert.AlertType.WARNING);
+            setDefaultDialogConfig(alertDialog);
+            alertDialog.setContentText("Your username or password might have been type in incorrectly. Please try it again!\n You may want to restart the database!");
+            alertDialog.show();
+        } catch (ConnectionException e){
+            Alert alertDialog = new Alert(Alert.AlertType.WARNING);
+            setDefaultDialogConfig(alertDialog);
+            alertDialog.setContentText("Error connecting to the database!");
+            alertDialog.show();
         }
+
 
         DBConnect.closeCon();
     }
@@ -211,10 +205,10 @@ public class GraphSimulationController implements Initializable {
                 alertDialog.setContentText("Error connecting to the database!");
                 alertDialog.show();
 
-            } catch (AuthenticationException e){
+            } catch (ClientException e){
                 Alert alertDialog = new Alert(Alert.AlertType.WARNING);
                 setDefaultDialogConfig(alertDialog);
-                alertDialog.setContentText("Your username or password might have been type in incorrectly. Please try it again!");
+                alertDialog.setContentText("Your username or password might have been type in incorrectly. Please try it again!\n You may want to restart the database!");
                 alertDialog.show();
             }
         }
@@ -567,12 +561,10 @@ public class GraphSimulationController implements Initializable {
         }
     }
 
-    // TODO : add a state to the clear button, for the database to make sure that whether it is needed to clear the database
     public void clearGraphFX(ActionEvent event) {
+        isSaved = false;
+
         // Remove all vertices from sociograph
-
-            isSaved = false;
-
         this.sociograph.clear();
 
         List<Node> allNodesOnCanvas = new ArrayList<>();
@@ -1347,7 +1339,6 @@ public class GraphSimulationController implements Initializable {
         return labelNameList;
     }
 
-    // TODO : Can I ask you all to help me check whether the vertex and the edges whether they will go out of the blank canvas?
     private void drawAllVertexAndEdge(Sociograph newSociograph, HashMap<String, Boolean> isCreated){
         int xSize = 510 / 30;
         int ySize = 570 / 30;
@@ -1471,14 +1462,12 @@ public class GraphSimulationController implements Initializable {
         return null;
     }
 
-    // TODO: I removed the Transition effect here, so that it works better with SequentialTransition
     public EdgeFX createNewUndirectedEdgeFX(VertexFX srcVertex, VertexFX endVertex, String srcRep, String endRep, Relationship rel) {
         EdgeFX newUndirectedEdge = new EdgeFX(srcVertex, endVertex, srcRep, endRep, rel);
         newUndirectedEdge.showEdge();
         return newUndirectedEdge;
     }
 
-    // TODO: I removed the Transition effect here, so that it works better with SequentialTransition
     public EdgeFX createNewDirectedEdgeFX(VertexFX srcVertex, VertexFX endVertex, String srcRep, Relationship rel) {
         EdgeFX newDirectedEdge = new EdgeFX(srcVertex, endVertex, srcRep, rel);
         newDirectedEdge.showEdge();

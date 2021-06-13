@@ -18,19 +18,17 @@ import java.util.Random;
 
 public class Event1Controller {
 
-    // TODO: I changed this, which I think is a better way
     private static GraphSimulationController canvasRef = MainPageController.canvasRef;
     private static SequentialTransition st = new SequentialTransition();
 
-    // TODO : Try to see whether can improve the animation
-    // TODO : need to add the FadeTransition
+    // Basic Output for event 1
     public static void event1prompt(Sociograph sociograph, GraphSimulationController.VertexFX selectedVertex) {
         Alert alert = new Alert(Alert.AlertType.WARNING);
         canvasRef.setDefaultDialogConfig(alert);
 
         // check whether a vertex is selected
         if(selectedVertex == null){
-            alert.setContentText("Please select a student as the student that wanted to teach lab questions!");
+            alert.setContentText("Please select a vertex as the teacher that wanted to teach lab questions!");
             alert.show();
         }
 
@@ -40,22 +38,24 @@ public class Event1Controller {
             alert.show();
         }
 
+        // Start the event with some user inputs and description
         else{
             String teacher = selectedVertex.nameText.getText();
 
-            String descriptionText = "Here’s a stranger who is seeking your help to teach him/her how to solve the Data Structure \n" +
+            String descriptionText = "Here’s a stranger who is seeking your help to teach him/her how to solve the Data Structure " +
                     "course’s lab question. As a kind person, you will always help them out.\n" +
-                    "If you did something good to a person you increase your rep points relative to that person by 10. \n" +
-                    "The stranger becomes your friend now. He or she might tell his/her friends about you.\n" +
-                    "But if you are bad at programming, the learning experience with you might not be pleasant, you \n" +
-                    "will still be friends with him, but your rep points relative to that person will be 2 instead (Note that \n" +
-                    "you were strangers before this, now you guys are friends and your rep point relative to that person \n" +
-                    "is 2)";
+                    "If you did something good to a person you increase your rep points relative to that person by 10. The stranger becomes your friend now. " +
+                    "He or she might tell his/her friends about you. But if you are bad at programming, the learning experience with you might not be pleasant, you " +
+                    "will still be friends with him, but your rep points relative to that person will be 2 instead (Note that " +
+                    "you were strangers before this, now you guys are friends and your rep point relative to that person is 2)";
             String title = "Event 1 - Teaching a stranger a lab question";
             String headerText = "Description";
 
+            // Check whether the user had clicked on the OK button
             Optional<ButtonType> result = canvasRef.showDescriptionDialog(title, headerText, descriptionText);
             if(result.isPresent() && result.get() == ButtonType.OK){
+
+                // A input pop up window for the user to enter the
                 TextInputDialog enterStudentDL = new TextInputDialog();
                 canvasRef.setDefaultDialogConfig(enterStudentDL);
                 enterStudentDL.setTitle("Event 1 - Teaching a stranger a lab question");
@@ -69,13 +69,15 @@ public class Event1Controller {
 
                 TextField studentTF = new TextField();
                 studentTF.setPromptText("Name of the student");
-                studentTF.setPrefWidth(100);
+                studentTF.setPrefWidth(150);
 
-                gridPane.add(new Label("Student being taught"), 0, 0);
+                gridPane.add(new Label("Student's name"), 0, 0);
                 gridPane.add(studentTF, 1, 0);
 
                 dialogPane.setContent(gridPane);
+                dialogPane.setPrefWidth(300);
 
+                // Disable the OK button if any of these conditions happen
                 Button okButton = (Button) dialogPane.lookupButton(ButtonType.OK);
                 okButton.disableProperty().bind(Bindings.createBooleanBinding(() ->
 
@@ -92,22 +94,18 @@ public class Event1Controller {
 
                 , studentTF.textProperty()));
 
-                String studentName ;
+                String student ;
 
                 Optional<String> inputResult = enterStudentDL.showAndWait();
 
                 if(inputResult.isPresent()){
-                    studentName = studentTF.getText().trim();
+                    student = studentTF.getText().trim();
                 }
 
                 else{
                     return;
                 }
 
-                GraphSimulationController.VertexFX teacherVertex = selectedVertex;
-                GraphSimulationController.VertexFX studentVertex = canvasRef.getVertexFX(studentName);
-
-                String student = studentVertex.nameText.getText();
                 event1Execution(sociograph,teacher, student);
             }
         }
@@ -116,26 +114,23 @@ public class Event1Controller {
 
     private static void event1Execution(Sociograph sociograph,String teacher, String student) {
         Random rd = new Random();
+
+        // Clear previously added animations
         st.getChildren().clear();
 
         double repSrc = rd.nextDouble() < 0.5 ? 2 : 10;
         double repDest = rd.nextInt(10) + 1;
+
+        // Create a new edge (FRIENDS) between them at the starting
+        // Fade for the edge and Fill for the vertices that are being involved
         GraphSimulationController.EdgeFX friendEdgeFX = canvasRef.createNewUndirectedEdgeFX(canvasRef.getVertexFX(teacher), canvasRef.getVertexFX(student), String.valueOf(repSrc), String.valueOf(repDest), Relationship.FRIEND);
         FadeTransition friendFT = new FadeTransition(Duration.millis(1000),friendEdgeFX);
         friendFT.setFromValue(0);
-        friendFT.setToValue(100);
+        friendFT.setToValue(10);
 
-        FillTransition teacherFT = new FillTransition();
-        teacherFT.setDuration(Duration.millis(1000));
-        teacherFT.setFromValue(Color.GREY);
-        teacherFT.setToValue(Color.RED);
-        teacherFT.setShape(canvasRef.getVertexFX(teacher));
-
-        FillTransition studentFT = new FillTransition();
-        studentFT.setDuration(Duration.millis(1000));
-        studentFT.setFromValue(Color.GREY);
-        studentFT.setToValue(Color.RED);
-        studentFT.setShape(canvasRef.getVertexFX(student));
+        // FillTransition for both the teacherVertex and the StudentVertex
+        FillTransition teacherFT = new FillTransition(Duration.millis(1000), canvasRef.getVertexFX(teacher), Color.BLACK, Color.YELLOW);
+        FillTransition studentFT = new FillTransition(Duration.millis(1000), canvasRef.getVertexFX(student), Color.BLACK, Color.YELLOW);
 
         st.getChildren().add(teacherFT);
         st.getChildren().add(studentFT);
@@ -147,27 +142,28 @@ public class Event1Controller {
         canvasRef.setDefaultDialogConfig(alert);
         StringBuilder sb = new StringBuilder();
 
+        // If the teaching is not success, a percentage to become an enemy
         if (!checkSuccess) {
-
             boolean isEnemyRandom = !(rd.nextDouble() < 0.3);
 
+            // The percentage had hit the target to become an enemy
             if (isEnemyRandom) {
                 sb.append("UH OH! Your friend has become your enemy! \uD83D\uDE1E (Both of the rep points will now become negative!) \n");
 
+                // delete the edge
                 canvasRef.deleteEdgeFXWithoutPrompt(friendEdgeFX);
+
+                // create the new ENEMY edge and show on the graph
                 GraphSimulationController.EdgeFX enemyEdgeFX = canvasRef.createNewUndirectedEdgeFX(canvasRef.getVertexFX(teacher), canvasRef.getVertexFX(student),
                         String.valueOf(-repSrc), String.valueOf(-repDest), Relationship.ENEMY);
 
-                FadeTransition friendFTUpdate = new FadeTransition(Duration.millis(1000), friendEdgeFX);
-                friendFTUpdate.setFromValue(100);
-                friendFTUpdate.setToValue(0);
+                // The animation for the new enemy edge
+                FadeTransition enemyFT = new FadeTransition(Duration.millis(1000),enemyEdgeFX);
+                enemyFT.setFromValue(0);
+                enemyFT.setToValue(10);
 
-                FadeTransition enemyft = new FadeTransition(Duration.millis(1000),enemyEdgeFX);
-                enemyft.setFromValue(0);
-                enemyft.setToValue(100);
+                st.getChildren().add(enemyFT);
 
-                st.getChildren().add(friendFTUpdate);
-                st.getChildren().add(enemyft);
 
             } else {
                 sb.append("Fortunately, ").append(teacher).append(" is great enough and ").append(student).append(" is still your friend! YAY! \n");
@@ -175,29 +171,37 @@ public class Event1Controller {
         }
 
         else{
-            sb.append(teacher).append(" and ").append(student).append(" are now friends because ").append(teacher).append(" had taught good!");
+            sb.append(teacher).append(" and ").append(student).append(" are now good friends because ").append(teacher).append(" had taught good!");
         }
+
+        PauseTransition pt = new PauseTransition(Duration.millis(1500));
+        st.getChildren().add(pt);
 
         System.out.println(sociograph);
         System.out.println();
 
+        // When the events finish, then it will run this
         st.setOnFinished(event -> {
-            PauseTransition pt = new PauseTransition(Duration.millis(6000));
-            pt.play();
+            PauseTransition pt2 = new PauseTransition(Duration.millis(4000));
+            pt2.play();
 
             alert.setContentText(sb.toString());
-            alert.getDialogPane().setPrefWidth(250);
+            alert.getDialogPane().setPrefWidth(300);
             alert.getDialogPane().setPrefHeight(200);
             alert.show();
 
-            FillTransition ftTeacher = new FillTransition(Duration.millis(500), canvasRef.getVertexFX(teacher), Color.RED, Color.BLACK);
+            // Turn back the student and teacher vertex back to the original colour
+            FillTransition ftTeacher = new FillTransition(Duration.millis(500), canvasRef.getVertexFX(teacher), Color.YELLOW, Color.BLACK);
             ftTeacher.play();
 
-            FillTransition ftStudent = new FillTransition(Duration.millis(500), canvasRef.getVertexFX(student), Color.RED, Color.BLACK);
+            FillTransition ftStudent = new FillTransition(Duration.millis(500), canvasRef.getVertexFX(student), Color.YELLOW, Color.BLACK);
             ftStudent.play();
         });
 
+        // To let the SequentialTransition knows that here is the end so that it can run anything inside the setOnAction()
         st.onFinishedProperty();
+
+        // Play the animation
         st.play();
 
     }
