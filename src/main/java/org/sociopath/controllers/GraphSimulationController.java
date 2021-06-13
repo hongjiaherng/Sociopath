@@ -937,6 +937,7 @@ public class GraphSimulationController implements Initializable {
             return;
         }
 
+        Event4Controller.event4Prompt(sociograph, selectedVertex);
 //        markEventRunning();
 //        Event2Controller.event2Prompt(sociograph, selectedVertex);
 
@@ -1435,6 +1436,7 @@ public class GraphSimulationController implements Initializable {
         dialog.setGraphic(null);
         dialog.initStyle(StageStyle.UTILITY);
         dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.setResizable(true);
         DialogPane dialogPane = dialog.getDialogPane();
         dialogPane.getStyleClass().add("dialog");
         dialogPane.getStylesheets().add(getClass().getResource("../style/style.css").toExternalForm());
