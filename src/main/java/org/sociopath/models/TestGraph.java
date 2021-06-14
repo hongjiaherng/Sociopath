@@ -15,6 +15,7 @@ public class TestGraph {
 //        event4Test(sociograph);
 //        event5Test(sociograph);
 //        event6Test(sociograph);
+        doAssignmentsTest(sociograph);
 //        GraphDao.saveGraph(sociograph);
 //        DBConnect.closeCon();
     }

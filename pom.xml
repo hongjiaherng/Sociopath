@@ -25,18 +25,11 @@
             <artifactId>javafx-media</artifactId>
             <version>15.0.1</version>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>org.neo4j</groupId>-->
-<!--            <artifactId>neo4j</artifactId>-->
-<!--            <version>3.5.28</version>-->
-<!--        </dependency>-->
-        <!-- https://mvnrepository.com/artifact/org.neo4j/neo4j -->
         <dependency>
             <groupId>org.neo4j</groupId>
             <artifactId>neo4j</artifactId>
             <version>4.3.0</version>
         </dependency>
-
         <dependency>
             <groupId>org.neo4j</groupId>
             <artifactId>neo4j-ogm-core</artifactId>
@@ -47,7 +40,6 @@
             <artifactId>neo4j-ogm-bolt-driver</artifactId>
             <version>3.2.24</version>
         </dependency>
-
     </dependencies>
 
     <build>

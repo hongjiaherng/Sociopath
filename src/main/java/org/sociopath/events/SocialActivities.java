@@ -380,7 +380,6 @@ public class SocialActivities {
         return allPaths.stream().allMatch(path -> path.contains("stop"));
     }
 
-
     public static void doAssignments(Sociograph sociograph){
         List<List<String>> groups = distributeTeam(sociograph);
         System.out.println("All the groups are : ");
@@ -395,7 +394,6 @@ public class SocialActivities {
             System.out.println(sociograph);
         }
     }
-
 
     public static void sixDegreeOfKenThompson(Sociograph sociograph){
         System.out.print("Which node to start first ? ");
@@ -650,6 +648,5 @@ public class SocialActivities {
         int nthMinute = minute + hour;
         return nthMinute;
     }
-
 
 }
