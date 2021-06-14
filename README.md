@@ -1,11 +1,5 @@
 [Sociopath](https://github.com/hongjiaherng/Sociopath.git) is a friendship monitoring system implemented using Graph data structure
 
-## Contributors
-    - Hong Jia Herng
-    - Lim Hong Zhi
-    - Chai Nam Chi
-    - Sim Jia Hong
-
 ## Libraries used
 - JDK 15
 - JavaFX 15
@@ -34,3 +28,8 @@ Intellij IDEA is used as an example (Setup process in other IDE is similar)
 The nodes are draggable!
 ![img.png](src/main/resources/org/sociopath/others/readme_img/img_4.png)
 
+## Contributors
+    - Hong Jia Herng
+    - Lim Hong Zhi
+    - Chai Nam Chi
+    - Sim Jia Hong
