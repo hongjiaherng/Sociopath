@@ -494,7 +494,11 @@ public class GraphSimulationController implements Initializable {
             TextField newDestRepTF = new TextField();
             newDestRepTF.setPromptText(edge.endVertex.nameText.getText() + "'s rep pts");
             newDestRepTF.setPrefWidth(150);
-            ComboBox<Relationship> newRelTypeCB = new ComboBox<>(FXCollections.observableArrayList(Relationship.NONE, Relationship.FRIEND, Relationship.ENEMY, Relationship.THE_OTHER_HALF));
+            ObservableList<Relationship> relationships = FXCollections.observableArrayList(Relationship.NONE, Relationship.FRIEND, Relationship.ENEMY, Relationship.THE_OTHER_HALF);
+            if ((sociograph.getStudent(edge.srcVertex.nameText.getText()).getTheOtherHalf() != null) || (sociograph.getStudent(edge.endVertex.nameText.getText()).getTheOtherHalf() != null)) {
+                relationships.remove(Relationship.THE_OTHER_HALF);
+            }
+            ComboBox<Relationship> newRelTypeCB = new ComboBox<>(relationships);
             newRelTypeCB.setValue(Relationship.NONE);
             newRelTypeCB.setPrefWidth(150);
 
